@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -44,7 +43,19 @@ import chat.stoat.api.routes.account.authenticateWithMfaTotpCode
 import chat.stoat.composables.generic.CollapsibleCard
 import chat.stoat.composables.generic.FormTextField
 import chat.stoat.persistence.KVStorage
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.cancel
+import chat.stoat.shared.resources.mfa_interstitial_header
+import chat.stoat.shared.resources.mfa_interstitial_lead
+import chat.stoat.shared.resources.mfa_recovery_code
+import chat.stoat.shared.resources.mfa_recovery_header
+import chat.stoat.shared.resources.mfa_recovery_lead
+import chat.stoat.shared.resources.mfa_totp_code
+import chat.stoat.shared.resources.mfa_totp_header
+import chat.stoat.shared.resources.mfa_totp_lead
+import chat.stoat.shared.resources.next
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 
 class MfaScreenViewModel(
@@ -78,8 +89,9 @@ class MfaScreenViewModel(
         _error = null
         viewModelScope.launch {
             val response = authenticateWithMfaTotpCode(mfaTicket, MfaResponseTotpCode(totpCode))
-            if (response.error != null) {
-                _error = response.error.type
+            val error = response.error
+            if (error != null) {
+                _error = error.type
             } else {
                 Log.d(
                     "MFA",
@@ -87,8 +99,9 @@ class MfaScreenViewModel(
                 )
 
                 try {
-                    val token = response.firstUserHints!!.token
-                    val id = response.firstUserHints.id
+                    val hints = response.firstUserHints!!
+                    val token = hints.token
+                    val id = hints.id
 
                     StoatAPI.loginAs(token)
                     StoatAPI.setSessionId(id)
@@ -108,8 +121,9 @@ class MfaScreenViewModel(
         viewModelScope.launch {
             val response =
                 authenticateWithMfaRecoveryCode(mfaTicket, MfaResponseRecoveryCode(recoveryCode))
-            if (response.error != null) {
-                _error = response.error.type
+            val error = response.error
+            if (error != null) {
+                _error = error.type
             } else {
                 Log.d(
                     "MFA",
@@ -117,8 +131,9 @@ class MfaScreenViewModel(
                 )
 
                 try {
-                    val token = response.firstUserHints!!.token
-                    val id = response.firstUserHints.id
+                    val hints = response.firstUserHints!!
+                    val token = hints.token
+                    val id = hints.id
 
                     StoatAPI.loginAs(token)
                     StoatAPI.setSessionId(id)
@@ -169,7 +184,7 @@ fun MfaScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.mfa_interstitial_header),
+                text = stringResource(Res.string.mfa_interstitial_header),
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Black,
@@ -181,7 +196,7 @@ fun MfaScreen(
             )
 
             Text(
-                text = stringResource(R.string.mfa_interstitial_lead),
+                text = stringResource(Res.string.mfa_interstitial_lead),
                 color = MaterialTheme.colorScheme.onBackground.copy(
                     alpha = 0.5f
                 ),
@@ -224,7 +239,7 @@ fun MfaScreen(
                                         .size(64.dp)
                                         .padding(end = 10.dp)
                                 )
-                                Text(stringResource(R.string.mfa_totp_header))
+                                Text(stringResource(Res.string.mfa_totp_header))
                             }
                         }) {
                             Column(
@@ -232,7 +247,7 @@ fun MfaScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = stringResource(R.string.mfa_totp_lead),
+                                    text = stringResource(Res.string.mfa_totp_lead),
                                     color = MaterialTheme.colorScheme.onBackground.copy(
                                         alpha = 0.5f
                                     ),
@@ -246,7 +261,7 @@ fun MfaScreen(
                                 )
 
                                 FormTextField(
-                                    label = stringResource(R.string.mfa_totp_code),
+                                    label = stringResource(Res.string.mfa_totp_code),
                                     onChange = viewModel::setTotpCode,
                                     type = KeyboardType.Number,
                                     value = viewModel.totpCode
@@ -260,7 +275,7 @@ fun MfaScreen(
                                         .testTag("do_totp_button")
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.next)
+                                        text = stringResource(Res.string.next)
                                     )
                                 }
                             }
@@ -279,7 +294,7 @@ fun MfaScreen(
                                         .size(64.dp)
                                         .padding(end = 10.dp)
                                 )
-                                Text(stringResource(R.string.mfa_recovery_header))
+                                Text(stringResource(Res.string.mfa_recovery_header))
                             }
                         }) {
                             Column(
@@ -287,7 +302,7 @@ fun MfaScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = stringResource(R.string.mfa_recovery_lead),
+                                    text = stringResource(Res.string.mfa_recovery_lead),
                                     color = MaterialTheme.colorScheme.onBackground.copy(
                                         alpha = 0.5f
                                     ),
@@ -301,7 +316,7 @@ fun MfaScreen(
                                 )
 
                                 FormTextField(
-                                    label = stringResource(R.string.mfa_recovery_code),
+                                    label = stringResource(Res.string.mfa_recovery_code),
                                     onChange = viewModel::setRecoveryCode,
                                     value = viewModel.recoveryCode
                                 )
@@ -314,7 +329,7 @@ fun MfaScreen(
                                         .testTag("do_mfa_recovery_button")
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.next)
+                                        text = stringResource(Res.string.next)
                                     )
                                 }
                             }
@@ -327,7 +342,7 @@ fun MfaScreen(
         ElevatedButton(
             onClick = { navController.popBackStack() }
         ) {
-            Text(text = stringResource(R.string.cancel))
+            Text(text = stringResource(Res.string.cancel))
         }
     }
 }

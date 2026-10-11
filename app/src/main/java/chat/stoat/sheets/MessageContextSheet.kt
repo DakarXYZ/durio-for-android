@@ -16,9 +16,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,9 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import chat.stoat.R
@@ -46,7 +45,29 @@ import chat.stoat.composables.chat.Message
 import chat.stoat.composables.generic.SheetButton
 import chat.stoat.core.model.data.STOAT_WEB_APP
 import chat.stoat.internals.Platform
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.comingsoon_toast
+import chat.stoat.shared.resources.copied
+import chat.stoat.shared.resources.message_context_sheet_actions_copy
+import chat.stoat.shared.resources.message_context_sheet_actions_copy_failed_empty
+import chat.stoat.shared.resources.message_context_sheet_actions_copy_id
+import chat.stoat.shared.resources.message_context_sheet_actions_copy_id_copied
+import chat.stoat.shared.resources.message_context_sheet_actions_copy_link
+import chat.stoat.shared.resources.message_context_sheet_actions_copy_link_copied
+import chat.stoat.shared.resources.message_context_sheet_actions_delete
+import chat.stoat.shared.resources.message_context_sheet_actions_delete_confirmation_body
+import chat.stoat.shared.resources.message_context_sheet_actions_delete_confirmation_no
+import chat.stoat.shared.resources.message_context_sheet_actions_delete_confirmation_title
+import chat.stoat.shared.resources.message_context_sheet_actions_delete_confirmation_yes
+import chat.stoat.shared.resources.message_context_sheet_actions_edit
+import chat.stoat.shared.resources.message_context_sheet_actions_mark_unread
+import chat.stoat.shared.resources.message_context_sheet_actions_react
+import chat.stoat.shared.resources.message_context_sheet_actions_reply
+import chat.stoat.shared.resources.message_context_sheet_actions_report
+import chat.stoat.shared.resources.share
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +76,11 @@ fun MessageContextSheet(
     onHideSheet: suspend () -> Unit,
     onReportMessage: () -> Unit
 ) {
+    val copiedText = stringResource(Res.string.copied)
+    val messageContextSheetActionsCopyFailedEmptyText = stringResource(Res.string.message_context_sheet_actions_copy_failed_empty)
+    val messageContextSheetActionsCopyLinkCopiedText = stringResource(Res.string.message_context_sheet_actions_copy_link_copied)
+    val messageContextSheetActionsCopyIdCopiedText = stringResource(Res.string.message_context_sheet_actions_copy_id_copied)
+    val comingsoonToastText = stringResource(Res.string.comingsoon_toast)
     val message = StoatAPI.messageCache[messageId]
     if (message == null) {
         Box(
@@ -68,7 +94,6 @@ fun MessageContextSheet(
     }
 
     val context = LocalContext.current
-    val resources = LocalResources.current
     val clipboardManager = LocalClipboardManager.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -77,7 +102,10 @@ fun MessageContextSheet(
     var showDeleteMessageConfirmation by remember { mutableStateOf(false) }
 
     if (showShareSheet) {
-        val shareSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val shareSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = shareSheetState,
@@ -98,7 +126,7 @@ fun MessageContextSheet(
                     },
                     headlineContent = {
                         Text(
-                            text = stringResource(id = R.string.message_context_sheet_actions_copy)
+                            text = stringResource(Res.string.message_context_sheet_actions_copy)
                         )
                     },
                     onClick = {
@@ -108,8 +136,8 @@ fun MessageContextSheet(
                                 onHideSheet()
                                 Toast.makeText(
                                     context,
-                                    resources.getString(
-                                        R.string.message_context_sheet_actions_copy_failed_empty
+                                    getString(
+                                        Res.string.message_context_sheet_actions_copy_failed_empty
                                     ),
                                     Toast.LENGTH_SHORT
                                 ).show()
@@ -120,7 +148,7 @@ fun MessageContextSheet(
                         if (Platform.needsShowClipboardNotification()) {
                             Toast.makeText(
                                 context,
-                                resources.getString(R.string.copied),
+                                copiedText,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -145,7 +173,7 @@ fun MessageContextSheet(
                     headlineContent = {
                         Text(
                             text = stringResource(
-                                id = R.string.message_context_sheet_actions_copy_link
+                                Res.string.message_context_sheet_actions_copy_link
                             )
                         )
                     },
@@ -153,9 +181,7 @@ fun MessageContextSheet(
                         if (message.content.isNullOrEmpty()) {
                             Toast.makeText(
                                 context,
-                                resources.getString(
-                                    R.string.message_context_sheet_actions_copy_failed_empty
-                                ),
+                                messageContextSheetActionsCopyFailedEmptyText,
                                 Toast.LENGTH_SHORT
                             ).show()
 
@@ -181,9 +207,7 @@ fun MessageContextSheet(
                         if (Platform.needsShowClipboardNotification()) {
                             Toast.makeText(
                                 context,
-                                resources.getString(
-                                    R.string.message_context_sheet_actions_copy_link_copied
-                                ),
+                                messageContextSheetActionsCopyLinkCopiedText,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -207,7 +231,7 @@ fun MessageContextSheet(
                     headlineContent = {
                         Text(
                             text = stringResource(
-                                id = R.string.message_context_sheet_actions_copy_id
+                                Res.string.message_context_sheet_actions_copy_id
                             )
                         )
                     },
@@ -219,9 +243,7 @@ fun MessageContextSheet(
                         if (Platform.needsShowClipboardNotification()) {
                             Toast.makeText(
                                 context,
-                                resources.getString(
-                                    R.string.message_context_sheet_actions_copy_id_copied
-                                ),
+                                messageContextSheetActionsCopyIdCopiedText,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -241,7 +263,10 @@ fun MessageContextSheet(
     }
 
     if (showReactSheet) {
-        val reactSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val reactSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = reactSheetState,
@@ -271,12 +296,12 @@ fun MessageContextSheet(
             },
             title = {
                 Text(
-                    text = stringResource(R.string.message_context_sheet_actions_delete_confirmation_title)
+                    text = stringResource(Res.string.message_context_sheet_actions_delete_confirmation_title)
                 )
             },
             text = {
                 Text(
-                    text = stringResource(R.string.message_context_sheet_actions_delete_confirmation_body)
+                    text = stringResource(Res.string.message_context_sheet_actions_delete_confirmation_body)
                 )
             },
             confirmButton = {
@@ -291,7 +316,7 @@ fun MessageContextSheet(
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.message_context_sheet_actions_delete_confirmation_yes))
+                    Text(stringResource(Res.string.message_context_sheet_actions_delete_confirmation_yes))
                 }
             },
             dismissButton = {
@@ -300,7 +325,7 @@ fun MessageContextSheet(
                         showDeleteMessageConfirmation = false
                     }
                 ) {
-                    Text(stringResource(R.string.message_context_sheet_actions_delete_confirmation_no))
+                    Text(stringResource(Res.string.message_context_sheet_actions_delete_confirmation_no))
                 }
             }
         )
@@ -333,7 +358,7 @@ fun MessageContextSheet(
             },
             headlineContent = {
                 Text(
-                    text = stringResource(id = R.string.message_context_sheet_actions_reply),
+                    text = stringResource(Res.string.message_context_sheet_actions_reply),
                 )
             },
             onClick = {
@@ -353,7 +378,7 @@ fun MessageContextSheet(
             },
             headlineContent = {
                 Text(
-                    text = stringResource(id = R.string.message_context_sheet_actions_react),
+                    text = stringResource(Res.string.message_context_sheet_actions_react),
                 )
             },
             onClick = {
@@ -371,7 +396,7 @@ fun MessageContextSheet(
                 },
                 headlineContent = {
                     Text(
-                        text = stringResource(id = R.string.message_context_sheet_actions_edit),
+                        text = stringResource(Res.string.message_context_sheet_actions_edit),
                     )
                 },
                 onClick = {
@@ -392,13 +417,13 @@ fun MessageContextSheet(
             },
             headlineContent = {
                 Text(
-                    text = stringResource(id = R.string.message_context_sheet_actions_mark_unread),
+                    text = stringResource(Res.string.message_context_sheet_actions_mark_unread),
                 )
             },
             onClick = {
                 Toast.makeText(
                     context,
-                    resources.getString(R.string.comingsoon_toast),
+                    comingsoonToastText,
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -417,7 +442,7 @@ fun MessageContextSheet(
             },
             headlineContent = {
                 Text(
-                    text = stringResource(id = R.string.share),
+                    text = stringResource(Res.string.share),
                 )
             },
             onClick = {
@@ -443,7 +468,7 @@ fun MessageContextSheet(
                 },
                 headlineContent = {
                     Text(
-                        text = stringResource(id = R.string.message_context_sheet_actions_delete),
+                        text = stringResource(Res.string.message_context_sheet_actions_delete),
                     )
                 },
                 dangerous = true,
@@ -463,7 +488,7 @@ fun MessageContextSheet(
                 },
                 headlineContent = {
                     Text(
-                        text = stringResource(id = R.string.message_context_sheet_actions_report),
+                        text = stringResource(Res.string.message_context_sheet_actions_report),
                     )
                 },
                 dangerous = true,

@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
@@ -62,13 +61,12 @@ import chat.stoat.R
 import chat.stoat.activities.media.ImageViewActivity
 import chat.stoat.activities.media.VideoViewActivity
 import chat.stoat.api.StoatAPI
-import chat.stoat.api.internals.BrushCompat
+import chat.stoat.api.StoatJson
 import chat.stoat.api.internals.MessageFlag
 import chat.stoat.api.internals.Roles
 import chat.stoat.api.internals.SpecialUsers
 import chat.stoat.api.internals.ULID
 import chat.stoat.api.internals.has
-import chat.stoat.api.internals.solidColor
 import chat.stoat.api.routes.channel.react
 import chat.stoat.api.routes.channel.unreact
 import chat.stoat.api.routes.microservices.january.asJanuaryProxyUrl
@@ -85,6 +83,12 @@ import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.AutumnResource
 import chat.stoat.core.model.schemas.User
 import chat.stoat.core.model.schemas.UserBadges
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.edited
+import chat.stoat.shared.resources.message_blocked
+import chat.stoat.shared.resources.message_context_sheet_actions_react
+import chat.stoat.shared.resources.unknown
+import org.jetbrains.compose.resources.stringResource
 import chat.stoat.core.model.schemas.has as hasUserBadge
 import chat.stoat.internals.text.Gigamoji
 import chat.stoat.internals.text.GigamojiState
@@ -94,6 +98,9 @@ import chat.stoat.internals.toNavigationAction
 import chat.stoat.internals.toStoatWebLinkOrNull
 import chat.stoat.media.parseVoiceMessageMetadata
 import chat.stoat.persistence.KVStorage
+import chat.stoat.ui.colour.BrushCompat
+import chat.stoat.ui.colour.solidColor
+import chat.stoat.ui.theme.TeamMemberFlairs
 import com.mikepenz.markdown.model.State
 import kotlinx.coroutines.launch
 import chat.stoat.core.model.schemas.Message as MessageSchema
@@ -132,13 +139,13 @@ fun displayNameInChannel(userId: String, channelId: String): String {
     val serverId =
         StoatAPI.channelCache[channelId]?.server
             ?: return StoatAPI.userCache[userId]?.let { User.resolveDefaultName(it) }
-                ?: stringResource(R.string.unknown)
+                ?: stringResource(Res.string.unknown)
 
     val member = userId.let { StoatAPI.members.getMember(serverId, it) }
-        ?: return stringResource(R.string.unknown)
+        ?: return stringResource(Res.string.unknown)
     return member.nickname
         ?: StoatAPI.userCache[userId]?.let { User.resolveDefaultName(it) }
-        ?: stringResource(R.string.unknown)
+        ?: stringResource(Res.string.unknown)
 }
 
 @Composable
@@ -150,13 +157,13 @@ fun authorName(message: MessageSchema): String {
     val serverId =
         StoatAPI.channelCache[message.channel]?.server
             ?: return StoatAPI.userCache[message.author]?.let { User.resolveDefaultName(it) }
-                ?: stringResource(R.string.unknown)
+                ?: stringResource(Res.string.unknown)
 
     val member = message.author?.let { StoatAPI.members.getMember(serverId, it) }
-        ?: return stringResource(R.string.unknown)
+        ?: return stringResource(Res.string.unknown)
     return member.nickname
         ?: StoatAPI.userCache[message.author]?.let { User.resolveDefaultName(it) }
-        ?: stringResource(R.string.unknown)
+        ?: stringResource(Res.string.unknown)
 }
 
 fun authorPronouns(message: MessageSchema, author: User): String? {
@@ -336,7 +343,7 @@ fun Message(
                         )
 
                         Text(
-                            text = stringResource(R.string.message_blocked),
+                            text = stringResource(Res.string.message_blocked),
                             fontSize = 12.sp,
                             color = LocalContentColor.current.copy(alpha = 0.5f),
                             fontStyle = FontStyle.Italic
@@ -465,7 +472,7 @@ fun Message(
                                     bot = author.bot != null && message.masquerade == null,
                                     bridge = message.masquerade != null && author.bot != null,
                                     platformModeration = author.id == SpecialUsers.PLATFORM_MODERATION_USER,
-                                    teamMember = author.id in SpecialUsers.TEAM_MEMBER_FLAIRS.keys,
+                                    teamMember = author.id in TeamMemberFlairs.TEAM_MEMBER_FLAIRS.keys,
                                     webhook = fromWebhook,
                                     colour = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                                     modifier = Modifier.size(16.dp),
@@ -492,7 +499,7 @@ fun Message(
                                 if (message.edited != null) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_edit_24dp),
-                                        contentDescription = stringResource(id = R.string.edited),
+                                        contentDescription = stringResource(Res.string.edited),
                                         tint = MaterialTheme.colorScheme.onBackground.copy(
                                             alpha = 0.5f
                                         ),
@@ -546,7 +553,7 @@ fun Message(
                                                     context,
                                                     ImageViewActivity::class.java
                                                 ).apply {
-                                                    putExtra("autumnResource", attachment)
+                                                    putExtra("autumnResource", StoatJson.encodeToString(AutumnResource.serializer(), attachment))
                                                 }
                                             )
                                         }
@@ -557,7 +564,7 @@ fun Message(
                                                     context,
                                                     VideoViewActivity::class.java
                                                 ).apply {
-                                                    putExtra("autumnResource", attachment)
+                                                    putExtra("autumnResource", StoatJson.encodeToString(AutumnResource.serializer(), attachment))
                                                 }
                                             )
                                         }
@@ -694,7 +701,7 @@ fun Message(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_add_reaction_24dp),
-                                        contentDescription = stringResource(R.string.message_context_sheet_actions_react),
+                                        contentDescription = stringResource(Res.string.message_context_sheet_actions_react),
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }

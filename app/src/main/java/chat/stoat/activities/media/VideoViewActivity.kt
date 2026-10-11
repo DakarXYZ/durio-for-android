@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
@@ -46,7 +45,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
-import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -69,10 +67,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -93,31 +89,47 @@ import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
 import chat.stoat.R
 import chat.stoat.api.StoatHttp
+import chat.stoat.api.StoatJson
 import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.api.settings.SyncedSettings
+import chat.stoat.composables.generic.ControlledSlider
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.AutumnResource
 import chat.stoat.internals.extensions.zero
 import chat.stoat.providers.getAttachmentContentUri
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.back
+import chat.stoat.shared.resources.media_viewer_exit_fullscreen
+import chat.stoat.shared.resources.media_viewer_fullscreen
+import chat.stoat.shared.resources.media_viewer_open
+import chat.stoat.shared.resources.media_viewer_pause
+import chat.stoat.shared.resources.media_viewer_play
+import chat.stoat.shared.resources.media_viewer_playback_error
+import chat.stoat.shared.resources.media_viewer_save
+import chat.stoat.shared.resources.media_viewer_saved
+import chat.stoat.shared.resources.media_viewer_seek_back
+import chat.stoat.shared.resources.media_viewer_seek_forward
+import chat.stoat.shared.resources.media_viewer_share_url
+import chat.stoat.shared.resources.media_viewer_share_video
+import chat.stoat.shared.resources.media_viewer_title_video
+import chat.stoat.shared.resources.retry
+import chat.stoat.shared.resources.share
 import chat.stoat.ui.theme.StoatTheme
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
 class VideoViewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val autumnResource =
-            // due to a bug in Android 13 we still use the deprecated method on Android 13, despite the new method being available
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra("autumnResource", AutumnResource::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra("autumnResource")
-            }
+        val autumnResource = intent.getStringExtra("autumnResource")
+
+            ?.let { StoatJson.decodeFromString(AutumnResource.serializer(), it) }
 
         if (autumnResource?.id == null) {
             Log.e("VideoViewActivity", "No AutumnResource provided")
@@ -140,7 +152,6 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
     val filename = resource.filename ?: "video"
     val resourceUrl = "$STOAT_FILES/attachments/$resourceId/$filename"
     val context = LocalContext.current
-    val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
@@ -280,8 +291,8 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
                 )
 
                 val result = snackbarHostState.showSnackbar(
-                    message = resources.getString(R.string.media_viewer_saved),
-                    actionLabel = resources.getString(R.string.media_viewer_open),
+                    message = getString(Res.string.media_viewer_saved),
+                    actionLabel = getString(Res.string.media_viewer_open),
                     duration = SnackbarDuration.Short
                 )
 
@@ -318,7 +329,7 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
                     TopAppBar(
                         title = {
                             Text(
-                                text = stringResource(R.string.media_viewer_title_video, filename),
+                                text = stringResource(Res.string.media_viewer_title_video, filename),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -327,7 +338,7 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
                             IconButton(onClick = onClose) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_arrow_back_24dp),
-                                    contentDescription = stringResource(R.string.back)
+                                    contentDescription = stringResource(Res.string.back)
                                 )
                             }
                         },
@@ -335,7 +346,7 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
                             IconButton(onClick = { shareSubmenuIsOpen = true }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_ios_share_24dp),
-                                    contentDescription = stringResource(R.string.share)
+                                    contentDescription = stringResource(Res.string.share)
                                 )
                             }
 
@@ -345,18 +356,18 @@ fun VideoViewScreen(resource: AutumnResource, onClose: () -> Unit = {}) {
                             ) {
                                 DropdownMenuItem(
                                     onClick = ::shareUrl,
-                                    text = { Text(stringResource(R.string.media_viewer_share_url)) }
+                                    text = { Text(stringResource(Res.string.media_viewer_share_url)) }
                                 )
                                 DropdownMenuItem(
                                     onClick = ::shareVideo,
-                                    text = { Text(stringResource(R.string.media_viewer_share_video)) }
+                                    text = { Text(stringResource(Res.string.media_viewer_share_video)) }
                                 )
                             }
 
                             IconButton(onClick = ::saveToGallery) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_download_24dp),
-                                    contentDescription = stringResource(R.string.media_viewer_save)
+                                    contentDescription = stringResource(Res.string.media_viewer_save)
                                 )
                             }
                         }
@@ -467,7 +478,7 @@ private fun StoatVideoPlayer(
                 ) {
                     VideoControlButton(
                         icon = R.drawable.ic_replay_5_24dp,
-                        contentDescription = stringResource(R.string.media_viewer_seek_back),
+                        contentDescription = stringResource(Res.string.media_viewer_seek_back),
                         enabled = seekBackState.isEnabled,
                         onClick = {
                             seekBackState.onClick()
@@ -500,9 +511,9 @@ private fun StoatVideoPlayer(
                             ),
                             contentDescription = stringResource(
                                 if (playPauseState.showPlay) {
-                                    R.string.media_viewer_play
+                                    Res.string.media_viewer_play
                                 } else {
-                                    R.string.media_viewer_pause
+                                    Res.string.media_viewer_pause
                                 }
                             ),
                             tint = MaterialTheme.colorScheme.onSurface,
@@ -514,7 +525,7 @@ private fun StoatVideoPlayer(
 
                     VideoControlButton(
                         icon = R.drawable.ic_forward_5_24dp,
-                        contentDescription = stringResource(R.string.media_viewer_seek_forward),
+                        contentDescription = stringResource(Res.string.media_viewer_seek_forward),
                         enabled = seekForwardState.isEnabled,
                         onClick = {
                             seekForwardState.onClick()
@@ -576,7 +587,7 @@ private fun StoatVideoPlayer(
             ) {
                 Text(
                     text = error.localizedMessage
-                        ?: stringResource(R.string.media_viewer_playback_error),
+                        ?: stringResource(Res.string.media_viewer_playback_error),
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 3,
@@ -587,7 +598,7 @@ private fun StoatVideoPlayer(
                     player.prepare()
                     player.play()
                 }) {
-                    Text(stringResource(R.string.retry))
+                    Text(stringResource(Res.string.retry))
                 }
             }
         }
@@ -648,7 +659,7 @@ private fun VideoTimeline(
             )
         )
 
-        Slider(
+        ControlledSlider(
             value = sliderValue,
             onValueChange = { onScrub((it * usableDurationMs).toLong()) },
             onValueChangeFinished = onScrubFinished,
@@ -687,9 +698,9 @@ private fun VideoTimeline(
                 ),
                 contentDescription = stringResource(
                     if (isFullscreen) {
-                        R.string.media_viewer_exit_fullscreen
+                        Res.string.media_viewer_exit_fullscreen
                     } else {
-                        R.string.media_viewer_fullscreen
+                        Res.string.media_viewer_fullscreen
                     }
                 ),
                 tint = Color.White

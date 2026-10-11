@@ -13,14 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
-import chat.stoat.api.internals.BrushCompat
 import chat.stoat.api.internals.Roles
-import chat.stoat.api.internals.solidColor
 import chat.stoat.composables.generic.UserAvatar
 import chat.stoat.composables.generic.presenceFromStatus
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.Member
 import chat.stoat.core.model.schemas.User
+import chat.stoat.ui.colour.BrushCompat
+import chat.stoat.ui.colour.solidColor
 
 private val NoneLambda = { }
 
@@ -88,18 +88,6 @@ fun MemberListItem(
                     )
                 }
             ),
-        headlineContent = {
-            Text(
-                text = member?.nickname
-                    ?: user?.displayName
-                    ?: user?.username
-                    ?: user?.id
-                    ?: userId,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = LocalTextStyle.current.copy(brush = colour),
-            )
-        },
         supportingContent = {
             user?.status?.text?.let {
                 if (user.online == true) {
@@ -128,5 +116,16 @@ fun MemberListItem(
             )
         },
         trailingContent = trailingContent
-    )
+    ) {
+        Text(
+            text = member?.nickname
+                ?: user?.displayName
+                ?: user?.username
+                ?: user?.id
+                ?: userId,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = LocalTextStyle.current.copy(brush = colour),
+        )
+    }
 }

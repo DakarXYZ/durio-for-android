@@ -32,10 +32,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -57,7 +58,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
@@ -95,6 +95,13 @@ import chat.stoat.screens.chat.views.FriendsScreen
 import chat.stoat.screens.chat.views.NoCurrentChannelScreen
 import chat.stoat.screens.chat.views.OverviewScreen
 import chat.stoat.screens.chat.views.channel.ChannelScreen
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.channel_link_invalid
+import chat.stoat.shared.resources.channel_link_invalid_description
+import chat.stoat.shared.resources.notice_platform_mod_dm_acknowledge
+import chat.stoat.shared.resources.notice_platform_mod_dm_description
+import chat.stoat.shared.resources.notice_platform_mod_dm_title
+import chat.stoat.shared.resources.ok
 import chat.stoat.sheets.AddServerSheet
 import chat.stoat.sheets.EarlyAccessSheet
 import chat.stoat.sheets.EmoteInfoSheet
@@ -117,6 +124,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import logcat.LogPriority
 import logcat.logcat
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 
 sealed class ChatRouterDestination {
@@ -591,10 +599,10 @@ fun ChatRouterScreen(
         AlertDialog(
             onDismissRequest = {},
             title = {
-                Text(stringResource(id = R.string.notice_platform_mod_dm_title))
+                Text(stringResource(Res.string.notice_platform_mod_dm_title))
             },
             text = {
-                Text(stringResource(id = R.string.notice_platform_mod_dm_description))
+                Text(stringResource(Res.string.notice_platform_mod_dm_description))
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -603,14 +611,17 @@ fun ChatRouterScreen(
                         viewModel.setSaveDestination(ChatRouterDestination.Channel(it))
                     }
                 }) {
-                    Text(stringResource(id = R.string.notice_platform_mod_dm_acknowledge))
+                    Text(stringResource(Res.string.notice_platform_mod_dm_acknowledge))
                 }
             }
         )
     }
 
     if (showStatusSheet) {
-        val statusSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val statusSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = statusSheetState,
@@ -633,7 +644,10 @@ fun ChatRouterScreen(
     }
 
     if (showAddServerSheet) {
-        val addServerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val addServerSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = addServerSheetState,
@@ -652,7 +666,10 @@ fun ChatRouterScreen(
     }
 
     if (showServerContextSheet) {
-        val serverContextSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val serverContextSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = serverContextSheetState,
@@ -680,7 +697,10 @@ fun ChatRouterScreen(
     }
 
     if (showServerFolderPicker) {
-        val serverFolderPickerState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val serverFolderPickerState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = serverFolderPickerState,
@@ -699,7 +719,7 @@ fun ChatRouterScreen(
     }
 
     if (showUserContextSheet) {
-        val userContextSheetState = rememberModalBottomSheetState()
+        val userContextSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = userContextSheetState,
@@ -728,7 +748,10 @@ fun ChatRouterScreen(
     }
 
     if (showWebhookInfoSheet) {
-        val webhookInfoSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val webhookInfoSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = webhookInfoSheetState,
@@ -777,14 +800,14 @@ fun ChatRouterScreen(
             },
             title = {
                 Text(
-                    text = stringResource(id = R.string.channel_link_invalid),
+                    text = stringResource(Res.string.channel_link_invalid),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             text = {
                 Text(
-                    text = stringResource(id = R.string.channel_link_invalid_description),
+                    text = stringResource(Res.string.channel_link_invalid_description),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -793,14 +816,14 @@ fun ChatRouterScreen(
                 TextButton(onClick = {
                     showChannelUnavailableAlert = false
                 }) {
-                    Text(text = stringResource(id = R.string.ok))
+                    Text(text = stringResource(Res.string.ok))
                 }
             }
         )
     }
 
     if (showLinkInfoSheet) {
-        val linkInfoSheetState = rememberModalBottomSheetState()
+        val linkInfoSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = linkInfoSheetState,
@@ -818,7 +841,7 @@ fun ChatRouterScreen(
     }
 
     if (showEmoteInfoSheet) {
-        val emoteInfoSheetState = rememberModalBottomSheetState()
+        val emoteInfoSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = emoteInfoSheetState,
@@ -836,7 +859,7 @@ fun ChatRouterScreen(
     }
 
     if (showReactionInfoSheet) {
-        val reactionInfoSheetState = rememberModalBottomSheetState()
+        val reactionInfoSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = reactionInfoSheetState,
@@ -882,7 +905,10 @@ fun ChatRouterScreen(
     }
 
     if (viewModel.showEarlyAccessSpark) {
-        val earlyAccessSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val earlyAccessSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = earlyAccessSheetState,
@@ -905,7 +931,10 @@ fun ChatRouterScreen(
     }
 
     if (viewModel.showSwipeToReplySpark) {
-        val swipeToReplySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val swipeToReplySheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = swipeToReplySheetState,

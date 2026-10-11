@@ -63,13 +63,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.composables.chat.displayNameInChannel
 import chat.stoat.core.model.util.UserVoiceState
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.unknown
+import chat.stoat.shared.resources.voice_action_deafen
+import chat.stoat.shared.resources.voice_action_disconnect
+import chat.stoat.shared.resources.voice_action_flip_camera
+import chat.stoat.shared.resources.voice_action_mute
+import chat.stoat.shared.resources.voice_action_screen_share
+import chat.stoat.shared.resources.voice_action_undeafen
+import chat.stoat.shared.resources.voice_action_unmute
+import chat.stoat.shared.resources.voice_action_video
+import chat.stoat.shared.resources.voice_audio_output
+import chat.stoat.shared.resources.voice_audio_output_earpiece
+import chat.stoat.shared.resources.voice_audio_output_speaker
+import chat.stoat.shared.resources.voice_audio_output_wired_headset
+import chat.stoat.shared.resources.voice_screen_sharing
+import chat.stoat.shared.resources.voice_status_connected
+import chat.stoat.shared.resources.voice_status_connecting
+import chat.stoat.shared.resources.voice_status_disconnected
+import chat.stoat.shared.resources.voice_status_reconnecting
 import chat.stoat.voice.VoiceCallManager
 import com.twilio.audioswitch.AudioDevice
 import com.twilio.audioswitch.AudioDeviceChangeListener
@@ -88,6 +106,7 @@ import kotlinx.coroutines.launch
 import logcat.LogPriority
 import logcat.asLog
 import logcat.logcat
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -202,14 +221,14 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                         if (trackRef.source == Track.Source.SCREEN_SHARE) {
                                             Icon(
                                                 painter = painterResource(R.drawable.ic_screen_share_24dp),
-                                                contentDescription = stringResource(R.string.voice_screen_sharing),
+                                                contentDescription = stringResource(Res.string.voice_screen_sharing),
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
                                         Text(
                                             text = trackRef.participant.identity?.value
                                                 ?.let { displayNameInChannel(it, channelId) }
-                                                ?: stringResource(R.string.unknown),
+                                                ?: stringResource(Res.string.unknown),
                                             style = MaterialTheme.typography.labelMedium
                                         )
                                     }
@@ -298,10 +317,10 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                     )
                                     Text(
                                         text = when (roomState) {
-                                            Room.State.CONNECTING -> stringResource(R.string.voice_status_connecting)
-                                            Room.State.CONNECTED -> stringResource(R.string.voice_status_connected)
-                                            Room.State.DISCONNECTED -> stringResource(R.string.voice_status_disconnected)
-                                            Room.State.RECONNECTING -> stringResource(R.string.voice_status_reconnecting)
+                                            Room.State.CONNECTING -> stringResource(Res.string.voice_status_connecting)
+                                            Room.State.CONNECTED -> stringResource(Res.string.voice_status_connected)
+                                            Room.State.DISCONNECTED -> stringResource(Res.string.voice_status_disconnected)
+                                            Room.State.RECONNECTING -> stringResource(Res.string.voice_status_reconnecting)
                                         }
                                     )
                                 }
@@ -392,7 +411,6 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                 ListItemDefaults.colors().leadingContentColor
                             }
                         ),
-                        headlineContent = { Text(stringResource(R.string.voice_action_video)) },
                         leadingContent = {
                             Icon(
                                 painter = if (isCameraOn) painterResource(R.drawable.ic_videocam_24dp) else painterResource(
@@ -408,15 +426,12 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                     room.localParticipant.setCameraEnabled(!isCameraOn)
                                 }
                             }
-                    )
+                    ) { Text(stringResource(Res.string.voice_action_video)) }
                     AnimatedVisibility(visible = isCameraOn) {
                         ListItem(
                             colors = ListItemDefaults.colors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainer
                             ),
-                            headlineContent = {
-                                Text(stringResource(R.string.voice_action_flip_camera))
-                            },
                             leadingContent = {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_cameraswitch_24dp),
@@ -431,7 +446,9 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                         ?.track as? LocalVideoTrack)
                                         ?.switchCamera()
                                 }
-                        )
+                        ) {
+                            Text(stringResource(Res.string.voice_action_flip_camera))
+                        }
                     }
                     ListItem(
                         colors = ListItemDefaults.colors(
@@ -447,7 +464,6 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                 ListItemDefaults.colors().leadingContentColor
                             }
                         ),
-                        headlineContent = { Text(stringResource(R.string.voice_action_screen_share)) },
                         leadingContent = {
                             Icon(
                                 painter = painterResource(R.drawable.ic_mobile_share_24px),
@@ -470,16 +486,13 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                         }
                                 }
                             }
-                    )
+                    ) { Text(stringResource(Res.string.voice_action_screen_share)) }
                     if (audioHandler != null) {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             ListItem(
                                 colors = ListItemDefaults.colors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                                 ),
-                                headlineContent = {
-                                    Text(stringResource(R.string.voice_audio_output))
-                                },
                                 supportingContent = {
                                     selectedAudioDevice?.let { Text(audioDeviceLabel(it)) }
                                 },
@@ -492,7 +505,9 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                                 modifier = Modifier
                                     .clip(MaterialTheme.shapes.extraSmall)
                                     .clickable { outputMenuOpen = true }
-                            )
+                            ) {
+                                Text(stringResource(Res.string.voice_audio_output))
+                            }
                             DropdownMenu(
                                 expanded = outputMenuOpen,
                                 onDismissRequest = { outputMenuOpen = false }
@@ -555,7 +570,7 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                             R.drawable.ic_mic_off_24dp
                         ),
                         contentDescription = stringResource(
-                            if (isMicOn) R.string.voice_action_mute else R.string.voice_action_unmute
+                            if (isMicOn) Res.string.voice_action_mute else Res.string.voice_action_unmute
                         )
                     )
                 }
@@ -576,7 +591,7 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                             R.drawable.ic_headset_24dp
                         ),
                         contentDescription = stringResource(
-                            if (isDeafened) R.string.voice_action_undeafen else R.string.voice_action_deafen
+                            if (isDeafened) Res.string.voice_action_undeafen else Res.string.voice_action_deafen
                         )
                     )
                 }
@@ -612,7 +627,7 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_call_end_24dp__fill),
-                        contentDescription = stringResource(R.string.voice_action_disconnect)
+                        contentDescription = stringResource(Res.string.voice_action_disconnect)
                     )
                 }
             }
@@ -623,7 +638,7 @@ fun VoiceSheet(onDisconnect: () -> Unit) {
 @Composable
 private fun audioDeviceLabel(device: AudioDevice): String = when (device) {
     is AudioDevice.BluetoothHeadset -> device.name
-    is AudioDevice.WiredHeadset -> stringResource(R.string.voice_audio_output_wired_headset)
-    is AudioDevice.Earpiece -> stringResource(R.string.voice_audio_output_earpiece)
-    is AudioDevice.Speakerphone -> stringResource(R.string.voice_audio_output_speaker)
+    is AudioDevice.WiredHeadset -> stringResource(Res.string.voice_audio_output_wired_headset)
+    is AudioDevice.Earpiece -> stringResource(Res.string.voice_audio_output_earpiece)
+    is AudioDevice.Speakerphone -> stringResource(Res.string.voice_audio_output_speaker)
 }

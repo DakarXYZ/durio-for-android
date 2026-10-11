@@ -17,8 +17,9 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,11 +31,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.internals.PermissionBit
 import chat.stoat.api.internals.Roles
@@ -52,8 +51,15 @@ import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.AutumnResource
 import chat.stoat.core.model.schemas.Member
 import chat.stoat.core.model.schemas.User
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.channel_info_sheet_options_members
+import chat.stoat.shared.resources.status_offline
+import chat.stoat.shared.resources.status_online
+import chat.stoat.shared.resources.unknown
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 
 val DO_NOT_FETCH_OFFLINE_MEMBERS_SERVERS = listOf(
@@ -85,8 +91,8 @@ class MemberListSheetViewModel(
 
             val categories = mutableMapOf<String, List<Member>>()
 
-            val offlineCategoryName = context.getString(R.string.status_offline)
-            val defaultCategoryName = context.getString(R.string.status_online)
+            val offlineCategoryName = getString(Res.string.status_offline)
+            val defaultCategoryName = getString(Res.string.status_online)
 
             memberList.forEach { member ->
                 val user = StoatAPI.userCache[member.id!!.user] ?: run {
@@ -107,7 +113,7 @@ class MemberListSheetViewModel(
                     Roles.resolveHighestRole(serverId, member.id!!.user, hoisted = true)
 
                 val category = if (highestHoistedRole != null) {
-                    highestHoistedRole.name ?: context.getString(R.string.unknown)
+                    highestHoistedRole.name ?: getString(Res.string.unknown)
                 } else {
                     defaultCategoryName
                 }
@@ -188,7 +194,7 @@ class MemberListSheetViewModel(
             if (userList.count(onlinePredicate) > 0) {
                 fullItemList.add(
                     MemberListSheetItem.CategoryItem(
-                        context.getString(R.string.status_online),
+                        getString(Res.string.status_online),
                         userList.count(onlinePredicate)
                     )
                 )
@@ -201,7 +207,7 @@ class MemberListSheetViewModel(
             if (userList.count(offlinePredicate) > 0) {
                 fullItemList.add(
                     MemberListSheetItem.CategoryItem(
-                        context.getString(R.string.status_offline),
+                        getString(Res.string.status_offline),
                         userList.count(offlinePredicate)
                     )
                 )
@@ -241,7 +247,7 @@ fun MemberListSheet(
     }
 
     if (showUserInfoSheet) {
-        val userContextSheetState = rememberModalBottomSheetState()
+        val userContextSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = userContextSheetState,
@@ -270,7 +276,7 @@ fun MemberListSheet(
     }
 
     if (showMemberContextSheet) {
-        val memberContextSheetState = rememberModalBottomSheetState()
+        val memberContextSheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
         ModalBottomSheet(
             sheetState = memberContextSheetState,
@@ -323,7 +329,7 @@ fun MemberListSheet(
 
         SheetHeaderPadding {
             Text(
-                text = stringResource(R.string.channel_info_sheet_options_members),
+                text = stringResource(Res.string.channel_info_sheet_options_members),
                 style = MaterialTheme.typography.headlineSmall
             )
         }

@@ -30,6 +30,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -43,10 +44,11 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,8 +64,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
@@ -97,7 +97,51 @@ import chat.stoat.internals.server.toServerCategories
 import chat.stoat.screens.settings.SettingsIcon
 import chat.stoat.screens.settings.SettingsListItem
 import chat.stoat.settings.dsl.SettingsPage
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.cancel
+import chat.stoat.shared.resources.retry
+import chat.stoat.shared.resources.server_settings_channels
+import chat.stoat.shared.resources.server_settings_channels_add_title
+import chat.stoat.shared.resources.server_settings_channels_category
+import chat.stoat.shared.resources.server_settings_channels_category_actions
+import chat.stoat.shared.resources.server_settings_channels_category_count
+import chat.stoat.shared.resources.server_settings_channels_category_name
+import chat.stoat.shared.resources.server_settings_channels_channel_name
+import chat.stoat.shared.resources.server_settings_channels_count
+import chat.stoat.shared.resources.server_settings_channels_create
+import chat.stoat.shared.resources.server_settings_channels_create_category
+import chat.stoat.shared.resources.server_settings_channels_create_category_description
+import chat.stoat.shared.resources.server_settings_channels_create_channel
+import chat.stoat.shared.resources.server_settings_channels_create_error
+import chat.stoat.shared.resources.server_settings_channels_delete
+import chat.stoat.shared.resources.server_settings_channels_delete_category
+import chat.stoat.shared.resources.server_settings_channels_delete_category_description
+import chat.stoat.shared.resources.server_settings_channels_delete_category_title
+import chat.stoat.shared.resources.server_settings_channels_empty_description
+import chat.stoat.shared.resources.server_settings_channels_empty_title
+import chat.stoat.shared.resources.server_settings_channels_move_category_down
+import chat.stoat.shared.resources.server_settings_channels_move_category_up
+import chat.stoat.shared.resources.server_settings_channels_move_channel_down
+import chat.stoat.shared.resources.server_settings_channels_move_channel_up
+import chat.stoat.shared.resources.server_settings_channels_new_text_channel
+import chat.stoat.shared.resources.server_settings_channels_new_voice_channel
+import chat.stoat.shared.resources.server_settings_channels_rename
+import chat.stoat.shared.resources.server_settings_channels_rename_category
+import chat.stoat.shared.resources.server_settings_channels_reorder_category
+import chat.stoat.shared.resources.server_settings_channels_reorder_channel
+import chat.stoat.shared.resources.server_settings_channels_reorder_error
+import chat.stoat.shared.resources.server_settings_channels_reordered
+import chat.stoat.shared.resources.server_settings_channels_text_channel
+import chat.stoat.shared.resources.server_settings_channels_text_description
+import chat.stoat.shared.resources.server_settings_channels_uncategorised
+import chat.stoat.shared.resources.server_settings_channels_undo
+import chat.stoat.shared.resources.server_settings_channels_update_error
+import chat.stoat.shared.resources.server_settings_channels_voice_channel
+import chat.stoat.shared.resources.server_settings_channels_voice_description
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -157,7 +201,7 @@ class ServerSettingsChannelsViewModel(private val context: Application) : ViewMo
                 mutationSucceeded++
             }.onFailure {
                 error = it.message
-                    ?: context.getString(R.string.server_settings_channels_create_error)
+                    ?: getString(Res.string.server_settings_channels_create_error)
             }
             mutating = false
         }
@@ -254,7 +298,7 @@ class ServerSettingsChannelsViewModel(private val context: Application) : ViewMo
                 }
                 .onFailure {
                     layoutError = it.message
-                        ?: context.getString(R.string.server_settings_channels_reorder_error)
+                        ?: getString(Res.string.server_settings_channels_reorder_error)
                     pendingRetryRequest = request
                     layoutSaveFailed++
                 }
@@ -280,7 +324,7 @@ class ServerSettingsChannelsViewModel(private val context: Application) : ViewMo
                 .onSuccess { mutationSucceeded++ }
                 .onFailure {
                     error = it.message
-                        ?: context.getString(R.string.server_settings_channels_update_error)
+                        ?: getString(Res.string.server_settings_channels_update_error)
                 }
             mutating = false
         }
@@ -420,7 +464,10 @@ fun ServerSettingsChannels(
     }
 
     if (showAddSheet) {
-        val addSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val addSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
         val addSheetScope = rememberCoroutineScope()
 
         fun dismissAddSheet(onDismissed: () -> Unit) {
@@ -436,17 +483,17 @@ fun ServerSettingsChannels(
             onDismissRequest = { showAddSheet = false }
         ) {
             Text(
-                text = stringResource(R.string.server_settings_channels_add_title),
+                text = stringResource(Res.string.server_settings_channels_add_title),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
             )
             SettingsListItem(
                 first = true,
                 headlineContent = {
-                    Text(stringResource(R.string.server_settings_channels_text_channel))
+                    Text(stringResource(Res.string.server_settings_channels_text_channel))
                 },
                 supportingContent = {
-                    Text(stringResource(R.string.server_settings_channels_text_description))
+                    Text(stringResource(Res.string.server_settings_channels_text_description))
                 },
                 leadingContent = {
                     SettingsIcon {
@@ -465,10 +512,10 @@ fun ServerSettingsChannels(
             Spacer(Modifier.height(2.dp))
             SettingsListItem(
                 headlineContent = {
-                    Text(stringResource(R.string.server_settings_channels_voice_channel))
+                    Text(stringResource(Res.string.server_settings_channels_voice_channel))
                 },
                 supportingContent = {
-                    Text(stringResource(R.string.server_settings_channels_voice_description))
+                    Text(stringResource(Res.string.server_settings_channels_voice_description))
                 },
                 last = selectedSectionId != UncategorisedChannelSectionId,
                 leadingContent = {
@@ -494,12 +541,12 @@ fun ServerSettingsChannels(
                 SettingsListItem(
                     last = true,
                     headlineContent = {
-                        Text(stringResource(R.string.server_settings_channels_category))
+                        Text(stringResource(Res.string.server_settings_channels_category))
                     },
                     supportingContent = {
                         Text(
                             stringResource(
-                                R.string.server_settings_channels_create_category_description
+                                Res.string.server_settings_channels_create_category_description
                             )
                         )
                     },
@@ -553,8 +600,8 @@ fun ServerSettingsChannels(
 
     if (showCreateCategory) {
         CategoryNameDialog(
-            title = stringResource(R.string.server_settings_channels_create_category),
-            action = stringResource(R.string.server_settings_channels_create),
+            title = stringResource(Res.string.server_settings_channels_create_category),
+            action = stringResource(Res.string.server_settings_channels_create),
             name = categoryName,
             onNameChange = { if (it.length <= 32) categoryName = it },
             busy = viewModel.mutating,
@@ -566,8 +613,8 @@ fun ServerSettingsChannels(
 
     categoryToRename?.let { category ->
         CategoryNameDialog(
-            title = stringResource(R.string.server_settings_channels_rename_category),
-            action = stringResource(R.string.server_settings_channels_rename),
+            title = stringResource(Res.string.server_settings_channels_rename_category),
+            action = stringResource(Res.string.server_settings_channels_rename),
             name = categoryName,
             onNameChange = { if (it.length <= 32) categoryName = it },
             busy = viewModel.mutating,
@@ -583,7 +630,7 @@ fun ServerSettingsChannels(
             title = {
                 Text(
                     stringResource(
-                        R.string.server_settings_channels_delete_category_title,
+                        Res.string.server_settings_channels_delete_category_title,
                         category.title.orEmpty()
                     )
                 )
@@ -592,7 +639,7 @@ fun ServerSettingsChannels(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
                         stringResource(
-                            R.string.server_settings_channels_delete_category_description
+                            Res.string.server_settings_channels_delete_category_description
                         )
                     )
                     DialogError(viewModel.error)
@@ -602,7 +649,7 @@ fun ServerSettingsChannels(
                 TextButton(
                     enabled = !viewModel.mutating,
                     onClick = { categoryToDelete = null }
-                ) { Text(stringResource(R.string.cancel)) }
+                ) { Text(stringResource(Res.string.cancel)) }
             },
             confirmButton = {
                 Button(
@@ -622,7 +669,7 @@ fun ServerSettingsChannels(
                     if (viewModel.mutating) {
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Text(stringResource(R.string.server_settings_channels_delete))
+                        Text(stringResource(Res.string.server_settings_channels_delete))
                     }
                 }
             }
@@ -631,7 +678,7 @@ fun ServerSettingsChannels(
 
     SettingsPage(
         navController = navController,
-        title = { Text(stringResource(R.string.server_settings_channels)) },
+        title = { Text(stringResource(Res.string.server_settings_channels)) },
         scrollable = false,
         onNavigateBack = { if (!viewModel.busy) navController.popBackStack() },
         floatingActionButton = {
@@ -648,17 +695,17 @@ fun ServerSettingsChannels(
                     Icon(
                         painterResource(R.drawable.ic_add_24dp),
                         contentDescription = stringResource(
-                            R.string.server_settings_channels_add_title
+                            Res.string.server_settings_channels_add_title
                         )
                     )
                 }
             }
         }
     ) {
-        val savedMessage = stringResource(R.string.server_settings_channels_reordered)
-        val undoLabel = stringResource(R.string.server_settings_channels_undo)
-        val reorderErrorMessage = stringResource(R.string.server_settings_channels_reorder_error)
-        val retryLabel = stringResource(R.string.retry)
+        val savedMessage = stringResource(Res.string.server_settings_channels_reordered)
+        val undoLabel = stringResource(Res.string.server_settings_channels_undo)
+        val reorderErrorMessage = stringResource(Res.string.server_settings_channels_reorder_error)
+        val retryLabel = stringResource(Res.string.retry)
         LaunchedEffect(viewModel.layoutSaved) {
             if (viewModel.consumeLayoutSaved()) {
                 showSnackbar(
@@ -698,7 +745,7 @@ fun ServerSettingsChannels(
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                     Text(
                         text = pluralStringResource(
-                            R.plurals.server_settings_channels_count,
+                            Res.plurals.server_settings_channels_count,
                             server.channels.orEmpty().size,
                             server.channels.orEmpty().size
                         ),
@@ -720,8 +767,8 @@ fun ServerSettingsChannels(
                 item(key = "empty") {
                     ServerSettingsEmptyState(
                         icon = R.drawable.ic_grid_3x3_24dp,
-                        title = R.string.server_settings_channels_empty_title,
-                        description = R.string.server_settings_channels_empty_description,
+                        title = Res.string.server_settings_channels_empty_title,
+                        description = Res.string.server_settings_channels_empty_description,
                     )
                 }
             }
@@ -794,7 +841,7 @@ fun ServerSettingsChannels(
                                                 ReorderDragHandle(
                                                     enabled = !viewModel.busy,
                                                     contentDescription = stringResource(
-                                                        R.string
+                                                        Res.string
                                                             .server_settings_channels_reorder_category
                                                     ),
                                                     modifier = dragHandleModifier
@@ -848,7 +895,7 @@ fun ServerSettingsChannels(
                                                         ReorderDragHandle(
                                                             enabled = false,
                                                             contentDescription = stringResource(
-                                                                R.string
+                                                                Res.string
                                                                     .server_settings_channels_reorder_channel
                                                             )
                                                         )
@@ -892,7 +939,7 @@ fun ServerSettingsChannels(
                                     ReorderDragHandle(
                                         enabled = !viewModel.busy,
                                         contentDescription = stringResource(
-                                            R.string.server_settings_channels_reorder_channel
+                                            Res.string.server_settings_channels_reorder_channel
                                         ),
                                         modifier = dragHandleModifier
                                     )
@@ -971,9 +1018,9 @@ private fun CreateChannelDialog(
                 Text(
                     text = stringResource(
                         if (isText) {
-                            R.string.server_settings_channels_new_text_channel
+                            Res.string.server_settings_channels_new_text_channel
                         } else {
-                            R.string.server_settings_channels_new_voice_channel
+                            Res.string.server_settings_channels_new_voice_channel
                         }
                     ),
                     style = MaterialTheme.typography.headlineSmall
@@ -983,7 +1030,7 @@ private fun CreateChannelDialog(
                     value = name,
                     onValueChange = onNameChange,
                     label = {
-                        Text(stringResource(R.string.server_settings_channels_channel_name))
+                        Text(stringResource(Res.string.server_settings_channels_channel_name))
                     },
                     supportingText = { Text("${name.length}/32") },
                     singleLine = true,
@@ -1000,7 +1047,7 @@ private fun CreateChannelDialog(
                         readOnly = true,
                         enabled = !busy,
                         label = {
-                            Text(stringResource(R.string.server_settings_channels_category))
+                            Text(stringResource(Res.string.server_settings_channels_category))
                         },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(categoryMenuExpanded)
@@ -1032,7 +1079,7 @@ private fun CreateChannelDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(enabled = !busy, onClick = onDismiss) {
-                        Text(stringResource(R.string.cancel))
+                        Text(stringResource(Res.string.cancel))
                     }
                     Button(
                         enabled = !busy && name.trim().length in 1..32,
@@ -1041,7 +1088,7 @@ private fun CreateChannelDialog(
                         if (busy) {
                             LoadingIndicator(Modifier.size(22.dp))
                         } else {
-                            Text(stringResource(R.string.server_settings_channels_create))
+                            Text(stringResource(Res.string.server_settings_channels_create))
                         }
                     }
                 }
@@ -1070,7 +1117,7 @@ private fun CategoryNameDialog(
                     value = name,
                     onValueChange = onNameChange,
                     label = {
-                        Text(stringResource(R.string.server_settings_channels_category_name))
+                        Text(stringResource(Res.string.server_settings_channels_category_name))
                     },
                     supportingText = { Text("${name.length}/32") },
                     singleLine = true,
@@ -1081,7 +1128,7 @@ private fun CategoryNameDialog(
         },
         dismissButton = {
             TextButton(enabled = !busy, onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
         },
         confirmButton = {
@@ -1136,8 +1183,8 @@ private fun ChannelSectionRow(
         bottomEnd = CornerSize(bottomCornerRadius),
         bottomStart = CornerSize(bottomCornerRadius)
     )
-    val moveUpLabel = stringResource(R.string.server_settings_channels_move_category_up)
-    val moveDownLabel = stringResource(R.string.server_settings_channels_move_category_down)
+    val moveUpLabel = stringResource(Res.string.server_settings_channels_move_category_up)
+    val moveDownLabel = stringResource(Res.string.server_settings_channels_move_category_down)
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1177,18 +1224,10 @@ private fun ChannelSectionRow(
                 leadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 trailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
-            headlineContent = {
-                Text(
-                    text = sectionTitle(section),
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
             supportingContent = {
                 Text(
                     pluralStringResource(
-                        R.plurals.server_settings_channels_category_count,
+                        Res.plurals.server_settings_channels_category_count,
                         section.channelIds.size,
                         section.channelIds.size
                     )
@@ -1207,7 +1246,7 @@ private fun ChannelSectionRow(
                             Icon(
                                 painterResource(R.drawable.ic_more_vert_24dp),
                                 contentDescription = stringResource(
-                                    R.string.server_settings_channels_category_actions
+                                    Res.string.server_settings_channels_category_actions
                                 )
                             )
                         }
@@ -1219,7 +1258,7 @@ private fun ChannelSectionRow(
                                 text = {
                                     Text(
                                         stringResource(
-                                            R.string.server_settings_channels_create_channel
+                                            Res.string.server_settings_channels_create_channel
                                         )
                                     )
                                 },
@@ -1239,7 +1278,7 @@ private fun ChannelSectionRow(
                                     text = {
                                         Text(
                                             stringResource(
-                                                R.string.server_settings_channels_rename_category
+                                                Res.string.server_settings_channels_rename_category
                                             )
                                         )
                                     },
@@ -1260,7 +1299,7 @@ private fun ChannelSectionRow(
                                     text = {
                                         Text(
                                             text = stringResource(
-                                                R.string.server_settings_channels_delete_category
+                                                Res.string.server_settings_channels_delete_category
                                             ),
                                             color = MaterialTheme.colorScheme.error
                                         )
@@ -1285,7 +1324,14 @@ private fun ChannelSectionRow(
                     }
                 }
             }
-        )
+        ) {
+            Text(
+                text = sectionTitle(section),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -1315,26 +1361,19 @@ private fun ChannelSettingsRow(
         targetValue = if (isDragging) 8.dp else 0.dp,
         label = "channel drag elevation"
     )
-    val moveUpLabel = stringResource(R.string.server_settings_channels_move_channel_up)
-    val moveDownLabel = stringResource(R.string.server_settings_channels_move_channel_down)
+    val moveUpLabel = stringResource(Res.string.server_settings_channels_move_channel_up)
+    val moveDownLabel = stringResource(Res.string.server_settings_channels_move_channel_down)
     ListItem(
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        headlineContent = {
-            Text(
-                text = channel?.name ?: channelId,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
         supportingContent = {
             Text(
                 stringResource(
                     if (channel?.voice != null) {
-                        R.string.server_settings_channels_voice_channel
+                        Res.string.server_settings_channels_voice_channel
                     } else {
-                        R.string.server_settings_channels_text_channel
+                        Res.string.server_settings_channels_text_channel
                     }
                 )
             )
@@ -1373,7 +1412,13 @@ private fun ChannelSettingsRow(
                 }
             }
             .clickable(enabled = enabled, onClick = onClick)
-    )
+    ) {
+        Text(
+            text = channel?.name ?: channelId,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }
 
 @Composable
@@ -1397,7 +1442,7 @@ private fun ReorderDragHandle(
 @Composable
 private fun sectionTitle(section: ServerChannelSection): String =
     if (section.id == UncategorisedChannelSectionId) {
-        stringResource(R.string.server_settings_channels_uncategorised)
+        stringResource(Res.string.server_settings_channels_uncategorised)
     } else {
         section.title.orEmpty()
     }

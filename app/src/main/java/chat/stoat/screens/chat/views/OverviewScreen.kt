@@ -37,13 +37,15 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,9 +56,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
@@ -70,8 +70,27 @@ import chat.stoat.composables.skeletons.UserOverviewSkeleton
 import chat.stoat.core.model.schemas.User
 import chat.stoat.internals.extensions.zero
 import chat.stoat.screens.chat.LocalIsConnected
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.menu
+import chat.stoat.shared.resources.overview_screen_catch_up
+import chat.stoat.shared.resources.overview_screen_catch_up_amount_badge_loading
+import chat.stoat.shared.resources.overview_screen_catch_up_description
+import chat.stoat.shared.resources.overview_screen_catch_up_none
+import chat.stoat.shared.resources.overview_screen_catch_up_none_description
+import chat.stoat.shared.resources.overview_screen_changelog
+import chat.stoat.shared.resources.overview_screen_changelog_description
+import chat.stoat.shared.resources.overview_screen_error
+import chat.stoat.shared.resources.overview_screen_error_description
+import chat.stoat.shared.resources.overview_screen_join_lounge
+import chat.stoat.shared.resources.overview_screen_join_lounge_description
+import chat.stoat.shared.resources.overview_screen_settings
+import chat.stoat.shared.resources.overview_screen_settings_description
+import chat.stoat.shared.resources.overview_screen_share_profile
+import chat.stoat.shared.resources.overview_screen_share_profile_description
+import chat.stoat.shared.resources.overview_screen_title
 import chat.stoat.sheets.UserCardSheet
 import io.sentry.Sentry
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,10 +101,9 @@ fun OverviewScreen(
     includePadding: Boolean = true
 ) {
     val context = LocalContext.current
-    val resources = LocalResources.current
 
-    var isLoading by rememberSaveable { mutableStateOf(true) }
-    var user by rememberSaveable { mutableStateOf<User?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var user by remember { mutableStateOf<User?>(null) }
     LaunchedEffect(Unit) {
         val inCache = StoatAPI.userCache[StoatAPI.selfId]
         if (inCache != null) {
@@ -108,7 +126,10 @@ fun OverviewScreen(
     var showUserCardSheet by rememberSaveable { mutableStateOf(false) }
 
     if (showUserCardSheet) {
-        val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val state = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
         ModalBottomSheet(
             sheetState = state,
             onDismissRequest = { showUserCardSheet = false },
@@ -150,7 +171,7 @@ fun OverviewScreen(
                     )
                 }
                 CenterAlignedTopAppBar(
-                    title = { Text(stringResource(R.string.overview_screen_title)) },
+                    title = { Text(stringResource(Res.string.overview_screen_title)) },
                     navigationIcon = {
                         if (useDrawer) {
                             IconButton(onClick = {
@@ -158,7 +179,7 @@ fun OverviewScreen(
                             }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_menu_24dp),
-                                    contentDescription = stringResource(id = R.string.menu)
+                                    contentDescription = stringResource(Res.string.menu)
                                 )
                             }
                         }
@@ -180,8 +201,8 @@ fun OverviewScreen(
                         modifier = Modifier.size(size)
                     )
                 },
-                title = { Text(stringResource(R.string.overview_screen_error)) },
-                description = { Text(stringResource(R.string.overview_screen_error_description)) }
+                title = { Text(stringResource(Res.string.overview_screen_error)) },
+                description = { Text(stringResource(Res.string.overview_screen_error_description)) }
             )
             return@Scaffold
         }
@@ -256,8 +277,8 @@ fun OverviewScreen(
                                                 modifier = Modifier.size(22.dp)
                                             )
                                             Text(
-                                                if (hasUnreads) stringResource(R.string.overview_screen_catch_up) else stringResource(
-                                                    R.string.overview_screen_catch_up_none
+                                                if (hasUnreads) stringResource(Res.string.overview_screen_catch_up) else stringResource(
+                                                    Res.string.overview_screen_catch_up_none
                                                 )
                                             )
 
@@ -266,7 +287,7 @@ fun OverviewScreen(
                                                 Badge {
                                                     Text(
                                                         countUnreads?.toString()
-                                                            ?: stringResource(R.string.overview_screen_catch_up_amount_badge_loading)
+                                                            ?: stringResource(Res.string.overview_screen_catch_up_amount_badge_loading)
                                                     )
                                                 }
                                             }
@@ -274,8 +295,8 @@ fun OverviewScreen(
                                     },
                                     body = {
                                         Text(
-                                            if (hasUnreads) stringResource(R.string.overview_screen_catch_up_description) else stringResource(
-                                                R.string.overview_screen_catch_up_none_description
+                                            if (hasUnreads) stringResource(Res.string.overview_screen_catch_up_description) else stringResource(
+                                                Res.string.overview_screen_catch_up_none_description
                                             )
                                         )
                                     }
@@ -300,10 +321,10 @@ fun OverviewScreen(
                                             contentDescription = null,
                                             modifier = Modifier.size(22.dp)
                                         )
-                                        Text(stringResource(R.string.overview_screen_settings))
+                                        Text(stringResource(Res.string.overview_screen_settings))
                                     }
                                 },
-                                body = { Text(stringResource(R.string.overview_screen_settings_description)) }
+                                body = { Text(stringResource(Res.string.overview_screen_settings_description)) }
                             )
                         }
                         item(key = "shareProfile") {
@@ -323,10 +344,10 @@ fun OverviewScreen(
                                             contentDescription = null,
                                             modifier = Modifier.size(22.dp)
                                         )
-                                        Text(stringResource(R.string.overview_screen_share_profile))
+                                        Text(stringResource(Res.string.overview_screen_share_profile))
                                     }
                                 },
-                                body = { Text(stringResource(R.string.overview_screen_share_profile_description)) }
+                                body = { Text(stringResource(Res.string.overview_screen_share_profile_description)) }
                             )
                         }
 
@@ -347,10 +368,10 @@ fun OverviewScreen(
                                             contentDescription = null,
                                             modifier = Modifier.size(22.dp)
                                         )
-                                        Text(stringResource(R.string.overview_screen_changelog))
+                                        Text(stringResource(Res.string.overview_screen_changelog))
                                     }
                                 },
-                                body = { Text(stringResource(R.string.overview_screen_changelog_description)) }
+                                body = { Text(stringResource(Res.string.overview_screen_changelog_description)) }
                             )
                         }
 
@@ -377,10 +398,10 @@ fun OverviewScreen(
                                             contentDescription = null,
                                             modifier = Modifier.size(22.dp)
                                         )
-                                        Text(stringResource(R.string.overview_screen_join_lounge))
+                                        Text(stringResource(Res.string.overview_screen_join_lounge))
                                     }
                                 },
-                                body = { Text(stringResource(R.string.overview_screen_join_lounge_description)) }
+                                body = { Text(stringResource(Res.string.overview_screen_join_lounge_description)) }
                             )
                         }
                     }

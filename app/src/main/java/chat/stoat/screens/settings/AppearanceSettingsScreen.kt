@@ -33,13 +33,14 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,10 +53,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -75,10 +74,33 @@ import chat.stoat.composables.generic.ListHeader
 import chat.stoat.composables.screens.settings.appearance.ColourChip
 import chat.stoat.composables.screens.settings.appearance.CornerRadiusPicker
 import chat.stoat.core.model.data.OverridableColourScheme
+import chat.stoat.internals.extensions.getStringBlocking
+import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.back
+import chat.stoat.shared.resources.settings_appearance
+import chat.stoat.shared.resources.settings_appearance_avatar_shape
+import chat.stoat.shared.resources.settings_appearance_avatar_shape_description
+import chat.stoat.shared.resources.settings_appearance_colour_overrides
+import chat.stoat.shared.resources.settings_appearance_colour_overrides_export
+import chat.stoat.shared.resources.settings_appearance_colour_overrides_import
+import chat.stoat.shared.resources.settings_appearance_colour_overrides_import_error
+import chat.stoat.shared.resources.settings_appearance_message_composer_blur
+import chat.stoat.shared.resources.settings_appearance_theme
+import chat.stoat.shared.resources.settings_appearance_theme_amoled
+import chat.stoat.shared.resources.settings_appearance_theme_default
+import chat.stoat.shared.resources.settings_appearance_theme_light
+import chat.stoat.shared.resources.settings_appearance_theme_m3dynamic
+import chat.stoat.shared.resources.settings_appearance_theme_m3dynamic_unsupported
+import chat.stoat.shared.resources.settings_appearance_theme_m3dynamic_unsupported_toast
+import chat.stoat.shared.resources.settings_appearance_theme_none
+import chat.stoat.shared.resources.settings_appearance_typeface
+import chat.stoat.shared.resources.settings_appearance_typeface_default
+import chat.stoat.shared.resources.settings_appearance_typeface_google_sans_flex
+import chat.stoat.shared.resources.settings_appearance_visual_effects
 import chat.stoat.sheets.ColourPickerSheet
 import chat.stoat.ui.theme.GoogleSansFlex
 import chat.stoat.ui.theme.Inter
-import chat.stoat.ui.theme.Theme
+import chat.stoat.api.settings.Theme
 import chat.stoat.ui.theme.applyFromKeyValueMap
 import chat.stoat.ui.theme.getFieldByName
 import chat.stoat.ui.theme.overridableColourSchemeFieldNameToResource
@@ -88,6 +110,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
+import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 import java.io.File
 
@@ -201,7 +224,7 @@ class AppearanceSettingsScreenViewModel(val context: Application) : ViewModel() 
         } catch (e: Exception) {
             Toast.makeText(
                 context,
-                context.getString(R.string.settings_appearance_colour_overrides_import_error),
+                getStringBlocking(Res.string.settings_appearance_colour_overrides_import_error),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -231,6 +254,7 @@ fun AppearanceSettingsScreen(
     navController: NavController,
     viewModel: AppearanceSettingsScreenViewModel = koinViewModel()
 ) {
+    val settingsAppearanceThemeM3dynamicUnsupportedToastText = stringResource(Res.string.settings_appearance_theme_m3dynamic_unsupported_toast)
     val colourOverridesOpenerArrowRotation by animateFloatAsState(
         if (viewModel.showColourOverrides) {
             if (LocalLayoutDirection.current == LayoutDirection.Ltr) 90f else -90f
@@ -254,11 +278,13 @@ fun AppearanceSettingsScreen(
     }
 
     val context = LocalContext.current
-    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
 
     if (viewModel.overridePickerSheetVisible) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
 
         ModalBottomSheet(
             sheetState = sheetState,
@@ -307,7 +333,7 @@ fun AppearanceSettingsScreen(
                 scrollBehavior = scrollBehavior,
                 title = {
                     Text(
-                        text = stringResource(R.string.settings_appearance),
+                        text = stringResource(Res.string.settings_appearance),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -318,7 +344,7 @@ fun AppearanceSettingsScreen(
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back_24dp),
-                            contentDescription = stringResource(id = R.string.back)
+                            contentDescription = stringResource(Res.string.back)
                         )
                     }
                 },
@@ -332,7 +358,7 @@ fun AppearanceSettingsScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 ListHeader {
-                    Text(stringResource(R.string.settings_appearance_theme))
+                    Text(stringResource(Res.string.settings_appearance_theme))
                 }
 
                 FlowRow(
@@ -344,7 +370,7 @@ fun AppearanceSettingsScreen(
                 ) {
                     ColourChip(
                         color = Color(0xff333642),
-                        text = stringResource(id = R.string.settings_appearance_theme_default),
+                        text = stringResource(Res.string.settings_appearance_theme_default),
                         selected = LoadedSettings.theme == Theme.Default,
                         modifier = Modifier
                             .weight(1f)
@@ -355,7 +381,7 @@ fun AppearanceSettingsScreen(
 
                     ColourChip(
                         color = Color(0xfff7f7f7),
-                        text = stringResource(id = R.string.settings_appearance_theme_light),
+                        text = stringResource(Res.string.settings_appearance_theme_light),
                         selected = LoadedSettings.theme == Theme.Light,
                         modifier = Modifier
                             .weight(1f)
@@ -366,7 +392,7 @@ fun AppearanceSettingsScreen(
 
                     ColourChip(
                         color = Color(0xff000000),
-                        text = stringResource(id = R.string.settings_appearance_theme_amoled),
+                        text = stringResource(Res.string.settings_appearance_theme_amoled),
                         selected = LoadedSettings.theme == Theme.Amoled,
                         modifier = Modifier
                             .weight(1f)
@@ -377,7 +403,7 @@ fun AppearanceSettingsScreen(
 
                     ColourChip(
                         color = if (isSystemInDarkTheme()) Color(0xff333642) else Color(0xfff7f7f7),
-                        text = stringResource(id = R.string.settings_appearance_theme_none),
+                        text = stringResource(Res.string.settings_appearance_theme_none),
                         selected = LoadedSettings.theme == Theme.None,
                         modifier = Modifier
                             .weight(1f)
@@ -389,7 +415,7 @@ fun AppearanceSettingsScreen(
                     if (systemSupportsDynamicColors()) {
                         ColourChip(
                             color = dynamicDarkColorScheme(LocalContext.current).primary,
-                            text = stringResource(id = R.string.settings_appearance_theme_m3dynamic),
+                            text = stringResource(Res.string.settings_appearance_theme_m3dynamic),
                             selected = LoadedSettings.theme == Theme.M3Dynamic,
                             modifier = Modifier
                                 .weight(1f)
@@ -401,7 +427,7 @@ fun AppearanceSettingsScreen(
                         ColourChip(
                             color = Color(0xffa0a0a0),
                             text = stringResource(
-                                id = R.string.settings_appearance_theme_m3dynamic_unsupported
+                                Res.string.settings_appearance_theme_m3dynamic_unsupported
                             ),
                             selected = false,
                             modifier = Modifier
@@ -410,7 +436,7 @@ fun AppearanceSettingsScreen(
                         ) {
                             Toast.makeText(
                                 context,
-                                resources.getString(R.string.settings_appearance_theme_m3dynamic_unsupported_toast),
+                                settingsAppearanceThemeM3dynamicUnsupportedToastText,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -418,13 +444,10 @@ fun AppearanceSettingsScreen(
                 }
 
                 ListHeader {
-                    Text(stringResource(R.string.settings_appearance_visual_effects))
+                    Text(stringResource(Res.string.settings_appearance_visual_effects))
                 }
 
                 ListItem(
-                    headlineContent = {
-                        Text(stringResource(R.string.settings_appearance_message_composer_blur))
-                    },
                     trailingContent = {
                         Switch(
                             checked = LoadedSettings.messageComposerBlurEnabled,
@@ -436,10 +459,12 @@ fun AppearanceSettingsScreen(
                             !LoadedSettings.messageComposerBlurEnabled
                         )
                     }
-                )
+                ) {
+                    Text(stringResource(Res.string.settings_appearance_message_composer_blur))
+                }
 
                 ListHeader {
-                    Text(stringResource(R.string.settings_appearance_typeface))
+                    Text(stringResource(Res.string.settings_appearance_typeface))
                 }
 
                 FlowRow(
@@ -458,7 +483,7 @@ fun AppearanceSettingsScreen(
                             .weight(1f),
                     ) {
                         Text(
-                            stringResource(R.string.settings_appearance_typeface_default),
+                            stringResource(Res.string.settings_appearance_typeface_default),
                             fontFamily = Inter
                         )
                     }
@@ -471,18 +496,18 @@ fun AppearanceSettingsScreen(
                             .weight(1f),
                     ) {
                         Text(
-                            stringResource(R.string.settings_appearance_typeface_google_sans_flex),
+                            stringResource(Res.string.settings_appearance_typeface_google_sans_flex),
                             fontFamily = GoogleSansFlex
                         )
                     }
                 }
 
                 ListHeader {
-                    Text(stringResource(R.string.settings_appearance_avatar_shape))
+                    Text(stringResource(Res.string.settings_appearance_avatar_shape))
                 }
 
                 Text(
-                    stringResource(R.string.settings_appearance_avatar_shape_description),
+                    stringResource(Res.string.settings_appearance_avatar_shape_description),
                     modifier = Modifier
                         .padding(vertical = 8.dp, horizontal = 16.dp),
                 )
@@ -516,7 +541,7 @@ fun AppearanceSettingsScreen(
                     )
 
                     Text(
-                        text = stringResource(id = R.string.settings_appearance_colour_overrides),
+                        text = stringResource(Res.string.settings_appearance_colour_overrides),
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier
                             .weight(1f)
@@ -547,7 +572,7 @@ fun AppearanceSettingsScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
-                                    text = stringResource(id = R.string.settings_appearance_colour_overrides_import)
+                                    text = stringResource(Res.string.settings_appearance_colour_overrides_import)
                                 )
                             }
 
@@ -565,7 +590,7 @@ fun AppearanceSettingsScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
 
                                 Text(
-                                    text = stringResource(id = R.string.settings_appearance_colour_overrides_export)
+                                    text = stringResource(Res.string.settings_appearance_colour_overrides_export)
                                 )
                             }
                         }

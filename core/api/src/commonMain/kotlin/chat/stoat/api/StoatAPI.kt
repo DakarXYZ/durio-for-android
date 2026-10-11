@@ -1,0 +1,454 @@
+package chat.stoat.api
+
+import androidx.compose.runtime.mutableStateMapOf
+import chat.stoat.api.StoatAPI.initialize
+import chat.stoat.api.internals.ActiveSlowmode
+import chat.stoat.api.internals.Members
+import chat.stoat.api.internals.platformUserAgent
+import chat.stoat.api.realtime.DisconnectionState
+import chat.stoat.api.realtime.RealtimeSocket
+import chat.stoat.api.realtime.shouldReconnectOnForeground
+import chat.stoat.api.routes.user.fetchSelf
+import chat.stoat.api.unreads.Unreads
+import chat.stoat.core.model.data.STOAT_BASE
+import chat.stoat.core.model.schemas.AutumnResource
+import chat.stoat.core.model.schemas.ChannelType
+import chat.stoat.core.model.schemas.Emoji
+import chat.stoat.core.model.schemas.Message
+import chat.stoat.core.model.schemas.Server
+import chat.stoat.core.model.schemas.User
+import chat.stoat.core.model.util.ChannelVoiceState
+import chat.stoat.persistence.Database
+import co.touchlab.kermit.Logger
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.request.header
+import io.ktor.serialization.kotlinx.json.json
+import io.sentry.kotlin.multiplatform.Sentry
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
+import kotlinx.io.IOException
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.json.Json
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import chat.stoat.core.model.schemas.Channel as ChannelSchema
+
+fun String.api(): String {
+    return "$STOAT_BASE$this"
+}
+
+fun buildUserAgent(accessMethod: String = "Ktor"): String {
+    return "$accessMethod ${platformUserAgent()} Kotlin/${KotlinVersion.CURRENT}"
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+val StoatJson = Json {
+    ignoreUnknownKeys = true
+    explicitNulls = false
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+val StoatCbor = Cbor {
+    ignoreUnknownKeys = true
+}
+
+private val SessionTokenHeader = createClientPlugin("SessionTokenHeader") {
+    onRequest { request, _ ->
+        if (!request.headers.contains(StoatAPI.TOKEN_HEADER_NAME)) {
+            request.header(StoatAPI.TOKEN_HEADER_NAME, StoatAPI.sessionToken)
+        }
+    }
+}
+
+val StoatHttp = HttpClient(StoatAPIHost.platform.createHttpEngine()) {
+    install(SessionTokenHeader)
+    install(DefaultRequest)
+    install(ContentNegotiation) {
+        json(StoatJson)
+    }
+
+    install(WebSockets)
+
+    install(HttpRequestRetry) {
+        retryOnServerErrors(maxRetries = 5)
+        retryOnException(maxRetries = 5)
+
+        modifyRequest { request ->
+            request.headers.append("x-retry-count", retryCount.toString())
+        }
+
+        exponentialDelay()
+    }
+
+    install(Logging) { level = LogLevel.INFO }
+
+    defaultRequest {
+        url(STOAT_BASE)
+        header("User-Agent", buildUserAgent())
+    }
+}
+
+@OptIn(ExperimentalAtomicApi::class)
+object StoatAPI {
+    const val TOKEN_HEADER_NAME = "x-session-token"
+    private const val WS_EVENT_BUFFER_CAPACITY =
+        128 // arbitrary -- should be adjusted if too much gets dropped...
+    private val INITIAL_RECONNECT_DELAY = 1.seconds
+    private val MAX_RECONNECT_DELAY = 30.seconds
+    private val PING_INTERVAL = 30.seconds // Same interval as the web clients (/revolt.js)
+    private val CONNECTION_READY_TIMEOUT = 20.seconds
+
+    val userCache = mutableStateMapOf<String, User>()
+    val serverCache = mutableStateMapOf<String, Server>()
+    val channelCache = mutableStateMapOf<String, ChannelSchema>()
+    val emojiCache = mutableStateMapOf<String, Emoji>()
+    val messageCache = mutableStateMapOf<String, Message>()
+    val voiceStateCache = mutableStateMapOf<String, ChannelVoiceState>()
+    val userSlowmodeCache = mutableStateMapOf<String, ActiveSlowmode>()
+
+    val members = Members()
+
+    val unreads = Unreads()
+
+    var selfId: String? = null
+
+    var sessionToken: String = ""
+        private set
+    var sessionId: String = ""
+        private set
+
+    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+    val realtimeContext = newSingleThreadContext("RealtimeContext")
+    val wsFrameChannel = MutableSharedFlow<Any>(
+        replay = 0,
+        extraBufferCapacity = WS_EVENT_BUFFER_CAPACITY,
+    )
+
+    private var socketCoroutine: Job? = null
+    private var pingCoroutine: Job? = null
+    private val reconnectRequestJob = AtomicReference<Job?>(null)
+    private val socketRestartMutex = Mutex()
+    private val socketScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private var openForLocalHydration = true
+
+    fun setSessionHeader(token: String) {
+        sessionToken = token
+    }
+
+    fun setSessionId(id: String) {
+        sessionId = id
+    }
+
+    suspend fun loginAs(token: String) {
+        setSessionHeader(token)
+        fetchSelf()
+        startSocketOps()
+        unreads.sync()
+    }
+
+    suspend fun connectWS() {
+        socketRestartMutex.withLock {
+            socketCoroutine?.cancelAndJoin()
+            val token = sessionToken
+            if (token.isEmpty()) {
+                RealtimeSocket.updateDisconnectionState(DisconnectionState.Disconnected)
+                return@withLock
+            }
+
+            RealtimeSocket.updateDisconnectionState(DisconnectionState.Reconnecting)
+            socketCoroutine = socketScope.launch {
+                var reconnectDelay = INITIAL_RECONNECT_DELAY
+                while (isActive && sessionToken == token) {
+                    try {
+                        connectOnce(token)
+                        reconnectDelay = INITIAL_RECONNECT_DELAY
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: IOException) {
+                        Logger.d { "WebSocket closed: ${e.message}" }
+                    } catch (e: Exception) {
+                        Logger.e(e) { "WebSocket error" }
+                    }
+
+                    if (!isActive || sessionToken != token) break
+
+                    try {
+                        RealtimeSocket.updateDisconnectionState(DisconnectionState.Reconnecting)
+                        delay(reconnectDelay)
+                        reconnectDelay =
+                            (reconnectDelay * 2).coerceAtMost(MAX_RECONNECT_DELAY)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        RealtimeSocket.updateDisconnectionState(DisconnectionState.Disconnected)
+                        Sentry.captureMessage("Error in socket error handling: $e")
+                    }
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun connectOnce(token: String) = coroutineScope {
+        val connectionReady = CompletableDeferred<Unit>()
+        val connection = async(realtimeContext) {
+            RealtimeSocket.connect(token) {
+                connectionReady.complete(Unit)
+            }
+        }
+
+        try {
+            try {
+                withTimeout(CONNECTION_READY_TIMEOUT) {
+                    connectionReady.await()
+                }
+            } catch (_: TimeoutCancellationException) {
+                throw RealtimeReadyTimeoutException(
+                    "WebSocket did not authenticate within $CONNECTION_READY_TIMEOUT."
+                )
+            }
+            connection.await()
+        } finally {
+            connection.cancelAndJoin()
+        }
+    }
+
+    fun requestReconnect(reason: String) {
+        if (sessionToken.isEmpty()) return
+
+        // Started lazily so a request that loses the race to claim the slot never runs.
+        val job = socketScope.launch(start = CoroutineStart.LAZY) {
+            Logger.d { "Restarting realtime connection: $reason" }
+            connectWS()
+        }
+        while (true) {
+            val current = reconnectRequestJob.load()
+            if (current?.isActive == true) {
+                job.cancel()
+                return
+            }
+            if (reconnectRequestJob.compareAndSet(current, job)) {
+                job.start()
+                return
+            }
+        }
+    }
+
+    fun onAppForegrounded(backgroundDuration: Duration) {
+        if (
+            shouldReconnectOnForeground(
+                state = RealtimeSocket.disconnectionState,
+                backgroundDuration = backgroundDuration,
+                connectionIsStale = RealtimeSocket.isConnectionStale(),
+            )
+        ) {
+            requestReconnect("app foregrounded after $backgroundDuration")
+        }
+    }
+
+    private suspend fun startSocketOps() {
+        connectWS()
+
+        // Send a ping every roughly PING_INTERVAL else the socket dies
+        pingCoroutine?.cancel()
+        pingCoroutine = socketScope.launch {
+            while (isActive) {
+                delay(PING_INTERVAL)
+                try {
+                    if (RealtimeSocket.isConnectionStale()) {
+                        requestReconnect("no server frames received recently")
+                        continue
+                    }
+                    RealtimeSocket.sendPing()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Logger.e(e) { "Failed to ping WebSocket" }
+                }
+            }
+        }
+    }
+
+    suspend fun initialize() {
+        if (sessionToken != "") {
+            fetchSelf()
+        }
+    }
+
+    /**
+     * Returns true if the user is logged in and the current user has been fetched at least once.
+     * Call [initialize] to fetch the current user first, else this will return false.
+     */
+    fun isLoggedIn(): Boolean {
+        return selfId != null
+    }
+
+    /**
+     * Clears the API client's state completely.
+     */
+    fun logout() {
+        selfId = null
+        sessionToken = ""
+        sessionId = ""
+
+        userCache.clear()
+        serverCache.clear()
+        channelCache.clear()
+        emojiCache.clear()
+        messageCache.clear()
+        userSlowmodeCache.clear()
+
+        members.clear()
+        unreads.clear()
+
+        socketCoroutine?.cancel()
+        pingCoroutine?.cancel()
+        reconnectRequestJob.load()?.cancel()
+
+        clearPersistentCache()
+    }
+
+    /**
+     * Checks if a session token is valid.
+     */
+    suspend fun checkSessionToken(token: String): Boolean {
+        return try {
+            setSessionHeader(token)
+            fetchSelf()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Hydrate caches from a local database.
+     */
+    fun hydrateFromPersistentCache() {
+        if (!openForLocalHydration) {
+            Logger.w { "Hydration is closed, but was called" }
+            // Stale data is worst case, let's track it even in prod
+            Sentry.captureMessage("Local hydration called twice or after real data was fetched")
+            return
+        }
+
+        val db = Database(StoatAPIHost.storage.sqlDriver)
+
+        val channels = db.channelQueries.selectAll().executeAsList().map {
+            ChannelSchema(
+                id = it.id,
+                channelType = try {
+                    ChannelType.valueOf(it.channelType)
+                } catch (e: Exception) {
+                    null
+                },
+                user = it.userId,
+                name = it.name,
+                owner = it.owner,
+                description = it.description,
+                recipients = selfId?.let { selfId ->
+                    it.userId?.let { u -> listOf(u, selfId) }
+                } ?: it.userId?.let { u -> listOf(u) },
+                icon = AutumnResource(
+                    id = it.iconId,
+                ),
+                server = it.server,
+                lastMessageID = it.lastMessageId,
+                active = it.active == 1L,
+                nsfw = it.nsfw == 1L
+            )
+        }
+        channelCache.clear()
+        channelCache.putAll(channels.associateBy { it.id!! })
+
+        val servers = db.serverQueries.selectAll().executeAsList().map {
+            Server(
+                id = it.id,
+                owner = it.owner,
+                name = it.name,
+                description = it.description,
+                icon = AutumnResource(
+                    id = it.iconId,
+                ),
+                banner = AutumnResource(
+                    id = it.bannerId,
+                ),
+                flags = it.flags,
+                channels = channels
+                    .filter { c -> c.server == it.id }
+                    .filterNot { c -> c.id == null }
+                    .map { c -> c.id!! },
+            )
+        }
+        serverCache.clear()
+        serverCache.putAll(servers.associateBy { it.id!! })
+
+        openForLocalHydration = false
+    }
+
+    /**
+     * Clear the local caching database.
+     */
+    private fun clearPersistentCache() {
+        val db = Database(StoatAPIHost.storage.sqlDriver)
+        db.serverQueries.clear()
+        db.channelQueries.clear()
+    }
+
+    /**
+     * Marks database as hydrated (after real data was fetched, for example).
+     */
+    fun closeHydration() {
+        openForLocalHydration = false
+    }
+}
+
+@Serializable
+data class RateLimitResponse(@SerialName("retry_after") val retryAfter: Int) {
+    fun toException(): HitRateLimitException {
+        return HitRateLimitException(retryAfter)
+    }
+}
+
+internal const val NO_RETRY_AFTER = Int.MIN_VALUE
+
+class HitRateLimitException(retryAfter: Int = NO_RETRY_AFTER) :
+    Exception(if (retryAfter == NO_RETRY_AFTER) "Hit rate limit" else "Hit rate limit, retry after ${retryAfter}ms") {
+    val retryAfterMilliseconds = retryAfter.takeUnless { it == NO_RETRY_AFTER }
+}
+
+class RealtimeReadyTimeoutException(message: String) : Exception(message)
