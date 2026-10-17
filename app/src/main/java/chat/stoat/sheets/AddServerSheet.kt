@@ -60,7 +60,8 @@ import chat.stoat.composables.sheets.SheetSelection
 import chat.stoat.composables.vectorassets.CreateServer
 import chat.stoat.composables.vectorassets.JoinServer
 import chat.stoat.composables.vectorassets.NewServer
-import chat.stoat.core.model.data.STOAT_WEB_APP
+import chat.stoat.core.model.data.STOAT_INVITES
+import chat.stoat.fork.links.inviteUrlFromInput
 import chat.stoat.material.EasingTokens
 import chat.stoat.screens.chat.ChatRouterDestination
 import chat.stoat.shared.resources.Res
@@ -331,19 +332,19 @@ fun AddServerSheet(onDismiss: () -> Unit) {
                         Button(
                             onClick = {
                                 val intent = Intent(context, InviteActivity::class.java)
-                                intent.data = if (inviteState.text.startsWith("https://")) {
-                                    try {
-                                        inviteState.text.toString().toUri()
-                                    } catch (e: Exception) {
-                                        Log.e(
-                                            "AddServerSheet",
-                                            "Invalid URL: ${inviteState.text}",
-                                            e
-                                        )
-                                        return@Button
-                                    }
-                                } else {
-                                    "https://$STOAT_WEB_APP/invite/${inviteState.text}".toUri()
+                                // durio: STOAT_INVITES already has its scheme; upstream added a
+                                // second "https://" to bare codes (plan AN-13)
+                                val inviteUrl = inviteUrlFromInput(inviteState.text.toString(), STOAT_INVITES)
+                                    ?: return@Button
+                                intent.data = try {
+                                    inviteUrl.toUri()
+                                } catch (e: Exception) {
+                                    Log.e(
+                                        "AddServerSheet",
+                                        "Invalid URL: ${inviteState.text}",
+                                        e
+                                    )
+                                    return@Button
                                 }
                                 context.startActivity(intent)
 

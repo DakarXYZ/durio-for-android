@@ -59,6 +59,7 @@ import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.Invite
 import chat.stoat.core.model.schemas.InviteJoined
 import chat.stoat.core.model.util.RsResult
+import chat.stoat.fork.links.AccountLinks
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.invite_already_member
 import chat.stoat.shared.resources.invite_cancel
@@ -81,6 +82,12 @@ import org.jetbrains.compose.resources.stringResource
 class InviteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // durio: an invite of another account's server is joined from that account (plan AN-13)
+        if (AccountLinks.openInOwnAccount(intent)) {
+            finish()
+            return
+        }
 
         val inviteCode = intent.data?.lastPathSegment
 

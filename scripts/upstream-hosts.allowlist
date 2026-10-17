@@ -7,8 +7,5 @@
 # Tests: canonicalApiUrl vectors shared with pushd, recognition of the upstream server
 ^core/(api|model)/src/(commonTest|androidHostTest)/
 
-# TODO(AN-13): upstream App Links hosts leave the manifest with the per-build host placeholder
-^app/src/main/AndroidManifest\.xml:
-
 # Upstream's spec link in a comment
 ^app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel\.kt:[0-9]+: *// Spec https://wiki\.rvlt\.gg/

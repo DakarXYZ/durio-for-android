@@ -94,88 +94,15 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="https" />
-                <data android:host="stoat.chat" />
-                <data android:pathPattern="/channel/.........................." />
-                <data android:pathPattern="/channel/........................../.........................." />
-                <data android:pathPattern="/server/.........................." />
-                <data android:pathPattern="/server/........................../channel/.........................." />
-                <data android:pathPattern="/server/........................../channel/........................../.........................." />
-            </intent-filter>
+            <!-- durio: no upstream hosts (plan AN-13, O12); our server's links come from
+                 src/links/AndroidManifest.xml when the build sets durio.link_host -->
         </activity>
 
         <activity
             android:name=".activities.InviteActivity"
             android:theme="@style/Theme.Stoat"
             android:exported="true">
-            <!-- Revolt invite links -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-
-                <data android:host="app.revolt.chat" />
-
-                <data android:pathPrefix="/invite/" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-
-                <data android:host="rvlt.gg" />
-
-                <uri-relative-filter-group
-                    android:allow="false"
-                    tools:targetApi="35">
-                    <data android:pathPrefix="/discover/" />
-                </uri-relative-filter-group>
-            </intent-filter>
-            <!-- Stoat invite links -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-
-                <data android:host="stoat.chat" />
-
-                <data android:pathPrefix="/invite/" />
-            </intent-filter>
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="http" />
-                <data android:scheme="https" />
-
-                <data android:host="stt.gg" />
-
-                <uri-relative-filter-group
-                    android:allow="false"
-                    tools:targetApi="35">
-                    <data android:pathPrefix="/discover/" />
-                </uri-relative-filter-group>
-            </intent-filter>
+            <!-- durio: upstream invite hosts removed (plan AN-13, O12); see src/links/AndroidManifest.xml -->
         </activity>
 
         <activity

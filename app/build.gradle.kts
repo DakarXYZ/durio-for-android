@@ -52,6 +52,9 @@ fun buildproperty(propertyName: String, fallbackEnv: String? = null): String? {
     return property("stoatbuild.properties", propertyName, fallbackEnv)
 }
 
+// durio: App Links only for our own server's host, set per build; none by default (plan AN-13, O12)
+val durioLinkHost = buildproperty("durio.link_host", "DURIO_LINK_HOST").orEmpty().trim()
+
 android {
     compileSdk = libs.versions.compileSdk.get().toInt()
     namespace = "chat.stoat"
@@ -73,6 +76,7 @@ android {
         // durio: upstream status alerts and changelog, only for accounts on stoat.chat (plan AN-07, Q39)
         buildConfigField("boolean", "FORK_UPSTREAM_HEALTH", "false")
         buildConfigField("boolean", "FORK_UPSTREAM_GAZETTE", "false")
+        manifestPlaceholders["durioLinkHost"] = durioLinkHost
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -364,6 +368,10 @@ abstract class GenerateLocaleConfig : DefaultTask() {
 
 androidComponents {
     onVariants { variant ->
+        if (durioLinkHost.isNotEmpty()) {
+            variant.sources.manifests.addStaticManifestFile("src/links/AndroidManifest.xml")
+        }
+
         val task = tasks.register<GenerateLocaleConfig>(
             "generate${variant.name.replaceFirstChar(Char::uppercase)}StoatLocaleConfig"
         ) {

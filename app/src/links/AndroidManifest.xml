@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  durio: links of our own server (plan AN-13). Merged only when the build sets
+  durio.link_host (stoatbuild.properties) or DURIO_LINK_HOST, e.g. name.duckdns.org; without it
+  the app opens no web links from outside. Links of servers added at runtime are handled inside
+  the app. assetlinks.json for autoVerify is served by the server (SH-10).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <activity android:name="chat.stoat.activities.MainActivity">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="${durioLinkHost}" />
+                <data android:pathPattern="/channel/.........................." />
+                <data android:pathPattern="/channel/........................../.........................." />
+                <data android:pathPattern="/server/.........................." />
+                <data android:pathPattern="/server/........................../channel/.........................." />
+                <data android:pathPattern="/server/........................../channel/........................../.........................." />
+            </intent-filter>
+        </activity>
+
+        <activity android:name="chat.stoat.activities.InviteActivity">
+            <!-- only /invite/<code>, so /discover/ never matches -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="${durioLinkHost}" />
+                <data android:pathPrefix="/invite/" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
