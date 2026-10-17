@@ -2,6 +2,7 @@ package chat.stoat.api
 
 import androidx.compose.runtime.mutableStateMapOf
 import chat.stoat.api.StoatAPI.initialize
+import chat.stoat.api.fork.http.SessionTokenPlugin
 import chat.stoat.api.internals.ActiveSlowmode
 import chat.stoat.api.internals.Members
 import chat.stoat.api.internals.platformUserAgent
@@ -11,6 +12,7 @@ import chat.stoat.api.realtime.shouldReconnectOnForeground
 import chat.stoat.api.routes.user.fetchSelf
 import chat.stoat.api.unreads.Unreads
 import chat.stoat.core.model.data.STOAT_BASE
+import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.AutumnResource
 import chat.stoat.core.model.schemas.ChannelType
 import chat.stoat.core.model.schemas.Emoji
@@ -23,7 +25,6 @@ import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
@@ -84,13 +85,12 @@ val StoatCbor = Cbor {
     ignoreUnknownKeys = true
 }
 
-private val SessionTokenHeader = createClientPlugin("SessionTokenHeader") {
-    onRequest { request, _ ->
-        if (!request.headers.contains(StoatAPI.TOKEN_HEADER_NAME)) {
-            request.header(StoatAPI.TOKEN_HEADER_NAME, StoatAPI.sessionToken)
-        }
-    }
-}
+// durio: only to the active server, not to every host (plan AN-15)
+private val SessionTokenHeader = SessionTokenPlugin(
+    "SessionTokenHeader",
+    endpoints = { ActiveServer.currentOrNull },
+    token = { StoatAPI.sessionToken },
+)
 
 val StoatHttp = HttpClient(StoatAPIHost.platform.createHttpEngine()) {
     install(SessionTokenHeader)

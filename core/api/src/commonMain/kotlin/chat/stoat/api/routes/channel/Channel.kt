@@ -6,6 +6,8 @@ import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.api
 import chat.stoat.api.apiError
+import chat.stoat.api.fork.http.ApiClient
+import chat.stoat.api.fork.http.api
 import chat.stoat.api.internals.ULID
 import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
@@ -107,9 +109,10 @@ suspend fun sendMessage(
     nonce: String = ULID.makeNext(),
     replies: List<SendMessageReply>? = null,
     attachments: List<String>? = null,
-    idempotencyKey: String = ULID.makeNext()
+    idempotencyKey: String = ULID.makeNext(),
+    client: ApiClient = ApiClient.Active,
 ): String {
-    val response = StoatHttp.post("/channels/$channelId/messages".api()) {
+    val response = client.http.post("/channels/$channelId/messages".api(client)) {
         contentType(ContentType.Application.Json)
         setBody(
             SendMessageBody(
@@ -149,12 +152,16 @@ suspend fun deleteMessage(channelId: String, messageId: String) {
     StoatHttp.delete("/channels/$channelId/messages/$messageId".api())
 }
 
-suspend fun ackChannel(channelId: String, messageId: String = ULID.makeNext()) {
-    StoatHttp.put("/channels/$channelId/ack/$messageId".api())
+suspend fun ackChannel(
+    channelId: String,
+    messageId: String = ULID.makeNext(),
+    client: ApiClient = ApiClient.Active,
+) {
+    client.http.put("/channels/$channelId/ack/$messageId".api(client))
 }
 
-suspend fun fetchSingleChannel(channelId: String): Channel {
-    val response = StoatHttp.get("/channels/$channelId".api())
+suspend fun fetchSingleChannel(channelId: String, client: ApiClient = ApiClient.Active): Channel {
+    val response = client.http.get("/channels/$channelId".api(client))
         .bodyAsText()
 
     return StoatJson.decodeFromString(
@@ -184,8 +191,12 @@ suspend fun createInvite(channelId: String): ServerInvite {
     return StoatJson.decodeFromString(ServerInvite.serializer(), responseContent)
 }
 
-suspend fun fetchSingleMessage(channelId: String, messageId: String): Message {
-    val response = StoatHttp.get("/channels/$channelId/messages/$messageId".api())
+suspend fun fetchSingleMessage(
+    channelId: String,
+    messageId: String,
+    client: ApiClient = ApiClient.Active,
+): Message {
+    val response = client.http.get("/channels/$channelId/messages/$messageId".api(client))
         .bodyAsText()
 
     return StoatJson.decodeFromString(

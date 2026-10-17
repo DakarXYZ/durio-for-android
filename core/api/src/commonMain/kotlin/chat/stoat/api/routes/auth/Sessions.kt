@@ -3,6 +3,8 @@ package chat.stoat.api.routes.auth
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.api
+import chat.stoat.api.fork.http.ApiClient
+import chat.stoat.api.fork.http.api
 import chat.stoat.core.model.schemas.Session
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -20,8 +22,8 @@ suspend fun fetchAllSessions(): List<Session> {
     )
 }
 
-suspend fun logoutSessionById(id: String) {
-    StoatHttp.delete("/auth/session/$id".api())
+suspend fun logoutSessionById(id: String, client: ApiClient = ApiClient.Active) {
+    client.http.delete("/auth/session/$id".api(client))
 }
 
 suspend fun logoutAllSessions(includingSelf: Boolean = false) {

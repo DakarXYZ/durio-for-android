@@ -1,8 +1,8 @@
 package chat.stoat.api.routes.push
 
-import chat.stoat.api.StoatHttp
 import chat.stoat.api.routes.account.WebPushData
-import chat.stoat.api.api
+import chat.stoat.api.fork.http.ApiClient
+import chat.stoat.api.fork.http.api
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -12,6 +12,7 @@ suspend fun subscribePush(
     endpoint: String = "fcm",
     auth: String,
     p256diffieHellman: String? = null,
+    client: ApiClient = ApiClient.Active,
 ) {
     val data = WebPushData(
         endpoint = endpoint,
@@ -19,12 +20,12 @@ suspend fun subscribePush(
         auth = auth
     )
 
-    StoatHttp.post("/push/subscribe".api()) {
+    client.http.post("/push/subscribe".api(client)) {
         setBody(data)
         contentType(ContentType.Application.Json)
     }
 }
 
-suspend fun unsubscribePush() {
-    StoatHttp.post("/push/unsubscribe".api())
+suspend fun unsubscribePush(client: ApiClient = ApiClient.Active) {
+    client.http.post("/push/unsubscribe".api(client))
 }
