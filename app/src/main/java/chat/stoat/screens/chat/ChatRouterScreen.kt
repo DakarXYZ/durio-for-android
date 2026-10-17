@@ -86,6 +86,7 @@ import chat.stoat.core.model.schemas.ReleaseNotesSettings
 import chat.stoat.dialogs.NotificationRationaleDialog
 import chat.stoat.c2dm.NotificationDeepLink
 import chat.stoat.fork.upstream.UpstreamServices
+import chat.stoat.fork.ui.AccountSwitcherSection
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.zero
 import chat.stoat.persistence.KVStorage
@@ -639,6 +640,8 @@ fun ChatRouterScreen(
                     topNav.navigate("settings")
                 }
             )
+            // durio: long press on the own avatar also switches accounts (plan AN-10)
+            AccountSwitcherSection()
         }
     }
 

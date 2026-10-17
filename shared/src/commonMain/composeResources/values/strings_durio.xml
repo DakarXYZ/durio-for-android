@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io strings, kept apart from strings.xml so upstream translation updates merge cleanly -->
+<resources>
+    <string name="durio_server_label">Server</string>
+    <string name="durio_server_placeholder">name.duckdns.org</string>
+    <string name="durio_server_check">Check</string>
+    <string name="durio_server_required">Enter your server first</string>
+    <string name="durio_server_recent">Recent servers</string>
+    <string name="durio_server_version">Version %1$s</string>
+    <string name="durio_server_e2ee">End-to-end encryption available (beta)</string>
+    <string name="durio_server_no_e2ee">No end-to-end encryption on this server</string>
+    <string name="durio_server_foreign">Not a dur.io server: no background notifications</string>
+    <string name="durio_server_error_invalid">This is not a server address</string>
+    <string name="durio_server_error_insecure">The server must use https</string>
+    <string name="durio_server_error_no_connection">Could not reach the server</string>
+    <string name="durio_server_error_certificate">The server's certificate is not trusted</string>
+    <string name="durio_server_error_not_stoat">No chat server found at this address</string>
+    <string name="durio_server_error_unknown">Could not check the server</string>
+
+    <string name="durio_accounts">Accounts</string>
+    <string name="durio_accounts_add">Add account</string>
+    <string name="durio_accounts_back">Back to my accounts</string>
+    <string name="durio_accounts_active">Active</string>
+    <string name="durio_accounts_switching">Switching account…</string>
+    <string name="durio_accounts_logging_out">Logging out…</string>
+    <string name="durio_accounts_leave_call_title">Leave the call?</string>
+    <string name="durio_accounts_leave_call_body">Switching accounts ends the current call.</string>
+    <string name="durio_accounts_leave_call_confirm">Switch</string>
+</resources>

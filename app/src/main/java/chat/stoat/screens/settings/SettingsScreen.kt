@@ -42,6 +42,7 @@ import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.composables.generic.ListHeader
 import chat.stoat.core.model.fork.UpstreamStoat
 import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.ui.AccountsSettingsItem
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.persistence.KVStorage
 import chat.stoat.shared.resources.Res
@@ -121,6 +122,9 @@ fun SettingsScreen(
                         .fillMaxSize()
                         .padding(bottom = 10.dp)
                 ) {
+                    // durio: account switcher (plan AN-10)
+                    AccountsSettingsItem()
+
                     ListHeader {
                         Text(stringResource(Res.string.settings_category_account))
                     }

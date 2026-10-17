@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Строки dur.io отдельно от strings.xml, чтобы обновления переводов upstream сливались без конфликтов -->
+<resources>
+    <string name="durio_server_label">Сервер</string>
+    <string name="durio_server_placeholder">name.duckdns.org</string>
+    <string name="durio_server_check">Проверить</string>
+    <string name="durio_server_required">Сначала укажите сервер</string>
+    <string name="durio_server_recent">Недавние серверы</string>
+    <string name="durio_server_version">Версия %1$s</string>
+    <string name="durio_server_e2ee">Доступно сквозное шифрование (бета)</string>
+    <string name="durio_server_no_e2ee">На этом сервере нет сквозного шифрования</string>
+    <string name="durio_server_foreign">Не сервер dur.io: без фоновых уведомлений</string>
+    <string name="durio_server_error_invalid">Это не адрес сервера</string>
+    <string name="durio_server_error_insecure">Сервер должен работать по https</string>
+    <string name="durio_server_error_no_connection">Не удалось связаться с сервером</string>
+    <string name="durio_server_error_certificate">Сертификат сервера не вызывает доверия</string>
+    <string name="durio_server_error_not_stoat">По этому адресу нет сервера чата</string>
+    <string name="durio_server_error_unknown">Не удалось проверить сервер</string>
+
+    <string name="durio_accounts">Аккаунты</string>
+    <string name="durio_accounts_add">Добавить аккаунт</string>
+    <string name="durio_accounts_back">Вернуться к моим аккаунтам</string>
+    <string name="durio_accounts_active">Активный</string>
+    <string name="durio_accounts_switching">Переключение аккаунта…</string>
+    <string name="durio_accounts_logging_out">Выход…</string>
+    <string name="durio_accounts_leave_call_title">Покинуть звонок?</string>
+    <string name="durio_accounts_leave_call_body">При переключении аккаунта текущий звонок завершится.</string>
+    <string name="durio_accounts_leave_call_confirm">Переключить</string>
+</resources>

@@ -40,14 +40,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import chat.stoat.BuildConfig
 import chat.stoat.R
 import chat.stoat.composables.generic.AnyLink
 import chat.stoat.composables.generic.Weblink
 import chat.stoat.core.model.data.STOAT_MARKETING
+import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.ui.ServerPicker
+import chat.stoat.fork.ui.ServerPickerViewModel
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.community_guidelines
+import chat.stoat.shared.resources.durio_accounts_back
 import chat.stoat.shared.resources.login
 import chat.stoat.shared.resources.login_onboarding_body
 import chat.stoat.shared.resources.login_onboarding_heading
@@ -59,8 +64,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LoginGreetingScreen(navController: NavController) {
+fun LoginGreetingScreen(
+    navController: NavController,
+    serverPicker: ServerPickerViewModel = viewModel(),
+) {
     val context = LocalContext.current
+    // durio: links of the chosen server (plan AN-10)
+    val marketing = serverPicker.selected?.endpoints?.webApp ?: STOAT_MARKETING
     var catTaps by remember { mutableIntStateOf(0) }
     var showBoringButton by remember { mutableStateOf(false) }
 
@@ -135,6 +145,13 @@ fun LoginGreetingScreen(navController: NavController) {
                     .padding(horizontal = 20.dp, vertical = 10.dp)
                     .fillMaxWidth()
             )
+
+            ServerPicker(
+                viewModel = serverPicker,
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .fillMaxWidth()
+            )
         }
 
         Column(
@@ -145,6 +162,7 @@ fun LoginGreetingScreen(navController: NavController) {
         ) {
             Button(
                 onClick = { navController.navigate("login/login") },
+                enabled = serverPicker.hasServer,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("view_login_page_button")
@@ -156,11 +174,22 @@ fun LoginGreetingScreen(navController: NavController) {
 
             ElevatedButton(
                 onClick = { navController.navigate("register/greeting") },
+                enabled = serverPicker.hasServer,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("view_signup_page_button")
             ) {
                 Text(text = stringResource(Res.string.signup))
+            }
+
+            if (AccountManager.canCancelAddAccount) {
+                Spacer(modifier = Modifier.height(5.dp))
+                TextButton(
+                    onClick = { AccountManager.cancelAddAccount() },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = stringResource(Res.string.durio_accounts_back), textAlign = TextAlign.Center)
+                }
             }
 
             AnimatedVisibility(showBoringButton) {
@@ -189,18 +218,20 @@ fun LoginGreetingScreen(navController: NavController) {
             CompositionLocalProvider(
                 LocalTextStyle provides LocalTextStyle.current.copy(textAlign = TextAlign.Center)
             ) {
-                Weblink(
-                    text = stringResource(Res.string.terms_of_service),
-                    url = "$STOAT_MARKETING/terms"
-                )
-                Weblink(
-                    text = stringResource(Res.string.privacy_policy),
-                    url = "$STOAT_MARKETING/privacy"
-                )
-                Weblink(
-                    text = stringResource(Res.string.community_guidelines),
-                    url = "$STOAT_MARKETING/aup"
-                )
+                if (marketing.isNotEmpty()) {
+                    Weblink(
+                        text = stringResource(Res.string.terms_of_service),
+                        url = "$marketing/terms"
+                    )
+                    Weblink(
+                        text = stringResource(Res.string.privacy_policy),
+                        url = "$marketing/privacy"
+                    )
+                    Weblink(
+                        text = stringResource(Res.string.community_guidelines),
+                        url = "$marketing/aup"
+                    )
+                }
                 if (BuildConfig.DEBUG) {
                     AnyLink(
                         text = "Debug: Chucker",

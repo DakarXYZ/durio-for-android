@@ -8,14 +8,12 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import chat.stoat.BuildConfig
 import chat.stoat.activities.MainActivity
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.fork.account.AccountKv
 import chat.stoat.api.fork.http.AccountHttp
 import chat.stoat.api.fork.routes.fetchSelfUser
 import chat.stoat.api.fork.server.DiscoveredServer
-import chat.stoat.api.fork.server.ServerDiscovery
 import chat.stoat.api.routes.account.UserHints
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.fork.ActiveServer
@@ -23,6 +21,7 @@ import chat.stoat.core.model.schemas.User
 import chat.stoat.fork.keystore.AndroidKeystoreWrapKey
 import chat.stoat.fork.keystore.UnwrapException
 import chat.stoat.persistence.Database
+import chat.stoat.persistence.KVStorage
 import chat.stoat.persistence.stoatKVStorage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -148,17 +147,6 @@ object AccountManager {
         // The single-account cache from before AN-08; caches are per account now
         app.deleteDatabase("revolt.db")
 
-        val defaultServer = BuildConfig.DEFAULT_SERVER
-        if (!legacyMode && ActiveServer.currentOrNull == null && defaultServer.isNotBlank()) {
-            // TODO(AN-10): the login screen discovers the server the user types
-            ioScope.launch {
-                runCatching {
-                    ServerDiscovery.create(allowInsecure = BuildConfig.DEBUG).use { it.discover(defaultServer) }
-                }.onSuccess { selectServer(it) }
-                    .onFailure { logcat(LogPriority.WARN) { "Could not resolve default server: ${it.asLog()}" } }
-            }
-        }
-
         if (legacyMode) {
             ioScope.launch {
                 migration.rememberUserId { endpoints, token ->
@@ -214,6 +202,7 @@ object AccountManager {
         if (active != null) return
         pendingServer = server
         ActiveServer.set(server.endpoints)
+        ioScope.launch { ServerHistory.add(KVStorage(app), server.endpoints.api) }
     }
 
     /**
@@ -254,8 +243,8 @@ object AccountManager {
     }
 
     /**
-     * After `StoatAPI.loginAs` succeeded for the active account: refresh the name and avatar kept
-     * with the account.
+     * After `StoatAPI.loginAs` succeeded for the active account: refresh the name and avatar shown
+     * in the account switcher.
      */
     fun onLoggedIn() {
         val account = active ?: return
