@@ -29,4 +29,17 @@
     <string name="durio_accounts_login_again">Log in again</string>
 
     <string name="durio_push_new_message">New message</string>
+
+    <string name="durio_update_check">Check for updates</string>
+    <string name="durio_update_checking">Checking…</string>
+    <string name="durio_update_up_to_date">You have the latest version</string>
+    <string name="durio_update_available">Version %1$s is available</string>
+    <string name="durio_update_available_body">The update is downloaded from the app's GitHub releases. Android asks you to confirm the installation.</string>
+    <string name="durio_update_install">Download and install</string>
+    <string name="durio_update_later">Later</string>
+    <string name="durio_update_downloading">Downloading…</string>
+    <string name="durio_update_installing">Waiting for the installer…</string>
+    <string name="durio_update_failed_network">Could not reach GitHub</string>
+    <string name="durio_update_failed_checksum">The download is damaged (checksum mismatch); try again</string>
+    <string name="durio_update_failed_install">The update was not installed</string>
 </resources>

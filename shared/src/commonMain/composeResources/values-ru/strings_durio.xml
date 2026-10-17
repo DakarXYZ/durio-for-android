@@ -29,4 +29,17 @@
     <string name="durio_accounts_login_again">Войти заново</string>
 
     <string name="durio_push_new_message">Новое сообщение</string>
+
+    <string name="durio_update_check">Проверить обновления</string>
+    <string name="durio_update_checking">Проверка…</string>
+    <string name="durio_update_up_to_date">Установлена последняя версия</string>
+    <string name="durio_update_available">Доступна версия %1$s</string>
+    <string name="durio_update_available_body">Обновление скачивается из релизов приложения на GitHub. Android попросит подтвердить установку.</string>
+    <string name="durio_update_install">Скачать и установить</string>
+    <string name="durio_update_later">Позже</string>
+    <string name="durio_update_downloading">Скачивание…</string>
+    <string name="durio_update_installing">Ожидание установщика…</string>
+    <string name="durio_update_failed_network">Не удалось связаться с GitHub</string>
+    <string name="durio_update_failed_checksum">Файл повреждён (контрольная сумма не совпала), попробуйте ещё раз</string>
+    <string name="durio_update_failed_install">Обновление не установлено</string>
 </resources>

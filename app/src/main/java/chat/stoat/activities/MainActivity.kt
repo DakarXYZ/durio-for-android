@@ -88,6 +88,8 @@ import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.HealthNotice
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.links.AccountLinks
+import chat.stoat.fork.update.AppUpdates
+import chat.stoat.fork.update.UpdatePrompt
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.getStringBlocking
@@ -212,6 +214,8 @@ class MainActivityViewModel(
             if (UpstreamServices.health) doHealthCheck()
             Log.d("MainActivity", "Performing update geo state")
             if (UpstreamServices.geo) updateGeoState()
+            // durio: new release on GitHub, at most once a day; installs only on request (plan AN-18)
+            AppUpdates.checkIfDue(context)
         }
     }
 
@@ -544,6 +548,8 @@ fun AppEntrypoint(
                         HealthAlert(notice = healthNotice, onDismiss = onDismissHealthAlert)
                     }
                 }
+
+                UpdatePrompt()
 
                 if (couldNotLogIn) {
                     AlertDialog(

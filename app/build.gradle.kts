@@ -77,6 +77,8 @@ android {
         buildConfigField("boolean", "FORK_UPSTREAM_HEALTH", "false")
         buildConfigField("boolean", "FORK_UPSTREAM_GAZETTE", "false")
         manifestPlaceholders["durioLinkHost"] = durioLinkHost
+        // durio: in-app update check against our GitHub Releases; off for a future Play build (plan AN-18)
+        buildConfigField("boolean", "FORK_UPDATE_CHECK", "true")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

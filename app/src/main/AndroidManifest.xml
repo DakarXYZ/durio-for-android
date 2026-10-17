@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <!-- durio: install updates from our GitHub Releases, only after the user agrees (plan AN-18) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Up to Android 10, we need the following to take photos from the camera. -->
     <uses-permission
@@ -81,6 +83,10 @@
 
         <receiver
             android:name=".c2dm.MarkAsReadReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".fork.update.UpdateInstallReceiver"
             android:exported="false" />
 
         <activity

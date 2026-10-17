@@ -52,6 +52,7 @@ import chat.stoat.R
 import chat.stoat.api.StoatJson
 import chat.stoat.api.routes.misc.getRootRoute
 import chat.stoat.core.model.data.STOAT_BASE
+import chat.stoat.fork.update.UpdateSection
 import chat.stoat.internals.Platform
 import chat.stoat.settings.dsl.SettingsPage
 import chat.stoat.shared.resources.Res
@@ -272,6 +273,9 @@ fun AboutScreen(navController: NavController, viewModel: AboutViewModel = viewMo
                     }
                 }
             }
+
+            // durio: check GitHub Releases for a newer version (plan AN-18)
+            UpdateSection()
 
             Column(
                 modifier = Modifier
