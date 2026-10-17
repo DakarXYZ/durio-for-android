@@ -1,0 +1,104 @@
+name: durio release
+
+# Signed release APK in GitHub Releases with update.json for the in-app update check
+# (plan AN-14, AN-18, O2). Runs on a version tag, e.g. v1.8.1. AGPL: the release links to the
+# source of its tag.
+#
+# Secrets: DURIO_KEYSTORE_BASE64, DURIO_KEYSTORE_PASSWORD, DURIO_KEY_ALIAS, DURIO_KEY_PASSWORD,
+# DURIO_GOOGLE_SERVICES_JSON_BASE64 (release Firebase config). Variables (optional):
+# DURIO_DEFAULT_SERVER (prefilled on the login screen), DURIO_LINK_HOST (App Links host, AN-13).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Signed APK to GitHub Releases
+    if: github.repository_owner != 'stoatchat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: No hard-coded upstream hosts
+        run: bash scripts/check-upstream-hosts.sh
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Signing key and Firebase config
+        env:
+          KEYSTORE_BASE64: ${{ secrets.DURIO_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_BASE64: ${{ secrets.DURIO_GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "DURIO_KEYSTORE_BASE64 is not set"; exit 1; }
+          test -n "$GOOGLE_SERVICES_BASE64" || { echo "DURIO_GOOGLE_SERVICES_JSON_BASE64 is not set"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "$GOOGLE_SERVICES_BASE64" | base64 -d > app/google-services.json
+          echo "DURIO_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        env:
+          DURIO_KEYSTORE_PASSWORD: ${{ secrets.DURIO_KEYSTORE_PASSWORD }}
+          DURIO_KEY_ALIAS: ${{ secrets.DURIO_KEY_ALIAS }}
+          DURIO_KEY_PASSWORD: ${{ secrets.DURIO_KEY_PASSWORD }}
+          DURIO_DEFAULT_SERVER: ${{ vars.DURIO_DEFAULT_SERVER }}
+          DURIO_LINK_HOST: ${{ vars.DURIO_LINK_HOST }}
+        run: ./gradlew --no-daemon :app:assembleRelease
+
+      - name: Verify signature, hash, update manifest
+        run: |
+          build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          mkdir -p dist
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          "$build_tools/apksigner" verify --print-certs "$apk"
+
+          badging=$("$build_tools/aapt2" dump badging "$apk" | head -n 1)
+          version_code=$(sed -E "s/.*versionCode='([0-9]+)'.*/\1/" <<<"$badging")
+          version_name=$(sed -E "s/.*versionName='([^']+)'.*/\1/" <<<"$badging")
+          test "v$version_name" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match versionName $version_name"; exit 1; }
+
+          # ABI splits (AN-41) add one entry per ABI; until then one universal APK
+          file="durio-$version_name-universal.apk"
+          cp "$apk" "dist/$file"
+          sha=$(sha256sum "dist/$file" | cut -d' ' -f1)
+          (cd dist && sha256sum *.apk > SHA256SUMS)
+          cat > dist/update.json <<JSON
+          {
+            "versionCode": $version_code,
+            "versionName": "$version_name",
+            "apks": [
+              { "abi": "universal", "file": "$file", "sha256": "$sha" }
+            ]
+          }
+          JSON
+          cat dist/update.json
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "dur.io $GITHUB_REF_NAME" \
+            --notes "Source code of this build: https://github.com/$GITHUB_REPOSITORY/tree/$GITHUB_REF_NAME (AGPL-3.0)"
+
+      - name: Remove secrets
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks" app/google-services.json

@@ -6,7 +6,8 @@ on:
 
 jobs:
   build:
-    if: ${{ false }} # at the moment this simply wastes our minutes, we will enable it when we have unit tests etc.
+    # durio: upstream's job, only in stoatchat's repo (ours is durio-android.yml)
+    if: ${{ false && github.repository_owner == 'stoatchat' }} # at the moment this simply wastes our minutes, we will enable it when we have unit tests etc.
 
     runs-on: ubuntu-latest
 

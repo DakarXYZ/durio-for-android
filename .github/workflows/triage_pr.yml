@@ -6,6 +6,8 @@ on:
 
 jobs:
   track_pr:
+    # durio: upstream's project board, only in stoatchat's repo
+    if: github.repository_owner == 'stoatchat'
     runs-on: ubuntu-latest
     steps:
       - name: Get project data
