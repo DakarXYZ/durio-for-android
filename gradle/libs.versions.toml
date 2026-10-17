@@ -29,6 +29,9 @@ livekit-compose = "2.4.0"
 koin = "4.2.1"
 multiplatform-markdown = "0.41.0-b01"
 coil = "3.4.0"
+coroutines = "1.10.2"
+turbine = "1.2.1"
+robolectric = "4.17"
 
 [libraries]
 android-core-ktx = { module = "androidx.core:core-ktx", version = "1.16.0" }
@@ -69,6 +72,11 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+android-test-core-ktx = { module = "androidx.test:core-ktx", version = "1.7.0" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
@@ -79,6 +87,7 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-contentnegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.8" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-compose = { module = "com.github.bumptech.glide:compose", version = "1.0.0-beta01" }
@@ -99,6 +108,7 @@ haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = 
 zxing-core = { module = "com.google.zxing:core", version = "3.5.3" }
 quickie-bundled = { module = "io.github.g00fy2.quickie:quickie-bundled", version = "1.11.0" }
 sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 jetbrains-markdown = { module = "org.jetbrains:markdown", version = "0.7.3" }
 highlights = { module = "dev.snipme:highlights", version = "1.0.0" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version = "33.15.0" }

@@ -16,6 +16,9 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+
+        // durio: JVM unit tests for commonTest + androidHostTest (plan AN-16)
+        withHostTest {}
     }
 
     sourceSets {
@@ -40,6 +43,16 @@ kotlin {
             implementation(libs.lifecycle.process)
             implementation(libs.android.datastore.preferences)
         }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.turbine)
+        }
+
+        // The Android host test compilation does not pick up commonTest on its own
+        getByName("androidHostTest").dependsOn(commonTest.get())
     }
 }
 

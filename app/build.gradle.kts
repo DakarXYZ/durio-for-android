@@ -144,6 +144,10 @@ android {
     androidResources {
         generateLocaleConfig = false
     }
+    testOptions {
+        // durio: Robolectric needs merged resources and the manifest (plan AN-16)
+        unitTests.isIncludeAndroidResources = true
+    }
     lint {
         abortOnError = false
         disable += "MissingTranslation"
@@ -278,6 +282,12 @@ dependencies {
     androidTestImplementation(libs.android.test.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.junit4)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.android.test.core.ktx)
+    testImplementation(libs.sqldelight.sqlite.driver)
 }
 
 aboutLibraries {
