@@ -21,6 +21,7 @@ import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.User
 import chat.stoat.fork.keystore.AndroidKeystoreWrapKey
 import chat.stoat.fork.keystore.UnwrapException
+import chat.stoat.fork.push.PushNotifications
 import chat.stoat.persistence.Database
 import chat.stoat.persistence.KVStorage
 import chat.stoat.persistence.stoatKVStorage
@@ -137,6 +138,10 @@ object AccountManager {
             ) {
                 LegacyServer.clear(app)
             }
+            if (result is LegacyAccountMigration.Result.Migrated) {
+                // it keeps upstream's notification channel and its sound settings (Q41)
+                PushNotifications.rememberLegacyChannelAccount(app, result.account.key)
+            }
 
             val state = store.load()
             _state.value = state
@@ -191,7 +196,23 @@ object AccountManager {
                 null
             }
         } ?: return null
-        return AccountHttp(account.endpoints, token)
+        // the server rejected the token: the switcher shows "log in again" (AN-10, AN-12)
+        return AccountHttp(account.endpoints, token, onUnauthorized = { markSessionExpired(key) })
+    }
+
+    private fun markSessionExpired(key: String) {
+        ioScope.launch {
+            mutex.withLock {
+                // not for an account that is being logged out: its files are going away
+                if (_state.value.find(key) == null) return@withLock
+                AccountBadges.setSessionExpired(registry.get(key), expired = true)
+            }
+        }
+    }
+
+    /** Unread counts and "log in again" of every account, for the switcher. */
+    suspend fun loadBadges() {
+        AccountBadges.load(_state.value.accounts.map { registry.get(it.key) })
     }
 
     /** Everything background code needs for one account (Q35). */
@@ -221,6 +242,7 @@ object AccountManager {
 
         val storage = registry.get(key)
         storage.writeToken(hints.token)
+        AccountBadges.setSessionExpired(storage, expired = false)
 
         val account = Account(
             key = key,
@@ -290,8 +312,11 @@ object AccountManager {
         }
     }
 
-    /** Makes [key] the active account and restarts the UI on it (AN-09). */
-    fun switchTo(key: String) {
+    /**
+     * Makes [key] the active account and restarts the UI on it (AN-09). [forward] is opened once
+     * the account is active: a notification or link of this account (AN-12, AN-13).
+     */
+    fun switchTo(key: String, forward: Intent? = null) {
         mainScope.launch {
             mutex.withLock {
                 val target = _state.value.find(key) ?: return@withLock
@@ -301,7 +326,8 @@ object AccountManager {
                 _state.value = store.setActive(target.key)
                 activate(target)
                 returnKey = null
-                restartUi()
+                AccountBadges.clearUnread(registry.get(target.key))
+                restartUi(forward)
             }
         }
     }
@@ -385,6 +411,7 @@ object AccountManager {
 
         registry.remove(account.key, deleteFiles = true)
         _state.value = store.remove(account.key)
+        AccountBadges.forget(account.key)
         AccountNotifications.clear(app, account.key, everything = _state.value.accounts.isEmpty())
         ioScope.launch { AccountNotifications.clearImageCache(app) }
 
@@ -427,12 +454,22 @@ object AccountManager {
         ActiveServer.set(account?.endpoints)
     }
 
-    private fun restartUi() {
+    private fun restartUi(forward: Intent? = null) {
         _busy.value = false
-        app.startActivity(
-            Intent(app, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        )
+        val main = Intent(app, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        when {
+            forward == null -> app.startActivity(main)
+            // a notification or link for the chat screen: the new task reads it from its intent
+            forward.component?.className == MainActivity::class.java.name -> {
+                main.action = forward.action
+                main.data = forward.data
+                forward.extras?.let(main::putExtras)
+                app.startActivity(main)
+            }
+            // another screen (an invite) on top of the chat screen
+            else -> app.startActivities(arrayOf(main, forward))
+        }
     }
 
     /** Push routing and re-subscription see the device's accounts through this. */

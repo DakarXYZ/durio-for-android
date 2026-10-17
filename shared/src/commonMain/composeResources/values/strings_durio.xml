@@ -26,4 +26,7 @@
     <string name="durio_accounts_leave_call_title">Leave the call?</string>
     <string name="durio_accounts_leave_call_body">Switching accounts ends the current call.</string>
     <string name="durio_accounts_leave_call_confirm">Switch</string>
+    <string name="durio_accounts_login_again">Log in again</string>
+
+    <string name="durio_push_new_message">New message</string>
 </resources>

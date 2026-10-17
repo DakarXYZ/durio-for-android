@@ -25,15 +25,19 @@ import chat.stoat.R
 import chat.stoat.activities.MainActivity
 import chat.stoat.api.internals.ULID
 import chat.stoat.api.routes.channel.fetchSingleChannel
+import chat.stoat.fork.account.AccountBadges
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.account.PushResubscribe
-import chat.stoat.c2dm.ChannelRegistrator.Companion.CHANNEL_ID_GROUP_CONVERSATIONS_MESSAGES
-import chat.stoat.core.model.data.STOAT_FILES
+import chat.stoat.fork.push.NotificationKeys
+import chat.stoat.fork.push.PushMessage
+import chat.stoat.fork.push.PushNotifications
+import chat.stoat.fork.push.PushRouter
+import chat.stoat.fork.push.PushTarget
 import chat.stoat.internals.extensions.getStringBlocking
 import chat.stoat.persistence.Database
-import chat.stoat.persistence.KVStorage
-import chat.stoat.persistence.SqlStorage
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.channel_context_sheet_actions_mark_read
+import chat.stoat.shared.resources.durio_push_new_message
 import chat.stoat.shared.resources.message_context_sheet_actions_reply
 import com.bumptech.glide.Glide
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -98,20 +102,31 @@ class HandlerService : FirebaseMessagingService() {
             return
         }
 
+        // durio: the push names its account (plan AN-12); the active one is never assumed
+        val account = when (val target = runBlocking { PushRouter.route(PushMessage(data)) }) {
+            is PushTarget.Bound -> target.account
+            PushTarget.Unbound -> {
+                logcat(LogPriority.WARN) { "Push without recipient, shown without an account" }
+                PushNotifications.showUnbound(this, data)
+                return
+            }
+            PushTarget.Drop -> {
+                logcat(LogPriority.WARN) { "Push for an account not on this device, dropped" }
+                return
+            }
+        }
+        val accountKey = account.key
+        val storage = AccountManager.registry.get(accountKey)
+
         val authorId = data["author"] ?: run {
             logcat(LogPriority.ERROR) { "No author in message, abort" }
             return
         }
 
-        val body = data["body"] ?: run {
-            logcat(LogPriority.ERROR) { "No body in message, abort" }
-            return
-        }
+        // durio: body and image are optional (encrypted messages, AN-29): generic text, letter avatar
+        val body = data["body"] ?: getStringBlocking(Res.string.durio_push_new_message)
 
-        val image = data["image"] ?: run {
-            logcat(LogPriority.WARN) { "No image in message, abort" }
-            return
-        }
+        val image = data["image"]
 
         val authorName = data["author_name"] ?: run {
             logcat(LogPriority.ERROR) { "No author name in message, abort" }
@@ -130,7 +145,7 @@ class HandlerService : FirebaseMessagingService() {
 
         val messageTimestamp = ULID.asTimestamp(messageId)
 
-        val db = Database(SqlStorage.driver)
+        val db = Database(storage.sqlDriver)
 
         fun serverPrefix(serverId: String?): String? {
             if (serverId == null) return null
@@ -150,7 +165,9 @@ class HandlerService : FirebaseMessagingService() {
         val channelName = db.channelQueries.findById(channelId).executeAsOneOrNull()?.let {
             formatChannelName(it.channelType, it.name, it.server)
         } ?: runBlocking {
-            runCatching { fetchSingleChannel(channelId) }.getOrNull()?.let {
+            runCatching {
+                PushRouter.http(accountKey)?.use { fetchSingleChannel(channelId, client = it) }
+            }.getOrNull()?.let {
                 formatChannelName(
                     it.channelType?.value ?: "",
                     it.name,
@@ -166,10 +183,10 @@ class HandlerService : FirebaseMessagingService() {
             .submit()
             .get()
 
-        val kv = KVStorage(this)
-        val selfId = runBlocking { kv.get("selfId") }.orEmpty()
-        val selfName = runBlocking { kv.get("selfName") }.orEmpty()
-        val selfAvatarUrl = runBlocking { kv.get("selfAvatarUrl") }
+        val kv = storage.kv
+        val selfId = account.userId
+        val selfName = account.displayName ?: runBlocking { kv.get("selfName") }.orEmpty()
+        val selfAvatarUrl = account.avatarUrl ?: runBlocking { kv.get("selfAvatarUrl") }
 
         val selfBitmap: Bitmap = if (!selfAvatarUrl.isNullOrEmpty()) {
             runCatching { loadBitmap(selfAvatarUrl) }.getOrNull()
@@ -187,18 +204,19 @@ class HandlerService : FirebaseMessagingService() {
 
         val dbChannel = db.channelQueries.findById(channelId).executeAsOneOrNull()
 
-        val authorBitmap = runCatching { loadBitmap(image) }.getOrElse { generateLetterBitmap(authorName) }
+        val authorBitmap = image?.let { runCatching { loadBitmap(it) }.getOrNull() }
+            ?: generateLetterBitmap(authorName)
         val conversationBitmap: Bitmap = when (dbChannel?.channelType) {
             "TextChannel", "VoiceChannel" -> {
                 val server =
                     dbChannel.server?.let { db.serverQueries.findById(it).executeAsOneOrNull() }
-                val iconUrl = server?.iconId?.let { "$STOAT_FILES/icons/$it" }
+                val iconUrl = server?.iconId?.let { "${account.endpoints.files}/icons/$it" }
                 iconUrl?.let { runCatching { loadBitmap(it) }.getOrNull() }
                     ?: generateLetterBitmap(server?.name ?: channelName)
             }
 
             "Group" -> {
-                val iconUrl = dbChannel.iconId?.let { "$STOAT_FILES/icons/$it" }
+                val iconUrl = dbChannel.iconId?.let { "${account.endpoints.files}/icons/$it" }
                 iconUrl?.let { runCatching { loadBitmap(it) }.getOrNull() }
                     ?: generateLetterBitmap(dbChannel.name ?: channelName)
             }
@@ -213,11 +231,13 @@ class HandlerService : FirebaseMessagingService() {
             .setName(authorName)
             .build()
 
-        val shortcutId = "${BuildConfig.APPLICATION_ID}.channel.$channelId"
+        val shortcutId = NotificationKeys.shortcutId(BuildConfig.APPLICATION_ID, accountKey, channelId)
+        val tag = NotificationKeys.tag(accountKey, channelId)
 
         val conversationIntent = Intent(this, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             putExtra("channelId", channelId)
+            putExtra(NotificationKeys.EXTRA_ACCOUNT_KEY, accountKey)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
@@ -239,6 +259,7 @@ class HandlerService : FirebaseMessagingService() {
 
         val replyIntent = Intent(this, ReplyReceiver::class.java).apply {
             putExtra("channelId", channelId)
+            putExtra(NotificationKeys.EXTRA_ACCOUNT_KEY, accountKey)
         }
 
         val replyAction: NotificationCompat.Action =
@@ -247,7 +268,7 @@ class HandlerService : FirebaseMessagingService() {
                 getStringBlocking(Res.string.message_context_sheet_actions_reply),
                 PendingIntent.getBroadcast(
                     this,
-                    channelId.hashCode(),
+                    NotificationKeys.requestCode(accountKey, channelId),
                     replyIntent,
                     PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
@@ -258,6 +279,7 @@ class HandlerService : FirebaseMessagingService() {
         val markAsReadIntent = Intent(this, MarkAsReadReceiver::class.java).apply {
             putExtra("channelId", channelId)
             putExtra("messageId", messageId)
+            putExtra(NotificationKeys.EXTRA_ACCOUNT_KEY, accountKey)
         }
 
         val markAsReadAction: NotificationCompat.Action =
@@ -266,7 +288,7 @@ class HandlerService : FirebaseMessagingService() {
                 getStringBlocking(Res.string.channel_context_sheet_actions_mark_read),
                 PendingIntent.getBroadcast(
                     this,
-                    channelId.hashCode() xor 1,
+                    NotificationKeys.requestCode(accountKey, channelId, action = 1),
                     markAsReadIntent,
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
@@ -275,14 +297,14 @@ class HandlerService : FirebaseMessagingService() {
 
         val contentIntent = PendingIntent.getActivity(
             this,
-            channelId.hashCode(),
+            NotificationKeys.requestCode(accountKey, channelId),
             conversationIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         val existingStyle = NotificationManagerCompat.from(this)
             .activeNotifications
-            .firstOrNull { it.tag == channelId && it.id == NotificationID.NEW_MESSAGE }
+            .firstOrNull { it.tag == tag && it.id == NotificationID.NEW_MESSAGE }
             ?.notification
             ?.let { NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(it) }
 
@@ -291,7 +313,8 @@ class HandlerService : FirebaseMessagingService() {
             .setConversationTitle(channelName)
             .addMessage(body, messageTimestamp, author)
 
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID_GROUP_CONVERSATIONS_MESSAGES)
+        val notificationChannel = runBlocking { PushNotifications.messagesChannel(this@HandlerService, account) }
+        val builder = NotificationCompat.Builder(this, notificationChannel)
             .setSmallIcon(R.drawable.ic_stoat_24dp)
             .setContentTitle(authorName)
             .setContentText(body)
@@ -302,6 +325,10 @@ class HandlerService : FirebaseMessagingService() {
             .addAction(markAsReadAction)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setGroup(NotificationKeys.channelGroup(accountKey))
+
+        // durio: which account, once there is more than one
+        if (AccountManager.state.value.accounts.size > 1) builder.setSubText(PushNotifications.label(account))
 
         // Android 11 bubbles
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -310,7 +337,7 @@ class HandlerService : FirebaseMessagingService() {
 
             val bubbleIntent = PendingIntent.getActivity(
                 this,
-                channelId.hashCode(),
+                NotificationKeys.requestCode(accountKey, channelId),
                 conversationIntent,
                 PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
@@ -335,7 +362,9 @@ class HandlerService : FirebaseMessagingService() {
             ) {
                 return
             }
-            notify(channelId, NotificationID.NEW_MESSAGE, builder.build())
+            notify(tag, NotificationID.NEW_MESSAGE, builder.build())
         }
+        PushNotifications.postSummary(this, account, notificationChannel)
+        if (accountKey != AccountManager.active?.key) runBlocking { AccountBadges.addUnread(storage) }
     }
 }

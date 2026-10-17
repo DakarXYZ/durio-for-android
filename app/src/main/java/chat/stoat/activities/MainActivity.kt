@@ -87,6 +87,7 @@ import chat.stoat.composables.voice.VoiceSheet
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.HealthNotice
 import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.links.AccountLinks
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.getStringBlocking
@@ -375,6 +376,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleNavigationIntent(intent: Intent) {
+        // durio: a notification or link of another account switches to it first (plan AN-12)
+        if (AccountLinks.openInOwnAccount(intent)) return
+
         val webLink = intent.data?.toStoatWebLinkOrNull()
         if (webLink != null) {
             NotificationDeepLink.pendingNavigation.value = webLink

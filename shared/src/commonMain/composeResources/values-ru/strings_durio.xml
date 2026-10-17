@@ -26,4 +26,7 @@
     <string name="durio_accounts_leave_call_title">Покинуть звонок?</string>
     <string name="durio_accounts_leave_call_body">При переключении аккаунта текущий звонок завершится.</string>
     <string name="durio_accounts_leave_call_confirm">Переключить</string>
+    <string name="durio_accounts_login_again">Войти заново</string>
+
+    <string name="durio_push_new_message">Новое сообщение</string>
 </resources>

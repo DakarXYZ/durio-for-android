@@ -114,7 +114,8 @@ fun LoginGreetingScreen(
                             }
                         },
                         onLongClick = {
-                            if (BuildConfig.DEBUG) showBoringButton = !showBoringButton
+                            // durio: the experimental login (login2) has no server field, so it stays hidden (plan AN-10)
+                            // upstream: if (BuildConfig.DEBUG) showBoringButton = !showBoringButton
                         }
                     )
             )

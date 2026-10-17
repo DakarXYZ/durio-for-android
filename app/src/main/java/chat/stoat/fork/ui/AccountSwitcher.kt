@@ -17,7 +17,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import chat.stoat.R
 import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.fork.account.Account
+import chat.stoat.fork.account.AccountBadge
+import chat.stoat.fork.account.AccountBadges
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.cancel
@@ -41,6 +45,7 @@ import chat.stoat.shared.resources.durio_accounts_leave_call_body
 import chat.stoat.shared.resources.durio_accounts_leave_call_confirm
 import chat.stoat.shared.resources.durio_accounts_leave_call_title
 import chat.stoat.shared.resources.durio_accounts_logging_out
+import chat.stoat.shared.resources.durio_accounts_login_again
 import chat.stoat.shared.resources.durio_accounts_switching
 import chat.stoat.voice.VoiceCallManager
 import org.jetbrains.compose.resources.stringResource
@@ -53,6 +58,8 @@ import org.jetbrains.compose.resources.stringResource
 fun AccountSwitcherList(modifier: Modifier = Modifier) {
     val state by AccountManager.state.collectAsState()
     val busy by AccountManager.busy.collectAsState()
+    val badges by AccountBadges.badges.collectAsState()
+    LaunchedEffect(state.accounts) { AccountManager.loadBadges() }
     var pending by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     fun whenCallAllows(action: () -> Unit) {
@@ -91,6 +98,7 @@ fun AccountSwitcherList(modifier: Modifier = Modifier) {
                 isActive = isActive,
                 showHost = true,
                 highlightHost = account.displayName in duplicateNames,
+                badge = badges[account.key],
                 enabled = !busy,
                 onClick = { if (!isActive) whenCallAllows { AccountManager.switchTo(account.key) } },
             )
@@ -129,8 +137,10 @@ private fun AccountRow(
     highlightHost: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
+    badge: AccountBadge? = null,
 ) {
     val name = account.displayName ?: account.userId
+    val unread = badge?.unread ?: 0
     ListItem(
         headlineContent = { Text(name) },
         supportingContent = if (showHost) {
@@ -151,9 +161,26 @@ private fun AccountRow(
                     .clip(CircleShape)
             )
         },
-        trailingContent = if (isActive) {
-            { Text(stringResource(Res.string.durio_accounts_active), style = MaterialTheme.typography.labelMedium) }
-        } else null,
+        trailingContent = when {
+            isActive -> {
+                { Text(stringResource(Res.string.durio_accounts_active), style = MaterialTheme.typography.labelMedium) }
+            }
+            // the server rejected the token in the background (AN-12): switching leads to a new login
+            badge?.sessionExpired == true -> {
+                {
+                    Text(
+                        text = stringResource(Res.string.durio_accounts_login_again),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            // messages that came by push while the account was not open
+            unread > 0 -> {
+                { Badge { Text(if (unread > 99) "99+" else unread.toString()) } }
+            }
+            else -> null
+        },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         modifier = Modifier
             .fillMaxWidth()
