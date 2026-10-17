@@ -7,6 +7,7 @@ import android.os.StrictMode
 import chat.stoat.api.realtime.RealtimeConnectionMonitor
 import chat.stoat.di.appModule
 import chat.stoat.di.viewModelModule
+import chat.stoat.fork.server.ServerBootstrap
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
 import coil3.ImageLoader
@@ -28,6 +29,7 @@ class StoatApplication : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        ServerBootstrap.init(this)
         AndroidLogcatLogger.installOnDebuggableApp(this, minPriority = LogPriority.VERBOSE)
         Logger.setTag("Stoat")
         if (!BuildConfig.DEBUG) {

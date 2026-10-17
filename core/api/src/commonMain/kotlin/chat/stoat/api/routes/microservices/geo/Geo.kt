@@ -4,6 +4,7 @@ import chat.stoat.api.HitRateLimitException
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.buildUserAgent
+import chat.stoat.core.model.fork.UpstreamStoat
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -18,7 +19,7 @@ data class GeoResponse(
 
 suspend fun queryGeo(): GeoResponse {
     try {
-        val response = StoatHttp.get("https://geo.revolt.chat/?client=android") {
+        val response = StoatHttp.get(UpstreamStoat.GEO) {
             header("User-Agent", buildUserAgent("Ktor queryGeo"))
         }
 

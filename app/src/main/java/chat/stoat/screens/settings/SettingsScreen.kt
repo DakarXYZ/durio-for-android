@@ -41,6 +41,8 @@ import chat.stoat.api.StoatAPI
 import chat.stoat.api.settings.FeatureFlags
 import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.composables.generic.ListHeader
+import chat.stoat.core.model.fork.UpstreamStoat
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.persistence.KVStorage
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.about
@@ -337,7 +339,7 @@ fun SettingsScreen(
                         )
                     }
 
-                    SettingsListItem(
+                    if (UpstreamServices.gazette) SettingsListItem(
                         first = true,
                         headlineContent = { Text(text = stringResource(Res.string.settings_changelog)) },
                         leadingContent = {
@@ -353,7 +355,7 @@ fun SettingsScreen(
                             .clickable { navController.navigate("changelog/latest") }
                     )
                     Spacer(Modifier.height(2.dp))
-                    SettingsListItem(
+                    if (UpstreamServices.testers) SettingsListItem(
                         headlineContent = { Text(text = stringResource(Res.string.settings_feedback)) },
                         supportingContent = { Text(text = stringResource(Res.string.settings_feedback_description)) },
                         leadingContent = {
@@ -371,7 +373,7 @@ fun SettingsScreen(
                                     context,
                                     InviteActivity::class.java
                                 ).setAction(Intent.ACTION_VIEW)
-                                intent.data = "https://stt.gg/Testers".toUri()
+                                intent.data = UpstreamStoat.TESTERS_INVITE.toUri()
                                 context.startActivity(intent)
                             }
                     )

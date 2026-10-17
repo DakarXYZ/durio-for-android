@@ -8,7 +8,8 @@ import chat.stoat.core.model.data.STOAT_WEB_APP
 fun Uri.isInviteUri(): Boolean {
     val firstPathSegmentIsInvite = this.pathSegments.firstOrNull() == "invite"
     val isStoatChat = this.host == STOAT_WEB_APP.toUri().host
-    val matchSttGG = this.host == STOAT_INVITES.toUri().host
+    // durio: without a short-link host, invites live under <webApp>/invite (plan AN-07)
+    val matchSttGG = this.host == STOAT_INVITES.toUri().host && !isStoatChat
 
     val matchApp = isStoatChat && firstPathSegmentIsInvite
 

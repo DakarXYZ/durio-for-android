@@ -84,7 +84,9 @@ import chat.stoat.c2dm.NotificationDeepLink
 import chat.stoat.composables.generic.HealthAlert
 import chat.stoat.composables.voice.VoicePermissionSwitch
 import chat.stoat.composables.voice.VoiceSheet
+import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.HealthNotice
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.getStringBlocking
 import chat.stoat.internals.toStoatWebLinkOrNull
@@ -205,9 +207,9 @@ class MainActivityViewModel(
             Log.d("MainActivity", "Hydrating Experiments from KV")
             Experiments.hydrateWithKv()
             Log.d("MainActivity", "Performing health check")
-            doHealthCheck()
+            if (UpstreamServices.health) doHealthCheck()
             Log.d("MainActivity", "Performing update geo state")
-            updateGeoState()
+            if (UpstreamServices.geo) updateGeoState()
         }
     }
 
@@ -229,6 +231,7 @@ class MainActivityViewModel(
             Log.d("MainActivity", "Checking if we can reach Stoat")
 
             if (!isConnected.value) return@launch startWithoutDestination()
+            if (ActiveServer.currentOrNull == null) return@launch startWithDestination("login/greeting")
 
             Log.d("MainActivity", "We can reach Stoat, checking if we're logged in")
 

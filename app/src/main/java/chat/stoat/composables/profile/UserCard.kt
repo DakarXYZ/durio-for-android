@@ -50,11 +50,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.net.toUri
 import androidx.palette.graphics.Palette
 import chat.stoat.R
 import chat.stoat.api.internals.ResourceLocations
 import chat.stoat.api.internals.ULID
 import chat.stoat.api.internals.UserQR
+import chat.stoat.core.model.data.STOAT_WEB_APP
 import chat.stoat.core.model.schemas.User
 import chat.stoat.composables.generic.UserAvatar
 import chat.stoat.shared.resources.Res
@@ -368,7 +370,7 @@ fun UserCard(
                 }
 
                 Text(
-                    "stoat.chat",
+                    STOAT_WEB_APP.toUri().host.orEmpty(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier

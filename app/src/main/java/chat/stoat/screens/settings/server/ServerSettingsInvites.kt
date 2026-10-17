@@ -117,7 +117,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 
 internal fun inviteLink(code: String, compact: Boolean = false): String =
-    if (compact) "${STOAT_INVITES.toUri().host}/$code"
+    if (compact) "${STOAT_INVITES.substringAfter("://")}/$code"
     else "$STOAT_INVITES/$code"
 
 

@@ -3,6 +3,7 @@ package chat.stoat.api.fork.server
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.buildUserAgent
 import chat.stoat.core.model.fork.ServerEndpoints
+import chat.stoat.core.model.fork.UpstreamStoat
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpTimeout
@@ -128,14 +129,14 @@ class ServerDiscovery(
 
     private fun discovered(api: String, root: ServerRootInfo, name: String?): DiscoveredServer {
         val features = root.features
-        val endpoints = ServerEndpoints(
+        val endpoints = UpstreamStoat.withUpstreamLinks(ServerEndpoints(
             api = api,
             ws = root.ws!!.trimEnd('/'),
             files = features?.autumn.serviceUrl(),
             proxy = features?.january.serviceUrl(),
             webApp = root.app?.trimEnd('/') ?: originOf(api),
             livekit = features?.livekit?.enabled == true,
-        )
+        ))
         requireSecure(endpoints.ws)
         if (endpoints.files.isNotEmpty()) requireSecure(endpoints.files)
 

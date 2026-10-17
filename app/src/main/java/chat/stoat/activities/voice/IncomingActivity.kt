@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import chat.stoat.R
 import chat.stoat.composables.generic.Presence
-import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.composables.generic.presenceColour
 import chat.stoat.ui.theme.StoatTheme
 import chat.stoat.api.settings.Theme
@@ -204,9 +203,9 @@ fun IncomingCallInner() {
                 fontWeight = FontWeight.SemiBold
             )
             with(density) {
-                RemoteImage(
-                    url = "https://cdn.revoltusercontent.com/attachments/K1CDpnvORz2fzUhgq47mcL7N4gccWGqNYYeGaJVvyp/image.png",
-                    description = null,
+                Icon(
+                    painter = painterResource(R.drawable.ic_person_24dp),
+                    contentDescription = null,
                     modifier = Modifier
                         .clip(CircleShape)
                         .fillMaxWidth(0.5f)

@@ -111,6 +111,7 @@ import chat.stoat.core.model.schemas.ServerFlags
 import chat.stoat.core.model.schemas.User
 import chat.stoat.core.model.schemas.has
 import chat.stoat.core.model.util.UserVoiceState
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.screens.chat.ChatRouterDestination
 import chat.stoat.screens.chat.LocalIsConnected
 import chat.stoat.shared.resources.Res
@@ -546,7 +547,7 @@ fun ChannelSideDrawer(
                     }
                 }
 
-                item(key = "discover") {
+                if (UpstreamServices.discover) item(key = "discover") {
                     Box(
                         Modifier
                             .padding(bottom = RailItemGap)

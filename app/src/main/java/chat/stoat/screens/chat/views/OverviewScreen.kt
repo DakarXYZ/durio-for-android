@@ -67,7 +67,9 @@ import chat.stoat.api.routes.user.fetchSelf
 import chat.stoat.composables.generic.NonIdealState
 import chat.stoat.composables.screens.settings.UserOverview
 import chat.stoat.composables.skeletons.UserOverviewSkeleton
+import chat.stoat.core.model.fork.UpstreamStoat
 import chat.stoat.core.model.schemas.User
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.extensions.zero
 import chat.stoat.screens.chat.LocalIsConnected
 import chat.stoat.shared.resources.Res
@@ -349,7 +351,7 @@ fun OverviewScreen(
                             )
                         }
 
-                        item(key = "changelog") {
+                        if (UpstreamServices.gazette) item(key = "changelog") {
                             OverviewScreenLink(
                                 onClick = {
                                     navController.navigate("changelog/latest")
@@ -373,7 +375,7 @@ fun OverviewScreen(
                             )
                         }
 
-                        item(key = "join-lounge") {
+                        if (UpstreamServices.testers) item(key = "join-lounge") {
                             OverviewScreenLink(
                                 onClick = {
                                     val intent = Intent(
@@ -381,7 +383,7 @@ fun OverviewScreen(
                                         InviteActivity::class.java
                                     ).setAction(Intent.ACTION_VIEW)
 
-                                    intent.data = "https://stt.gg/Testers".toUri()
+                                    intent.data = UpstreamStoat.TESTERS_INVITE.toUri()
                                     context.startActivity(intent)
                                 },
                                 backgroundColour = MaterialTheme.colorScheme.primary,

@@ -70,6 +70,9 @@ android {
             "DEFAULT_SERVER",
             "\"${buildproperty("durio.default_server", "DURIO_DEFAULT_SERVER") ?: ""}\""
         )
+        // durio: upstream status alerts and changelog, only for accounts on stoat.chat (plan AN-07, Q39)
+        buildConfigField("boolean", "FORK_UPSTREAM_HEALTH", "false")
+        buildConfigField("boolean", "FORK_UPSTREAM_GAZETTE", "false")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

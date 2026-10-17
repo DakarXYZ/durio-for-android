@@ -148,7 +148,7 @@ fun InviteDialog(channelId: String, onDismissRequest: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                (Uri.parse(STOAT_INVITES).host ?: "rvlt.gg") + "/",
+                STOAT_INVITES.substringAfter("://") + "/",
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
                 modifier = Modifier

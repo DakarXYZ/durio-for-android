@@ -25,8 +25,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import chat.stoat.activities.InviteActivity
 import chat.stoat.api.StoatJson
 import chat.stoat.api.buildUserAgent
-import chat.stoat.core.model.data.STOAT_INVITES
 import chat.stoat.core.model.data.STOAT_WEB_APP
+import chat.stoat.core.model.fork.UpstreamStoat
 import chat.stoat.ui.theme.ThemeCompat
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -54,7 +54,7 @@ fun ColumnScope.DiscoverView() {
                     settings.userAgentString = buildUserAgent("DiscoverView")
                     settings.setSupportZoom(false)
                     settings.setSupportMultipleWindows(false)
-                    loadUrl("$STOAT_INVITES/discover/servers?embedded=true")
+                    loadUrl(UpstreamStoat.DISCOVER)
 
                     webViewClient = object : android.webkit.WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
@@ -114,7 +114,7 @@ fun ColumnScope.DiscoverView() {
                                 return true
                             }
 
-                            if (!request?.url?.host.equals("rvlt.gg")) {
+                            if (!request?.url?.host.equals(UpstreamStoat.DISCOVER_HOST)) {
                                 return true
                             }
 

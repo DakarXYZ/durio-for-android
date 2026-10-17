@@ -85,6 +85,7 @@ import chat.stoat.composables.screens.chat.drawer.ChannelSideDrawer
 import chat.stoat.core.model.schemas.ReleaseNotesSettings
 import chat.stoat.dialogs.NotificationRationaleDialog
 import chat.stoat.c2dm.NotificationDeepLink
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.zero
 import chat.stoat.persistence.KVStorage
@@ -313,7 +314,7 @@ class ChatRouterViewModel(
     }
 
     fun maybeShowChangelog() {
-        if (changelogCheckDone) return
+        if (changelogCheckDone || !UpstreamServices.gazette) return
         changelogCheckDone = true
 
         viewModelScope.launch {

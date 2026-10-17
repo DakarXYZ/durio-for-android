@@ -114,8 +114,8 @@ val StoatHttp = HttpClient(StoatAPIHost.platform.createHttpEngine()) {
 
     install(Logging) { level = LogLevel.INFO }
 
+    // durio: no base URL, every route builds an absolute one (.api(), plan AN-07)
     defaultRequest {
-        url(STOAT_BASE)
         header("User-Agent", buildUserAgent())
     }
 }
