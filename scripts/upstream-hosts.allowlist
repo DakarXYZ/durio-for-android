@@ -6,6 +6,7 @@
 
 # Tests: canonicalApiUrl vectors shared with pushd, recognition of the upstream server
 ^core/(api|model)/src/(commonTest|androidHostTest)/
+^app/src/test/java/chat/stoat/fork/upstream/
 
 # Upstream's spec link in a comment
 ^app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel\.kt:[0-9]+: *// Spec https://wiki\.rvlt\.gg/

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import chat.stoat.R
 import chat.stoat.composables.chat.viewUrlInBrowser
 import chat.stoat.core.model.data.STOAT_SUPPORT
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.user_info_sheet_webhook
 import chat.stoat.shared.resources.user_info_sheet_webhook_body
@@ -68,7 +69,8 @@ fun WebHookUserSheet(modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-        Button(
+        // durio: the help article exists only on upstream's support site (plan AN-17)
+        if (UpstreamServices.support) Button(
             onClick = {
                 viewUrlInBrowser(context, "$STOAT_SUPPORT/kb/server-management/integrations-and-bots/webhooks")
             },

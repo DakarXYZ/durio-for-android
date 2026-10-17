@@ -47,6 +47,7 @@ import chat.stoat.callbacks.UiCallbacks
 import chat.stoat.composables.markdown.prose.easyLineBreaks
 import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
+import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.text.MessageProcessor
 import chat.stoat.internals.text.stripPUAChars
 import chat.stoat.markdown.StoatMarkdownFlavour
@@ -183,7 +184,9 @@ class ChannelScreenViewModel(
         this.isSending = false
         this.ageGateUnlocked = channel?.nsfw != true
         this.showGeoGate = when {
-            channel?.nsfw == true && GeoStateProvider.geoState?.isAgeRestrictedGeo == true -> true
+            // durio: the geo gate is upstream's, only for accounts on its server (plan AN-17, Q39)
+            channel?.nsfw == true && UpstreamServices.geo &&
+                GeoStateProvider.geoState?.isAgeRestrictedGeo == true -> true
             else -> false
         }
         viewModelScope.launch {

@@ -1064,7 +1064,9 @@ fun ChannelItem(
                 when (iconType) {
                     is ChannelItemIconType.Channel -> {
                         when {
-                            GeoStateProvider.geoState?.isAgeRestrictedGeo == true &&
+                            // durio: geo gate only for accounts on upstream's server (plan AN-17)
+                            UpstreamServices.geo &&
+                                    GeoStateProvider.geoState?.isAgeRestrictedGeo == true &&
                                     channel.nsfw == true -> {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_grid_3x3_off_24dp),
