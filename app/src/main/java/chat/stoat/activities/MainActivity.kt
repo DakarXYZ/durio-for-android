@@ -86,6 +86,7 @@ import chat.stoat.composables.voice.VoicePermissionSwitch
 import chat.stoat.composables.voice.VoiceSheet
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.HealthNotice
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.StoatWebLink
 import chat.stoat.internals.extensions.getStringBlocking
@@ -235,9 +236,15 @@ class MainActivityViewModel(
 
             Log.d("MainActivity", "We can reach Stoat, checking if we're logged in")
 
-            val token = kvStorage.get("sessionToken")
-                ?: return@launch startWithDestination("login/greeting")
-            val id = kvStorage.get("sessionId") ?: ""
+            // durio: the active account's session (plan AN-08)
+            val session = AccountManager.session()
+            if (session == null) {
+                // an account whose token cannot be read any more has to log in again
+                if (AccountManager.active != null) return@launch couldNotLogIn.emit(true)
+                return@launch startWithDestination("login/greeting")
+            }
+            val token = session.token
+            val id = session.id
 
             Log.d(
                 "MainActivity",
@@ -280,6 +287,7 @@ class MainActivityViewModel(
                     Log.d("MainActivity", "Onboarding state is complete, logging in")
                     StoatAPI.loginAs(token)
                     StoatAPI.setSessionId(id)
+                    AccountManager.onLoggedIn()
                     if (Experiments.usePolar.isEnabled) {
                         startWithDestination("main")
                     } else {
@@ -294,14 +302,8 @@ class MainActivityViewModel(
     }
 
     fun logOut() {
-        viewModelScope.launch {
-            kvStorage.remove("sessionToken")
-            kvStorage.remove("sessionId")
-            kvStorage.remove("selfId")
-            kvStorage.remove("selfName")
-            kvStorage.remove("selfAvatarUrl")
-            startWithDestination("login/greeting")
-        }
+        // durio: revokes the session and removes the account, then restarts the UI (plan AN-11)
+        AccountManager.logout(AccountManager.active?.key)
     }
 
     fun updateNextDestination(destination: String) {

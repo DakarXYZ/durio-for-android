@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.routes.account.EmailPasswordAssessment
@@ -125,8 +126,8 @@ class LoginViewModel(
                         val token = hints.token
                         val id = hints.id
 
-                        kvStorage.set("sessionToken", token)
-                        kvStorage.set("sessionId", id)
+                        // durio: stores the account and its wrapped token (plan AN-08)
+                        AccountManager.completeLogin(hints)
 
                         val onboard = needsOnboarding(token)
                         if (onboard) {
@@ -136,6 +137,7 @@ class LoginViewModel(
 
                         StoatAPI.loginAs(token)
                         StoatAPI.setSessionId(id)
+                        AccountManager.onLoggedIn()
 
                         _navigateTo = "home"
                     } catch (e: Error) {

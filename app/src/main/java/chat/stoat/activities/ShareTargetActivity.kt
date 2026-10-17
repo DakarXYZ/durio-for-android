@@ -50,6 +50,7 @@ import androidx.core.view.WindowCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.internals.ChannelUtils
 import chat.stoat.api.routes.channel.sendMessage
@@ -203,12 +204,12 @@ class ShareTargetScreenViewModel(
     var activeBottomPane by mutableStateOf<ChannelScreenActivePane>(ChannelScreenActivePane.None)
 
     suspend fun isLoggedIn(): Boolean {
-        return kvStorage.get("sessionToken") != null
+        return AccountManager.session() != null
     }
 
     suspend fun initialiseAPI() {
         if (!StoatAPI.isLoggedIn()) {
-            val token = kvStorage.get("sessionToken") ?: return
+            val token = AccountManager.session()?.token ?: return
             StoatAPI.loginAs(token)
             StoatAPI.initialize()
         }

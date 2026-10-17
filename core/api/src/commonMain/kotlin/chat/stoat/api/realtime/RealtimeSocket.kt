@@ -83,7 +83,9 @@ sealed class RealtimeSocketFrames {
 }
 
 object RealtimeSocket {
-    val database = Database(StoatAPIHost.storage.sqlDriver)
+    // durio: a getter, the driver belongs to the active account (plan AN-08)
+    val database: Database
+        get() = Database(StoatAPIHost.storage.sqlDriver)
     var socket: WebSocketSession? = null
 
     @Volatile

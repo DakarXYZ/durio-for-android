@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
-import chat.stoat.api.StoatAPI
 import chat.stoat.api.routes.channel.sendMessage
-import chat.stoat.persistence.KVStorage
+import chat.stoat.fork.account.AccountHttp
+import chat.stoat.fork.account.AccountManager
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import logcat.asLog
@@ -30,13 +30,16 @@ class ReplyReceiver : BroadcastReceiver() {
             }
 
         runBlocking {
-            val token = KVStorage(context).get("sessionToken") ?: run {
+            // durio: the account's own client, never the global token (AN-15); AN-12 picks the
+            // account from the intent
+            val http = AccountManager.active?.let { AccountHttp(it.key) } ?: run {
                 logcat(LogPriority.ERROR) { "No session token, aborting" }
                 return@runBlocking
             }
-            StoatAPI.setSessionHeader(token)
-            runCatching { sendMessage(channelId, content) }
-                .onFailure { logcat(LogPriority.ERROR) { "Send failed: ${it.asLog()}" } }
+            http.use { client ->
+                runCatching { sendMessage(channelId, content, client = client) }
+                    .onFailure { logcat(LogPriority.ERROR) { "Send failed: ${it.asLog()}" } }
+            }
         }
 
         NotificationManagerCompat.from(context).cancel(channelId, NotificationID.NEW_MESSAGE)

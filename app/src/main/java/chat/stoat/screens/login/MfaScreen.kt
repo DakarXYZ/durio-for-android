@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.routes.account.MfaResponseRecoveryCode
@@ -103,10 +104,11 @@ class MfaScreenViewModel(
                     val token = hints.token
                     val id = hints.id
 
+                    // durio: stores the account and its wrapped token (plan AN-08)
+                    AccountManager.completeLogin(hints)
                     StoatAPI.loginAs(token)
                     StoatAPI.setSessionId(id)
-                    kvStorage.set("sessionToken", token)
-                    kvStorage.set("sessionId", id)
+                    AccountManager.onLoggedIn()
 
                     _navigateToHome = true
                 } catch (e: Error) {
@@ -135,10 +137,11 @@ class MfaScreenViewModel(
                     val token = hints.token
                     val id = hints.id
 
+                    // durio: stores the account and its wrapped token (plan AN-08)
+                    AccountManager.completeLogin(hints)
                     StoatAPI.loginAs(token)
                     StoatAPI.setSessionId(id)
-                    kvStorage.set("sessionToken", token)
-                    kvStorage.set("sessionId", id)
+                    AccountManager.onLoggedIn()
 
                     _navigateToHome = true
                 } catch (e: Error) {

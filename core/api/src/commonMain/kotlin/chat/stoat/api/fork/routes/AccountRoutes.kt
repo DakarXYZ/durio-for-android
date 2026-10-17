@@ -1,0 +1,23 @@
+package chat.stoat.api.fork.routes
+
+import chat.stoat.api.StoatJson
+import chat.stoat.api.fork.http.ApiClient
+import chat.stoat.api.fork.http.api
+import chat.stoat.core.model.schemas.User
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
+
+/** Thrown when the server refuses the request (bad token, gone session); never for network errors. */
+class AccountRequestException(val status: Int) : Exception("Server answered $status")
+
+/**
+ * `GET /users/@me` for any account (plan AN-08 migration, AN-12). Unlike `fetchSelf()` it leaves
+ * the global caches alone.
+ */
+suspend fun fetchSelfUser(client: ApiClient): User {
+    val response = client.http.get("/users/@me".api(client))
+    if (!response.status.isSuccess()) throw AccountRequestException(response.status.value)
+    return StoatJson.decodeFromString(User.serializer(), response.bodyAsText())
+}
+

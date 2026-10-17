@@ -37,11 +37,11 @@ import androidx.navigation.NavController
 import chat.stoat.BuildConfig
 import chat.stoat.R
 import chat.stoat.activities.InviteActivity
-import chat.stoat.api.StoatAPI
 import chat.stoat.api.settings.FeatureFlags
 import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.composables.generic.ListHeader
 import chat.stoat.core.model.fork.UpstreamStoat
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.persistence.KVStorage
 import chat.stoat.shared.resources.Res
@@ -63,22 +63,16 @@ import chat.stoat.shared.resources.settings_language
 import chat.stoat.shared.resources.settings_notifications
 import chat.stoat.shared.resources.settings_profile
 import chat.stoat.shared.resources.settings_sessions
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.stringResource
 import org.koin.androidx.compose.koinViewModel
 
 class SettingsScreenViewModel(
     private val kvStorage: KVStorage
 ) : ViewModel() {
+    // durio: removes the account and its files, then restarts on another account or the login
+    // screen (plan AN-08)
     fun logout() {
-        runBlocking {
-            kvStorage.remove("sessionToken")
-            kvStorage.remove("selfId")
-            kvStorage.remove("selfName")
-            kvStorage.remove("selfAvatarUrl")
-            LoadedSettings.reset()
-            StoatAPI.logout()
-        }
+        AccountManager.logout(AccountManager.active?.key)
     }
 }
 
@@ -397,11 +391,6 @@ fun SettingsScreen(
                             .testTag("settings_view_logout")
                             .clickable {
                                 viewModel.logout()
-                                navController.navigate("login/greeting") {
-                                    popUpTo("chat") {
-                                        inclusive = true
-                                    }
-                                }
                             }
                     )
                 }

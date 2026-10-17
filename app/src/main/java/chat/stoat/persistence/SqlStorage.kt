@@ -1,13 +1,10 @@
 package chat.stoat.persistence
 
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import chat.stoat.StoatApplication
+import chat.stoat.fork.account.AccountManager
 
 object SqlStorage {
-    val driver: SqlDriver = AndroidSqliteDriver(
-        Database.Schema,
-        StoatApplication.instance.applicationContext,
-        "revolt.db"
-    )
+    // durio: cache_<key>.db of the active account instead of one revolt.db (plan AN-08)
+    val driver: SqlDriver
+        get() = AccountManager.sqlDriver
 }

@@ -23,10 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import chat.stoat.fork.account.AccountManager
 import chat.stoat.api.routes.onboard.OnboardingCompletionBody
 import chat.stoat.api.routes.onboard.completeOnboarding
 import chat.stoat.composables.generic.FormTextField
-import chat.stoat.persistence.KVStorage
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.next
 import chat.stoat.shared.resources.onboarding_changeable
@@ -59,7 +59,7 @@ fun OnboardingScreen(navController: NavController, onOnboardingComplete: () -> U
             username = username.value
         )
 
-        val sessionToken = KVStorage(context).get("sessionToken") ?: return
+        val sessionToken = AccountManager.session()?.token ?: return
         val result = completeOnboarding(body, sessionToken)
 
         if (result.ok) {
