@@ -5,6 +5,7 @@ import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
 import chat.stoat.core.model.schemas.User
 import io.ktor.client.request.get
+import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 
@@ -21,3 +22,11 @@ suspend fun fetchSelfUser(client: ApiClient): User {
     return StoatJson.decodeFromString(User.serializer(), response.bodyAsText())
 }
 
+/**
+ * `POST /auth/session/logout`: revokes the session whose token made the request (plan AN-11).
+ * For accounts whose session ID is unknown; otherwise `logoutSessionById` does the same.
+ */
+suspend fun logoutCurrentSession(client: ApiClient) {
+    val response = client.http.post("/auth/session/logout".api(client))
+    if (!response.status.isSuccess()) throw AccountRequestException(response.status.value)
+}

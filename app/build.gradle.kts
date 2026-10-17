@@ -226,6 +226,7 @@ dependencies {
     implementation(libs.android.material)
     implementation(libs.android.datastore)
     implementation(libs.android.datastore.preferences)
+    implementation(libs.android.work.runtime)
 
     implementation(libs.hcaptcha)
 
@@ -291,6 +292,7 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.android.test.core.ktx)
     testImplementation(libs.sqldelight.sqlite.driver)
+    testImplementation(libs.ktor.client.mock)
 }
 
 aboutLibraries {

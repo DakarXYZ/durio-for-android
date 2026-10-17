@@ -32,6 +32,7 @@ import chat.stoat.api.routes.push.subscribePush
 import chat.stoat.api.routes.push.unsubscribePush
 import chat.stoat.composables.generic.CenteredListItem
 import chat.stoat.dialogs.NotificationRationaleDialog
+import chat.stoat.fork.account.PushResubscribe
 import chat.stoat.persistence.KVStorage
 import chat.stoat.settings.dsl.SettingsPage
 import chat.stoat.shared.resources.Res
@@ -90,6 +91,8 @@ class NotificationsSettingsScreenViewModel(
                             subscribePush(auth = newToken)
                             kvStorage.set("fcmToken", newToken)
                         }
+                        // durio: the other accounts on this device too (plan AN-11)
+                        PushResubscribe.enqueue(context)
                         kvStorage.remove("pushNotificationsRejected")
                         isPushEnabled = checkPushEnabled()
                     } catch (e: Exception) {

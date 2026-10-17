@@ -15,6 +15,7 @@ import chat.stoat.api.fork.http.AccountHttp
 import chat.stoat.api.fork.routes.fetchSelfUser
 import chat.stoat.api.fork.server.DiscoveredServer
 import chat.stoat.api.routes.account.UserHints
+import chat.stoat.api.routes.push.subscribePush
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.User
@@ -40,7 +41,7 @@ import logcat.asLog
 import logcat.logcat
 
 /**
- * Accounts on this device (plan AN-08, AN-09). Stage 1 keeps one active account at a time: the
+ * Accounts on this device (plan AN-08..AN-11). Stage 1 keeps one active account at a time: the
  * global `StoatAPI`, socket and settings belong to it. Switching tears those down without
  * touching the account's data or its session, points the app at the next account's server and
  * files, and restarts the activity task (Q34).
@@ -72,6 +73,9 @@ object AccountManager {
     /** True while switching, adding or logging out; the UI shows progress. */
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
+
+    private val _loggingOut = MutableStateFlow(false)
+    val loggingOut: StateFlow<Boolean> = _loggingOut.asStateFlow()
 
     val active: Account?
         get() = _state.value.active
@@ -239,18 +243,26 @@ object AccountManager {
             migration.removeAccountKeys()
             LegacyServer.clear(app)
         }
+
+        // Same account logged in again: the old session is no longer used anywhere
+        val oldSession = previous?.sessionId?.takeIf { it.isNotEmpty() && it != hints.id }
+        if (oldSession != null) {
+            ioScope.launch { SessionRevoker.revoke(app, endpoints, hints.token, oldSession) }
+        }
         account
     }
 
     /**
      * After `StoatAPI.loginAs` succeeded for the active account: refresh the name and avatar shown
-     * in the account switcher.
+     * in the account switcher and subscribe to push (AN-11: on every login, not only from the
+     * notification banner).
      */
     fun onLoggedIn() {
         val account = active ?: return
         val self = StoatAPI.selfId?.let { StoatAPI.userCache[it] }
         ioScope.launch {
             if (self != null) updateProfile(account.key, self)
+            subscribeActiveToPush()
         }
     }
 
@@ -261,6 +273,20 @@ object AccountManager {
             val account = _state.value.find(key) ?: return
             if (account.displayName == name && account.avatarUrl == avatar) return
             _state.value = store.upsert(account.copy(displayName = name, avatarUrl = avatar))
+        }
+    }
+
+    private suspend fun subscribeActiveToPush() {
+        val account = active ?: return
+        if (!PushResubscribe.wantsPush(account)) return
+        val device = KVStorage(app)
+        if (device.getBoolean("pushNotificationsRejected") == true) return
+        val fcmToken = device.get("fcmToken") ?: return
+        try {
+            subscribePush(auth = fcmToken)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            logcat(LogPriority.WARN) { "Push subscription failed: ${e.asLog()}" }
         }
     }
 
@@ -307,13 +333,15 @@ object AccountManager {
     }
 
     /**
-     * Log out of [key]: delete the account's files and continue with another account or the login
-     * screen.
+     * Log out of [key] (AN-11): unsubscribe push and revoke the session on its server (both
+     * best effort; offline the revocation is retried by WorkManager), delete the account's files
+     * and notifications, then continue with another account or the login screen.
      */
     fun logout(key: String?) {
         mainScope.launch {
             mutex.withLock {
                 _busy.value = true
+                _loggingOut.value = true
                 val account = key?.let { _state.value.find(it) }
                 val restart = account == null || account.key == active?.key
                 try {
@@ -327,6 +355,7 @@ object AccountManager {
                     logcat(LogPriority.ERROR) { "Logout failed: ${e.asLog()}" }
                 }
                 // logging out of a background account leaves the UI as it is
+                _loggingOut.value = false
                 if (restart) restartUi() else _busy.value = false
             }
         }
@@ -334,15 +363,30 @@ object AccountManager {
 
     private suspend fun logoutAccount(account: Account) {
         val wasActive = account.key == active?.key
+        val token = withContext(Dispatchers.IO) {
+            try {
+                registry.get(account.key).readToken()
+            } catch (e: UnwrapException) {
+                null
+            }
+        }
+
         if (wasActive) {
             teardownActive()
             // nothing may write into the files that are about to go
             activate(null)
         }
-        // TODO(AN-11): revoke the session on the server first
+        if (token != null) {
+            withContext(Dispatchers.IO) {
+                SessionRevoker.unsubscribeAndRevoke(app, account.endpoints, token, account.sessionId)
+            }
+        }
+        // stage 4: close the account's E2EE machine here, before its files go
 
         registry.remove(account.key, deleteFiles = true)
         _state.value = store.remove(account.key)
+        AccountNotifications.clear(app, account.key, everything = _state.value.accounts.isEmpty())
+        ioScope.launch { AccountNotifications.clearImageCache(app) }
 
         if (wasActive) {
             val next = _state.value.accounts.maxByOrNull { it.addedAt }
@@ -352,10 +396,18 @@ object AccountManager {
     }
 
     private suspend fun logoutLegacy() {
+        val endpoints = LegacyServer.load(app)
+        val session = migration.legacySession()
         teardownActive()
+        if (endpoints != null && session != null) {
+            withContext(Dispatchers.IO) {
+                SessionRevoker.unsubscribeAndRevoke(app, endpoints, session.first, session.second)
+            }
+        }
         migration.removeAccountKeys()
         LegacyServer.clear(app)
         legacyMode = false
+        AccountNotifications.clear(app, key = null, everything = _state.value.accounts.isEmpty())
         activate(_state.value.active)
     }
 

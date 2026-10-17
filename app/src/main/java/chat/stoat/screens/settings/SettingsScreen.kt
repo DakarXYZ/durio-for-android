@@ -42,6 +42,7 @@ import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.composables.generic.ListHeader
 import chat.stoat.core.model.fork.UpstreamStoat
 import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.ui.AccountBusyDialog
 import chat.stoat.fork.ui.AccountsSettingsItem
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.persistence.KVStorage
@@ -70,8 +71,8 @@ import org.koin.androidx.compose.koinViewModel
 class SettingsScreenViewModel(
     private val kvStorage: KVStorage
 ) : ViewModel() {
-    // durio: removes the account and its files, then restarts on another account or the login
-    // screen (plan AN-08)
+    // durio: off the main thread; revokes the session, deletes the account's files and moves on
+    // to another account or the login screen (plan AN-11)
     fun logout() {
         AccountManager.logout(AccountManager.active?.key)
     }
@@ -124,6 +125,7 @@ fun SettingsScreen(
                 ) {
                     // durio: account switcher (plan AN-10)
                     AccountsSettingsItem()
+                    AccountBusyDialog()
 
                     ListHeader {
                         Text(stringResource(Res.string.settings_category_account))

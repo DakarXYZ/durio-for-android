@@ -25,7 +25,7 @@ import chat.stoat.R
 import chat.stoat.activities.MainActivity
 import chat.stoat.api.internals.ULID
 import chat.stoat.api.routes.channel.fetchSingleChannel
-import chat.stoat.api.routes.push.subscribePush
+import chat.stoat.fork.account.PushResubscribe
 import chat.stoat.c2dm.ChannelRegistrator.Companion.CHANNEL_ID_GROUP_CONVERSATIONS_MESSAGES
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.internals.extensions.getStringBlocking
@@ -83,8 +83,9 @@ object NotificationID {
 class HandlerService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        // durio: every account with its own session, from WorkManager (plan AN-11)
         runBlocking {
-            subscribePush(auth = token)
+            PushResubscribe.onNewToken(this@HandlerService, token)
         }
     }
 

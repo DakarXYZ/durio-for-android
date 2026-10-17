@@ -40,6 +40,7 @@ import chat.stoat.shared.resources.durio_accounts_add
 import chat.stoat.shared.resources.durio_accounts_leave_call_body
 import chat.stoat.shared.resources.durio_accounts_leave_call_confirm
 import chat.stoat.shared.resources.durio_accounts_leave_call_title
+import chat.stoat.shared.resources.durio_accounts_logging_out
 import chat.stoat.shared.resources.durio_accounts_switching
 import chat.stoat.voice.VoiceCallManager
 import org.jetbrains.compose.resources.stringResource
@@ -203,3 +204,15 @@ fun AccountsSettingsItem() {
     }
 }
 
+/** Shown while logging out: the revocation may wait for the network (up to a few seconds). */
+@Composable
+fun AccountBusyDialog() {
+    val loggingOut by AccountManager.loggingOut.collectAsState()
+    if (!loggingOut) return
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        title = { Text(stringResource(Res.string.durio_accounts_logging_out)) },
+        text = { CircularProgressIndicator() }
+    )
+}
