@@ -17,7 +17,6 @@ import chat.stoat.api.fork.routes.fetchSelfUser
 import chat.stoat.api.fork.server.DiscoveredServer
 import chat.stoat.api.fork.server.ServerDiscovery
 import chat.stoat.api.routes.account.UserHints
-import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.User
@@ -42,9 +41,10 @@ import logcat.asLog
 import logcat.logcat
 
 /**
- * Accounts on this device (plan AN-08). Stage 1 keeps one active account at a time: the global
- * `StoatAPI`, socket and settings belong to it, and [ActiveServer], the account keys of the KV
- * and the SQLDelight driver point at its server and files.
+ * Accounts on this device (plan AN-08, AN-09). Stage 1 keeps one active account at a time: the
+ * global `StoatAPI`, socket and settings belong to it. Switching tears those down without
+ * touching the account's data or its session, points the app at the next account's server and
+ * files, and restarts the activity task (Q34).
  *
  * Background work for any account (push, notification actions) goes through [registry] and
  * [http] instead of the global state (AN-12, Q35).
@@ -70,6 +70,10 @@ object AccountManager {
     private val _state = MutableStateFlow(AccountsState())
     val state: StateFlow<AccountsState> = _state.asStateFlow()
 
+    /** True while switching, adding or logging out; the UI shows progress. */
+    private val _busy = MutableStateFlow(false)
+    val busy: StateFlow<Boolean> = _busy.asStateFlow()
+
     val active: Account?
         get() = _state.value.active
 
@@ -80,6 +84,9 @@ object AccountManager {
     @Volatile
     var legacyMode = false
         private set
+
+    /** Account to go back to when "Add account" is cancelled. */
+    private var returnKey: String? = null
 
     /** Server picked on the login screen, before the account exists (AN-10). */
     var pendingServer: DiscoveredServer? = null
@@ -235,6 +242,7 @@ object AccountManager {
         _state.value = store.upsert(account, makeActive = true)
         activate(account)
         pendingServer = null
+        returnKey = null
 
         if (legacyMode) {
             // logged in again instead of migrating; the old session is not ours to keep
@@ -267,6 +275,48 @@ object AccountManager {
         }
     }
 
+    /** Makes [key] the active account and restarts the UI on it (AN-09). */
+    fun switchTo(key: String) {
+        mainScope.launch {
+            mutex.withLock {
+                val target = _state.value.find(key) ?: return@withLock
+                if (target.key == active?.key) return@withLock
+                _busy.value = true
+                teardownActive()
+                _state.value = store.setActive(target.key)
+                activate(target)
+                returnKey = null
+                restartUi()
+            }
+        }
+    }
+
+    /** "Add account": leave the active account (it stays signed in) and open the login screen. */
+    fun beginAddAccount() {
+        mainScope.launch {
+            mutex.withLock {
+                _busy.value = true
+                returnKey = active?.key ?: returnKey
+                teardownActive()
+                _state.value = store.setActive(null)
+                activate(null)
+                restartUi()
+            }
+        }
+    }
+
+    /** Accounts to go back to from the login screen ("Add account" cancelled). */
+    val canCancelAddAccount: Boolean
+        get() = active == null && !legacyMode && _state.value.accounts.isNotEmpty()
+
+    fun cancelAddAccount() {
+        val accounts = _state.value.accounts
+        val key = returnKey?.takeIf { k -> accounts.any { it.key == k } }
+            ?: accounts.maxByOrNull { it.addedAt }?.key
+            ?: return
+        switchTo(key)
+    }
+
     /**
      * Log out of [key]: delete the account's files and continue with another account or the login
      * screen.
@@ -274,6 +324,7 @@ object AccountManager {
     fun logout(key: String?) {
         mainScope.launch {
             mutex.withLock {
+                _busy.value = true
                 val account = key?.let { _state.value.find(it) }
                 val restart = account == null || account.key == active?.key
                 try {
@@ -287,7 +338,7 @@ object AccountManager {
                     logcat(LogPriority.ERROR) { "Logout failed: ${e.asLog()}" }
                 }
                 // logging out of a background account leaves the UI as it is
-                if (restart) restartUi()
+                if (restart) restartUi() else _busy.value = false
             }
         }
     }
@@ -319,10 +370,12 @@ object AccountManager {
         activate(_state.value.active)
     }
 
-    /** Forgets the active account's state in memory. TODO(AN-09): a full reset for switching. */
-    private fun teardownActive() {
-        LoadedSettings.reset()
-        StoatAPI.logout()
+    /**
+     * Stops everything that belongs to the active account (AN-09, the table in the plan), without
+     * deleting its data or ending its session.
+     */
+    private suspend fun teardownActive() {
+        AccountReset.resetGlobalState()
         pendingServer = null
     }
 
@@ -334,6 +387,7 @@ object AccountManager {
     }
 
     private fun restartUi() {
+        _busy.value = false
         app.startActivity(
             Intent(app, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

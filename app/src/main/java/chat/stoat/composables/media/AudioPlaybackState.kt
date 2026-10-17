@@ -48,6 +48,12 @@ internal object AudioPlaybackCoordinator : DefaultLifecycleObserver {
     override fun onStop(owner: LifecycleOwner) {
         activePlayer?.pause()
     }
+
+    // durio: account switch (plan AN-09)
+    fun stop() {
+        activePlayer?.pause()
+        activePlayer = null
+    }
 }
 
 internal class AudioPlaybackState(val player: ExoPlayer) {

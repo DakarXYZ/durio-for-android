@@ -12,12 +12,18 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private const val FOLDER_PREFIX = "folder-"
 
@@ -252,6 +258,16 @@ object ServerFolders {
     }
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * durio: before switching accounts let pending sidebar writes finish, then cancel the rest,
+     * so folders of one account never reach another account's server (plan AN-09).
+     */
+    suspend fun finishPendingSync(timeout: Duration = 5.seconds) {
+        val pending = syncScope.coroutineContext.job.children.toList()
+        withTimeoutOrNull(timeout) { pending.joinAll() }
+        pending.forEach { it.cancelAndJoin() }
+    }
 
     private fun commit(folders: List<ServerFolder>?, order: List<String>? = null) {
         val folderSettings = folders?.let { list ->

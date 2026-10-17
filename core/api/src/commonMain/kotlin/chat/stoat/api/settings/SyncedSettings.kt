@@ -16,11 +16,15 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /*
  * - Note: When adding a new key -
@@ -34,7 +38,7 @@ object SyncedSettings {
     private val KEYS =
         arrayOf("ordering", "android", "notifications", "release-notes", "server-folders")
 
-    private val _fetchCompleted = CompletableDeferred<Unit>()
+    private var _fetchCompleted = CompletableDeferred<Unit>()
 
     suspend fun awaitFetched() = _fetchCompleted.await()
 
@@ -52,6 +56,10 @@ object SyncedSettings {
     private val _serverFolders = mutableStateOf(ServerFoldersSettings())
     private val revisions = AtomicReference(emptyMap<String, Long>())
     private val writeLock = Mutex()
+
+    // durio: bumped on account switch; writes queued for the previous account are dropped
+    @Volatile
+    private var generation = 0
 
     val ordering: OrderingSettings
         get() = _ordering.value
@@ -133,10 +141,36 @@ object SyncedSettings {
     }
 
     private suspend fun write(key: String, value: String) {
+        val writeGeneration = generation
         val timestamp = Clock.System.now().toEpochMilliseconds()
         setRevision(key, timestamp)
         // mutex is FIFO === writes reach the server in the order their timestamps were taken
-        writeLock.withLock { setKey(key, value, timestamp) }
+        writeLock.withLock {
+            if (writeGeneration == generation) setKey(key, value, timestamp)
+        }
+    }
+
+    /**
+     * durio: forget the active account's settings locally, for switching accounts (plan AN-09).
+     * Unlike the reset functions below this never writes to the server. A write already on its
+     * way finishes (with the old account's token) before this returns, up to [timeout].
+     */
+    suspend fun clearLocal(timeout: Duration = 10.seconds) {
+        generation++
+        withTimeoutOrNull(timeout) { writeLock.withLock { } }
+
+        _ordering.value = OrderingSettings()
+        _android.value = AndroidSpecificSettings(
+            theme = "None",
+            font = "Default",
+            colourOverrides = null,
+            messageReplyStyle = "None"
+        )
+        _notifications.value = NotificationSettings()
+        _releaseNotes.value = ReleaseNotesSettings()
+        _serverFolders.value = ServerFoldersSettings()
+        revisions.store(emptyMap())
+        if (_fetchCompleted.isCompleted) _fetchCompleted = CompletableDeferred()
     }
 
     private fun parseNotificationSettings(value: String): NotificationSettings {

@@ -320,6 +320,27 @@ object StoatAPI {
      * Clears the API client's state completely.
      */
     fun logout() {
+        clearSessionState()
+        socketCoroutine?.cancel()
+        pingCoroutine?.cancel()
+        reconnectRequestJob.load()?.cancel()
+
+        clearPersistentCache()
+    }
+
+    /**
+     * durio: like [logout], but the account's local cache stays and its session stays valid on
+     * the server; for switching accounts (plan AN-09). Waits for the socket to stop, so nothing
+     * of the old account reaches the next account's cache.
+     */
+    suspend fun softReset() {
+        clearSessionState()
+        reconnectRequestJob.load()?.cancelAndJoin()
+        pingCoroutine?.cancelAndJoin()
+        socketCoroutine?.cancelAndJoin()
+    }
+
+    private fun clearSessionState() {
         selfId = null
         sessionToken = ""
         sessionId = ""
@@ -329,16 +350,14 @@ object StoatAPI {
         channelCache.clear()
         emojiCache.clear()
         messageCache.clear()
+        voiceStateCache.clear()
         userSlowmodeCache.clear()
 
         members.clear()
         unreads.clear()
 
-        socketCoroutine?.cancel()
-        pingCoroutine?.cancel()
-        reconnectRequestJob.load()?.cancel()
-
-        clearPersistentCache()
+        // durio: the next account hydrates from its own cache
+        openForLocalHydration = true
     }
 
     /**
