@@ -1,5 +1,4 @@
 import com.mikepenz.aboutlibraries.plugin.StrictMode
-import io.sentry.android.gradle.instrumentation.logcat.LogcatLevel
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
@@ -11,7 +10,6 @@ plugins {
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.sentry.android)
     alias(libs.plugins.google.services)
     id("kotlin-parcelize")
 }
@@ -59,11 +57,19 @@ android {
     namespace = "chat.stoat"
 
     defaultConfig {
-        applicationId = "chat.revolt"
+        // durio: our own application id (plan AN-01, decision O1′)
+        applicationId = "io.github.dakarxyz.durio"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = Integer.parseInt("001_008_001".replace("_", ""), 10)
         versionName = "1.8.1"
+
+        // durio: server prefilled on the login screen; empty = the user types the address (plan O13)
+        buildConfigField(
+            "String",
+            "DEFAULT_SERVER",
+            "\"${buildproperty("durio.default_server", "DURIO_DEFAULT_SERVER") ?: ""}\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -71,18 +77,28 @@ android {
         }
     }
 
+    // durio: release signing from keystore.properties (not in git) or DURIO_KEYSTORE_* env (plan AN-02).
+    // Without them assembleRelease produces an unsigned APK, as upstream does.
+    val releaseKeystore = property("keystore.properties", "storeFile", "DURIO_KEYSTORE_FILE")
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseKeystore)
+                storePassword = property("keystore.properties", "storePassword", "DURIO_KEYSTORE_PASSWORD")
+                keyAlias = property("keystore.properties", "keyAlias", "DURIO_KEY_ALIAS")
+                keyPassword = property("keystore.properties", "keyPassword", "DURIO_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
-            )
-            buildConfigField(
-                "String",
-                "SENTRY_DSN",
-                "\"${buildproperty("sentry.dsn", "RVX_SENTRY_DSN")}\""
             )
             buildConfigField(
                 "String",
@@ -99,14 +115,9 @@ android {
             resValue(
                 "string",
                 "app_name",
-                buildproperty("build.debug.app_name", "RVX_DEBUG_APP_NAME")!!
+                buildproperty("build.debug.app_name", "RVX_DEBUG_APP_NAME") ?: "dur.io debug"
             )
 
-            buildConfigField(
-                "String",
-                "SENTRY_DSN",
-                "\"${buildproperty("sentry.dsn", "RVX_SENTRY_DSN")}\""
-            )
             buildConfigField(
                 "String",
                 "FLAVOUR_ID",
@@ -142,20 +153,6 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
-    }
-}
-
-sentry {
-    autoUploadProguardMapping =
-        buildproperty("sentry.upload_mappings", "RVX_SENTRY_UPLOAD_MAPPINGS") == "true"
-
-    tracingInstrumentation {
-        enabled = true
-
-        logcat {
-            enabled = true
-            minLevel = LogcatLevel.WARNING
-        }
     }
 }
 
@@ -209,9 +206,6 @@ dependencies {
     ksp(libs.glide.ksp)
 
     implementation(libs.aboutlibraries.core)
-
-    implementation(libs.sentry.android)
-    implementation(libs.sentry.compose.android)
 
     implementation(libs.android.profileinstaller)
     implementation(libs.android.documentfile)

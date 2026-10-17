@@ -89,7 +89,6 @@ import chat.stoat.shared.resources.overview_screen_share_profile
 import chat.stoat.shared.resources.overview_screen_share_profile_description
 import chat.stoat.shared.resources.overview_screen_title
 import chat.stoat.sheets.UserCardSheet
-import io.sentry.Sentry
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,7 +116,6 @@ fun OverviewScreen(
                 }
             } catch (e: Exception) {
                 Log.e("OverviewScreen", "Failed to fetch self", e)
-                Sentry.captureException(e)
                 isLoading = false
             }
         }

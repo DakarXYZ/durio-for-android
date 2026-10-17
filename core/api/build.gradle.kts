@@ -26,7 +26,6 @@ kotlin {
             implementation(libs.kotlin.datetime)
             implementation(libs.compose.multiplatform.runtime)
             implementation(libs.kermit)
-            implementation(libs.sentry.kotlin.multiplatform)
             implementation(libs.android.datastore.preferences.core)
 
             implementation(libs.ktor.client.core)

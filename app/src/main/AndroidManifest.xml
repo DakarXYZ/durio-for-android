@@ -25,7 +25,7 @@
 
     <application
         android:localeConfig="@xml/locales_config"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -47,8 +47,12 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- durio: no analytics; the FCM token is requested only after the user agrees to notifications -->
         <meta-data
-            android:name="io.sentry.auto-init"
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
             android:value="false" />
 
         <meta-data

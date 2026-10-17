@@ -31,7 +31,6 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.request.header
 import io.ktor.serialization.kotlinx.json.json
-import io.sentry.kotlin.multiplatform.Sentry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -215,7 +214,7 @@ object StoatAPI {
                         throw e
                     } catch (e: Exception) {
                         RealtimeSocket.updateDisconnectionState(DisconnectionState.Disconnected)
-                        Sentry.captureMessage("Error in socket error handling: $e")
+                        Logger.e(e) { "Error in socket error handling" }
                     }
                 }
             }
@@ -361,8 +360,7 @@ object StoatAPI {
     fun hydrateFromPersistentCache() {
         if (!openForLocalHydration) {
             Logger.w { "Hydration is closed, but was called" }
-            // Stale data is worst case, let's track it even in prod
-            Sentry.captureMessage("Local hydration called twice or after real data was fetched")
+            Logger.w { "Local hydration called twice or after real data was fetched" }
             return
         }
 

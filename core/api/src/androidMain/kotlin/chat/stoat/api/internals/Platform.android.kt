@@ -9,9 +9,9 @@ import io.ktor.client.engine.okhttp.OkHttp
 actual fun elapsedRealtimeMillis(): Long = SystemClock.elapsedRealtime()
 
 internal actual fun platformUserAgent(): String =
-    "StoatForAndroid/${StoatAPIHost.config.versionName} ${StoatAPIHost.config.applicationId} " +
+    "DurioForAndroid/${StoatAPIHost.config.versionName} ${StoatAPIHost.config.applicationId} " +
         "Android/${Build.VERSION.SDK_INT} (${Build.MANUFACTURER} ${Build.DEVICE})"
 
-actual fun friendlySessionName(): String = "Stoat for Android on ${Build.MANUFACTURER} ${Build.MODEL}"
+actual fun friendlySessionName(): String = "dur.io on ${Build.MANUFACTURER} ${Build.MODEL}"
 
 internal actual fun defaultHttpEngine(): HttpClientEngine = OkHttp.create()

@@ -25,3 +25,6 @@ app/src/main/assets/embedded
 /app/src/main/jniLibs/x86_64/
 copilot.data.migration*xml
 *.local.*
+keystore.properties
+*.jks
+*.keystore

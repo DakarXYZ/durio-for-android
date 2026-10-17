@@ -1,4 +1,4 @@
-sentry.dsn=
-sentry.upload_mappings=true
-build.debug.app_name=
-build.flavour_id=ZZUU
+build.debug.app_name=dur.io debug
+build.flavour_id=durio
+# Server prefilled on the login screen (empty: the user types it)
+durio.default_server=
