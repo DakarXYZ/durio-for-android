@@ -10,4 +10,9 @@
     <string name="durio_e2ee_suspicious">Suspicious message: it was changed or replayed on the way and is hidden.</string>
     <string name="durio_e2ee_unauthenticated">The sender of this message cannot be confirmed (key from backup).</string>
     <string name="durio_e2ee_mismatch">Sent from an unknown or mismatching device.</string>
+    <string name="durio_e2ee_send_no_devices">Not sent: the other person has no device with encryption yet. They need to update the app and sign in again.</string>
+    <string name="durio_e2ee_send_too_long">Not sent: the message is too long to encrypt.</string>
+    <string name="durio_e2ee_send_unavailable">Not sent: encryption is not available on this device.</string>
+    <string name="durio_e2ee_send_network">Not sent: the encryption keys could not be shared. Check the connection and try again.</string>
+    <string name="durio_e2ee_send_refused">Not sent: the server refused the encrypted message.</string>
 </resources>

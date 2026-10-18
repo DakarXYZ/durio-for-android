@@ -79,6 +79,26 @@ class FakeE2eeCore(
 
     override suspend fun undeliveredDevices(): List<E2eeUndeliveredDevice> = emptyList()
 
+    /** Payloads given to `encrypt`; [notShared] times `RoomKeyNotShared` first. */
+    val encrypted = mutableListOf<Pair<String, String>>()
+    var notShared = 0
+    val userDevices = mutableMapOf<String, List<E2eeDevice>>()
+
+    override suspend fun encrypt(channelId: String, payloadJson: String): String {
+        calls += "encrypt $channelId"
+        if (notShared > 0) {
+            notShared--
+            throw E2eeException.RoomKeyNotShared()
+        }
+        encrypted += channelId to payloadJson
+        return """{"v":1,"algorithm":"m.megolm.v1.aes-sha2","session_id":"s1","device_id":"$deviceId","ciphertext":"C${encrypted.size}","sender_key":"dropped"}"""
+    }
+
+    override suspend fun devices(userId: String): List<E2eeDevice> {
+        calls += "devices $userId"
+        return userDevices[userId].orEmpty()
+    }
+
     /** What `decrypt` answers per message id; unknown ids wait for their key. */
     val decryptResults = mutableMapOf<String, E2eeDecryptResult>()
     val decrypted = mutableListOf<E2eeIncomingMessage>()

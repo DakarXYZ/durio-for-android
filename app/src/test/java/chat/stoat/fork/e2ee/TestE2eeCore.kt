@@ -3,6 +3,7 @@ package chat.stoat.fork.e2ee
 import chat.stoat.api.fork.e2ee.E2eeChannelSettings
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeDecryptResult
+import chat.stoat.api.fork.e2ee.E2eeDevice
 import chat.stoat.api.fork.e2ee.E2eeIncomingMessage
 import chat.stoat.api.fork.e2ee.E2eeLimits
 import chat.stoat.api.fork.e2ee.E2eeRequest
@@ -29,6 +30,8 @@ open class TestE2eeCore(
     override suspend fun prepareSend(channelId: String) = emptyList<E2eeRequest>()
     override suspend fun undeliveredDevices() = emptyList<E2eeUndeliveredDevice>()
     override suspend fun decrypt(messages: List<E2eeIncomingMessage>): List<E2eeDecryptResult> = emptyList()
+    override suspend fun encrypt(channelId: String, payloadJson: String): String = error("not scripted")
+    override suspend fun devices(userId: String) = emptyList<E2eeDevice>()
     override fun close() {
         closed = true
     }

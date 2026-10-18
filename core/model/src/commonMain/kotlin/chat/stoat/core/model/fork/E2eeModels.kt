@@ -1,5 +1,7 @@
 package chat.stoat.core.model.fork
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -8,10 +10,11 @@ import kotlinx.serialization.Serializable
  * ciphertext and the ids needed to find its key. `device_id` is only a hint (C7). Not secret,
  * but never logged either.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class EncryptedEnvelope(
-    val v: Int = 1,
-    val algorithm: String = MEGOLM_ALGORITHM,
+    @EncodeDefault val v: Int = 1,
+    @EncodeDefault val algorithm: String = MEGOLM_ALGORITHM,
     @SerialName("session_id") val sessionId: String,
     @SerialName("device_id") val deviceId: String,
     val ciphertext: String,

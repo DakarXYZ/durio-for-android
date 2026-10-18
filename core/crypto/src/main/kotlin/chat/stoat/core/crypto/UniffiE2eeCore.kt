@@ -4,6 +4,7 @@ import chat.stoat.api.fork.e2ee.E2eeAction
 import chat.stoat.api.fork.e2ee.E2eeChannelSettings
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeDecryptResult
+import chat.stoat.api.fork.e2ee.E2eeDevice
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeFailureKind
 import chat.stoat.api.fork.e2ee.E2eeIncomingMessage
@@ -24,6 +25,7 @@ import uniffi.stoat_crypto.IncomingEncryptedMessage
 import uniffi.stoat_crypto.OutgoingRequest
 import uniffi.stoat_crypto.RequestKind
 import uniffi.stoat_crypto.ServerLimits
+import uniffi.stoat_crypto.Trust
 import uniffi.stoat_crypto.Verification
 
 /**
@@ -130,6 +132,23 @@ internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
         }
     }
 
+    override suspend fun encrypt(channelId: String, payloadJson: String): String = core {
+        machine.encrypt(channelId, payloadJson)
+    }
+
+    override suspend fun devices(userId: String): List<E2eeDevice> = core {
+        machine.devices(userId).map {
+            E2eeDevice(
+                userId = it.userId,
+                deviceId = it.deviceId,
+                ed25519 = it.ed25519,
+                verified = it.trust == Trust.VERIFIED,
+                blocked = it.trust == Trust.BLOCKED,
+                deleted = it.deleted,
+            )
+        }
+    }
+
     override fun close() = machine.close()
 }
 
@@ -205,5 +224,8 @@ internal fun CryptoException.toE2ee(): E2eeException = when (this) {
         E2eeException.ActionRequired(E2eeAction.BackupVersionChanged, this)
     is CryptoException.DeviceKeysConflict ->
         E2eeException.ActionRequired(E2eeAction.DeviceKeysConflict, this)
+    is CryptoException.RoomKeyNotShared -> E2eeException.RoomKeyNotShared(this)
+    is CryptoException.PayloadTooLarge -> E2eeException.PayloadTooLarge(this)
+    is CryptoException.UnknownChannel -> E2eeException.UnknownChannel(this)
     else -> E2eeException.Core(this::class.simpleName ?: "Unknown", this)
 }

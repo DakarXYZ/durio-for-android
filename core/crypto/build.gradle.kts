@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     // JVM tests: the JAR carries the desktop jnidispatch for the host library
+    testImplementation(project(":core:model"))
+    testImplementation(libs.compose.multiplatform.runtime)
     testImplementation(libs.jna)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test)

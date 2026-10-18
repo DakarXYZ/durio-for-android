@@ -62,7 +62,29 @@ interface E2eeCore : AutoCloseable {
      * exception; `WaitingForKey` ones are decrypted again on [E2eeSyncEvent.RoomKeys].
      */
     suspend fun decrypt(messages: List<E2eeIncomingMessage>): List<E2eeDecryptResult>
+
+    /**
+     * Payload v1 JSON → envelope v1 JSON for `encrypted` of the send/edit request (AN-26). Only
+     * after [prepareSend] returned nothing; call once per message (every call advances the
+     * ratchet).
+     * @throws E2eeException.RoomKeyNotShared back to [prepareSend]
+     * @throws E2eeException.PayloadTooLarge the text is too long for one message
+     */
+    suspend fun encrypt(channelId: String, payloadJson: String): String
+
+    /** Known devices of [userId] (ULID); empty if it has none with E2EE (AN-26, AN-30). */
+    suspend fun devices(userId: String): List<E2eeDevice>
 }
+
+/** A device of a user as the core knows it. Keys are public. */
+data class E2eeDevice(
+    val userId: String,
+    val deviceId: String,
+    val ed25519: String?,
+    val verified: Boolean,
+    val blocked: Boolean,
+    val deleted: Boolean,
+)
 
 enum class E2eeRequestKind {
     KeysUpload,
@@ -138,6 +160,15 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
     /** A failed request needs the user (AN-31/32, AN-42). */
     class ActionRequired(val action: E2eeAction, cause: Throwable? = null) :
         E2eeException("Action required: $action", cause)
+
+    /** `encrypt` before the room key went out: run `prepareSend` again. */
+    class RoomKeyNotShared(cause: Throwable? = null) : E2eeException("Room key not shared", cause)
+
+    /** The message is too long to encrypt. */
+    class PayloadTooLarge(cause: Throwable? = null) : E2eeException("Payload too large", cause)
+
+    /** The core has no member list for the channel yet (`setChannelMembers` first). */
+    class UnknownChannel(cause: Throwable? = null) : E2eeException("Unknown channel", cause)
 
     /** Everything else; [code] is the core's error code. */
     class Core(val code: String, cause: Throwable? = null) : E2eeException("Core error $code", cause)

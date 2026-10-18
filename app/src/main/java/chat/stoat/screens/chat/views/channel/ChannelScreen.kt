@@ -141,6 +141,7 @@ import chat.stoat.api.routes.microservices.autumn.FileArgs
 import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.callbacks.Action
 import chat.stoat.callbacks.ActionChannel
+import chat.stoat.fork.e2ee.ui.E2eeSendErrors
 import chat.stoat.composables.LocalSnackbarHostState
 import chat.stoat.composables.chat.DateDivider
 import chat.stoat.composables.chat.Message
@@ -276,6 +277,8 @@ fun ChannelScreen(
             job.cancel()
         }
     }
+    // durio: why an encrypted message was not sent (plan AN-26)
+    E2eeSendErrors()
     // </editor-fold>
     // <editor-fold desc="Load/switch channel">
     val channelPermissions by rememberChannelPermissions(channelId, viewModel.ensuredSelfMember)

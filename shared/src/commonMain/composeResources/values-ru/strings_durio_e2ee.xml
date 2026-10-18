@@ -10,4 +10,9 @@
     <string name="durio_e2ee_suspicious">Подозрительное сообщение: его изменили или повторили по пути, оно скрыто.</string>
     <string name="durio_e2ee_unauthenticated">Отправителя этого сообщения нельзя подтвердить (ключ из резервной копии).</string>
     <string name="durio_e2ee_mismatch">Отправлено с неизвестного или несовпадающего устройства.</string>
+    <string name="durio_e2ee_send_no_devices">Не отправлено: у собеседника ещё нет устройства с шифрованием. Ему нужно обновить приложение и войти заново.</string>
+    <string name="durio_e2ee_send_too_long">Не отправлено: сообщение слишком длинное для шифрования.</string>
+    <string name="durio_e2ee_send_unavailable">Не отправлено: шифрование на этом устройстве недоступно.</string>
+    <string name="durio_e2ee_send_network">Не отправлено: не удалось передать ключи шифрования. Проверьте соединение и повторите.</string>
+    <string name="durio_e2ee_send_refused">Не отправлено: сервер отклонил зашифрованное сообщение.</string>
 </resources>

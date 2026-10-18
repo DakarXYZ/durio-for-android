@@ -51,6 +51,10 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.e2ee.OutgoingMessages
+import chat.stoat.api.fork.e2ee.E2eePayloadAttachment
+import chat.stoat.api.internals.ULID
+import kotlinx.coroutines.CancellationException
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.internals.ChannelUtils
 import chat.stoat.api.routes.channel.sendMessage
@@ -221,9 +225,13 @@ class ShareTargetScreenViewModel(
             val attachmentIds = arrayListOf<String>()
             val takenAttachments = attachments.take(MAX_ATTACHMENTS_PER_MESSAGE)
             val totalTaken = takenAttachments.size
+            // durio: encrypted DMs/groups never get plaintext, files included (plan AN-26, AN-28)
+            val encrypted = OutgoingMessages.isEncrypted(channelId)
+            val encryptedAttachments = arrayListOf<E2eePayloadAttachment>()
 
             takenAttachments.forEachIndexed { index, it ->
                 try {
+                    if (encrypted) error("Encrypted attachments are not supported yet")
                     val id = uploadToAutumn(
                         it.file,
                         it.filename,
@@ -240,7 +248,20 @@ class ShareTargetScreenViewModel(
                 }
             }
 
-            sendMessage(
+            if (encrypted) {
+                val channel = StoatAPI.channelCache[channelId] ?: return@launch
+                try {
+                    OutgoingMessages.send(
+                        channel = channel,
+                        content = messageContent,
+                        nonce = ULID.makeNext(),
+                        attachments = encryptedAttachments,
+                    )
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    return@launch
+                }
+            } else sendMessage(
                 channelId = channelId,
                 content = messageContent,
                 attachments = attachmentIds

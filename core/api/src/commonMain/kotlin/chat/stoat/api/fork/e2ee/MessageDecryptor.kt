@@ -108,16 +108,7 @@ class MessageDecryptor(
         }
 
         val attachments = payload.attachments.map { a ->
-            state.attachmentKeys[a.id] = E2eeAttachmentKeys(
-                messageId = id,
-                name = a.name,
-                contentType = a.contentType,
-                size = a.size,
-                fileJson = a.file.toString(),
-                thumbnailId = a.thumbnail?.id,
-                thumbnailFileJson = a.thumbnail?.file?.toString(),
-                spoiler = a.spoiler,
-            )
+            state.attachmentKeys[a.id] = E2eeAttachmentKeys(messageId = id, attachment = a)
             AutumnResource(
                 id = a.id,
                 tag = "attachments",

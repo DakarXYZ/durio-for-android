@@ -4,6 +4,7 @@ import android.content.Context
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeFrames
+import chat.stoat.api.fork.e2ee.E2eeChannels
 import chat.stoat.api.fork.e2ee.E2eeLimits
 import chat.stoat.api.fork.e2ee.E2eeMessages
 import chat.stoat.api.fork.e2ee.MessageDecryptor
@@ -112,14 +113,45 @@ object E2eeManager : E2eeSocketListener {
 
     /**
      * Whether a DM/group is encrypted: only those get their member lists into the core (the core
-     * then pins the channel as encrypted, AN-39). Set by the channel model in AN-25/AN-27.
+     * then pins the channel as encrypted, AN-39).
      */
     @Volatile
-    var isEncryptedChannel: (channelId: String) -> Boolean = { false }
+    var isEncryptedChannel: (channelId: String) -> Boolean = { E2eeChannels.isEncrypted(it) }
 
     /** The active account's sync, for the send path (AN-26); null without E2EE. */
     val activeSync: E2eeSync?
         get() = session?.sync
+
+    /**
+     * The core and sync of [accountKey] for one piece of work (send, edit, push, notification
+     * reply; AN-26, AN-29, AN-43): the running session of the active account, else the account's
+     * core borrowed from [registry] with a sync of its own over the account's HTTP (no loop: the
+     * work drives it). The borrowed core closes after the registry's idle time.
+     *
+     * @throws E2eeUnavailableException the account has no E2EE device (not a dur.io server,
+     *   unknown session, no token)
+     */
+    suspend fun <T> withSession(accountKey: String, block: suspend (E2eeCore, E2eeSync) -> T): T {
+        session?.takeIf { it.account.key == accountKey }?.let { return block(it.core, it.sync) }
+
+        val account = AccountManager.state.value.find(accountKey)
+        if (account == null || !account.ownServer || account.sessionId.isBlank()) throw E2eeUnavailableException()
+        val http = AccountManager.http(accountKey) ?: throw E2eeUnavailableException()
+        val job = SupervisorJob()
+        try {
+            return registry.withCore(accountKey) { core ->
+                core.setServerLimits(E2eeLimits(DEFAULT_TO_DEVICE_BATCH, DEFAULT_REQUEST_BYTES))
+                block(core, E2eeSync(core, http, CoroutineScope(Dispatchers.IO + job)))
+            }
+        } catch (e: E2eeKeyLostException) {
+            throw E2eeUnavailableException(e)
+        } catch (e: E2eeException.StoreUnusable) {
+            throw E2eeUnavailableException(e)
+        } finally {
+            job.cancel()
+            http.close()
+        }
+    }
 
     /** Called from `AccountManager.init`, before any account starts. */
     fun init(context: Context, wrapper: KeyWrapper) {
@@ -270,7 +302,12 @@ object E2eeManager : E2eeSocketListener {
         sessionScope.launch { E2eeMessages.install(MessageDecryptor(core)) }
 
         // Ready came before we were here: the contract wants it after every connect
-        if (RealtimeSocket.disconnectionState == DisconnectionState.Connected) sync.onReady()
+        if (RealtimeSocket.disconnectionState == DisconnectionState.Connected) onReady()
+    }
+
+    /** Members of every encrypted DM/group known so far (contract step 5). */
+    private fun feedMembers(sync: E2eeSync) {
+        for ((channelId, members) in E2eeChannels.encryptedWithMembers()) sync.onChannelMembers(channelId, members)
     }
 
     private suspend fun stopLocked() {
@@ -289,6 +326,7 @@ object E2eeManager : E2eeSocketListener {
         val current = session
         if (current != null) {
             current.sync.onReady()
+            feedMembers(current.sync)
             return
         }
         // offline at login: try again now that the server answers

@@ -47,6 +47,8 @@ import chat.stoat.callbacks.UiCallbacks
 import chat.stoat.composables.markdown.prose.easyLineBreaks
 import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
+import chat.stoat.api.fork.e2ee.E2eePayloadAttachment
+import chat.stoat.fork.e2ee.OutgoingMessages
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.text.MessageProcessor
 import chat.stoat.internals.text.stripPUAChars
@@ -469,10 +471,15 @@ class ChannelScreenViewModel(
 
     private suspend fun applyMessageEdit() {
         try {
-            editMessage(
+            // durio: edits go through processOutgoing like new messages, and are encrypted in
+            // encrypted DMs/groups (plan AN-26)
+            val edited = MessageProcessor.processOutgoing(draftContent, channel?.server)
+            if (OutgoingMessages.isEncrypted(channel?.id)) {
+                OutgoingMessages.edit(channel ?: return, editingMessage ?: return, edited)
+            } else editMessage(
                 channelId = channel?.id ?: return,
                 messageId = editingMessage ?: return,
-                newContent = draftContent,
+                newContent = edited,
             )
             putDraftContent("", true)
         } catch (e: Exception) {
@@ -543,9 +550,13 @@ class ChannelScreenViewModel(
             val takenAttachments = attachmentsOverride
                 ?: this@ChannelScreenViewModel.draftAttachments.take(MAX_ATTACHMENTS_PER_MESSAGE)
             val totalTaken = takenAttachments.size
+            // durio: encrypted DMs/groups never send plaintext, files included (plan AN-26, AN-28)
+            val encrypted = OutgoingMessages.isEncrypted(channel?.id)
+            val encryptedAttachments = arrayListOf<E2eePayloadAttachment>()
 
             takenAttachments.forEachIndexed { index, it ->
                 try {
+                    if (encrypted) error("Encrypted attachments are not supported yet")
                     val id = uploadToAutumn(
                         it.file,
                         if (it.spoiler) "SPOILER_${it.filename}" else it.filename,
@@ -601,7 +612,13 @@ class ChannelScreenViewModel(
             }
 
             try {
-                sendMessage(
+                if (encrypted) OutgoingMessages.send(
+                    channel = channel ?: return@launch,
+                    content = content,
+                    nonce = nonce,
+                    replies = replyTo,
+                    attachments = encryptedAttachments,
+                ) else sendMessage(
                     channelId = channel?.id ?: return@launch,
                     content = content,
                     nonce = nonce,

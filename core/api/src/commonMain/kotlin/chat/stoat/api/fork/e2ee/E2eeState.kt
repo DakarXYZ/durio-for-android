@@ -36,14 +36,17 @@ sealed interface DecryptionStatus {
  */
 class E2eeAttachmentKeys(
     val messageId: String,
-    val name: String,
-    val contentType: String,
-    val size: Long,
-    val fileJson: String,
-    val thumbnailId: String?,
-    val thumbnailFileJson: String?,
-    val spoiler: Boolean,
+    /** As in the payload; an edit sends it again unchanged. */
+    val attachment: E2eePayloadAttachment,
 ) {
+    val name: String get() = attachment.name
+    val contentType: String get() = attachment.contentType
+    val size: Long get() = attachment.size
+    val spoiler: Boolean get() = attachment.spoiler
+    val fileJson: String get() = attachment.file.toString()
+    val thumbnailId: String? get() = attachment.thumbnail?.id
+    val thumbnailFileJson: String? get() = attachment.thumbnail?.file?.toString()
+
     override fun toString() = "E2eeAttachmentKeys($messageId)"
 }
 
