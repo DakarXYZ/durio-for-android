@@ -2,7 +2,9 @@ package chat.stoat.fork.e2ee.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -92,7 +95,7 @@ fun E2eeSettingsEntry(navController: NavController) {
     SettingsListItem(
         first = true,
         last = true,
-        headlineContent = { Text(stringResource(Res.string.durio_e2ee_devices_title)) },
+        headlineContent = { BetaTitle(stringResource(Res.string.durio_e2ee_devices_title)) },
         leadingContent = {
             SettingsIcon { Icon(painterResource(R.drawable.ic_shield_lock_24dp), contentDescription = null) }
         },
@@ -133,7 +136,7 @@ fun E2eePrompts(navController: NavController) {
         E2eeOnboarding.Prompt.NewDevice -> AlertDialog(
             onDismissRequest = { E2eeOnboarding.dismiss(context) },
             icon = { Icon(painterResource(R.drawable.ic_shield_lock_24dp), contentDescription = null) },
-            title = { Text(stringResource(Res.string.durio_onboarding_new_device_title)) },
+            title = { BetaTitle(stringResource(Res.string.durio_onboarding_new_device_title)) },
             text = { Text(stringResource(Res.string.durio_onboarding_new_device)) },
             confirmButton = {
                 Column {
@@ -152,7 +155,7 @@ fun E2eePrompts(navController: NavController) {
         E2eeOnboarding.Prompt.SetUpRecovery -> AlertDialog(
             onDismissRequest = { E2eeOnboarding.dismiss(context) },
             icon = { Icon(painterResource(R.drawable.ic_key_24dp), contentDescription = null) },
-            title = { Text(stringResource(Res.string.durio_onboarding_set_up_title)) },
+            title = { BetaTitle(stringResource(Res.string.durio_onboarding_set_up_title)) },
             text = { Text(stringResource(Res.string.durio_onboarding_set_up_text)) },
             confirmButton = {
                 Button(onClick = {
@@ -203,7 +206,10 @@ private fun UserDevices(userId: String) {
     // users we share no encrypted chat with: the core does not track them
     if (devices.isEmpty()) return
     Column {
-        Text(stringResource(Res.string.durio_user_devices), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(bottom = 4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(bottom = 4.dp)) {
+            Text(stringResource(Res.string.durio_user_devices), style = MaterialTheme.typography.titleSmall)
+            BetaLabel()
+        }
         devices.forEach { row ->
             DeviceItem(
                 row = row,

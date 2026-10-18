@@ -28,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -47,7 +46,6 @@ import chat.stoat.fork.e2ee.E2eeStatus
 import chat.stoat.fork.e2ee.EnableEncryptionResult
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_e2ee_badge
-import chat.stoat.shared.resources.durio_e2ee_beta
 import chat.stoat.shared.resources.durio_e2ee_call_not_encrypted
 import chat.stoat.shared.resources.durio_e2ee_cancel
 import chat.stoat.shared.resources.durio_e2ee_downgraded
@@ -85,18 +83,6 @@ fun EncryptedChannelBadge(channelId: String?, modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-private fun BetaLabel() {
-    Text(
-        text = stringResource(Res.string.durio_e2ee_beta),
-        fontSize = 9.sp,
-        color = MaterialTheme.colorScheme.onTertiaryContainer,
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.extraSmall)
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
-            .padding(horizontal = 3.dp)
-    )
-}
 
 /**
  * The channel sheet's E2EE row (AN-27): "encrypted (beta)" with what that means, or "enable"

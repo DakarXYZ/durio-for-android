@@ -407,7 +407,7 @@ internal fun RecoveryScaffold(title: StringResource, onBack: () -> Unit, content
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(title)) },
+                title = { BetaTitle(stringResource(title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(painterResource(R.drawable.ic_arrow_back_24dp), contentDescription = stringResource(Res.string.back))

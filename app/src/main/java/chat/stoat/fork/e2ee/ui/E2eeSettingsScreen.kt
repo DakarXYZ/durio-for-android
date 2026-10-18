@@ -210,7 +210,12 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
         topBar = {
             LargeTopAppBar(
                 scrollBehavior = scrollBehavior,
-                title = { Text(stringResource(Res.string.durio_e2ee_devices_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(Res.string.durio_e2ee_devices_title), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                        BetaLabel()
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(painterResource(R.drawable.ic_arrow_back_24dp), contentDescription = stringResource(Res.string.back))

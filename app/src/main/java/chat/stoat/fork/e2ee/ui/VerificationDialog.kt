@@ -72,7 +72,7 @@ fun VerificationDialog(controller: VerificationController = E2eeVerifications.co
     AlertDialog(
         onDismissRequest = {},
         icon = { Icon(painterResource(R.drawable.ic_shield_lock_24dp), contentDescription = null) },
-        title = { Text(stringResource(Res.string.durio_verify_title)) },
+        title = { BetaTitle(stringResource(Res.string.durio_verify_title)) },
         text = { Body(flow) },
         confirmButton = {
             when (flow.state) {

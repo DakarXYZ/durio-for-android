@@ -42,7 +42,6 @@ import chat.stoat.fork.e2ee.E2eeManager
 import chat.stoat.fork.e2ee.KeyFileFailure
 import chat.stoat.fork.e2ee.PassphraseStrength
 import chat.stoat.shared.resources.Res
-import chat.stoat.shared.resources.durio_e2ee_beta
 import chat.stoat.shared.resources.durio_keys_all_chats
 import chat.stoat.shared.resources.durio_keys_choose_file
 import chat.stoat.shared.resources.durio_keys_export
@@ -175,7 +174,6 @@ fun KeyExportScreen(navController: NavController, viewModel: KeyExportViewModel 
             return@RecoveryScaffold
         }
         Text(stringResource(Res.string.durio_keys_export_intro))
-        Text(stringResource(Res.string.durio_e2ee_beta), style = MaterialTheme.typography.labelSmall)
         PassphraseField(viewModel.passphrase, Res.string.durio_keys_passphrase, "passphrase") { viewModel.passphrase = it }
         val strength = E2eeKeyFiles.strength(viewModel.passphrase)
         if (viewModel.passphrase.isNotEmpty()) {
@@ -309,7 +307,6 @@ fun KeyImportScreen(navController: NavController, viewModel: KeyImportViewModel 
             return@RecoveryScaffold
         }
         Text(stringResource(Res.string.durio_keys_import_intro))
-        Text(stringResource(Res.string.durio_e2ee_beta), style = MaterialTheme.typography.labelSmall)
         FilledTonalButton(onClick = { pick.launch(arrayOf("text/plain", "application/octet-stream", "*/*")) }) {
             Text(stringResource(Res.string.durio_keys_choose_file))
         }
