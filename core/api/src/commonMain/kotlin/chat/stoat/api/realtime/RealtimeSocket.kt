@@ -5,6 +5,8 @@ import chat.stoat.api.StoatAPI
 import chat.stoat.api.StoatAPIHost
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
+import chat.stoat.api.fork.e2ee.E2eeFrames
+import chat.stoat.api.fork.realtime.GroupMembershipFrames
 import chat.stoat.api.internals.ActiveSlowmode
 import chat.stoat.api.internals.elapsedRealtimeMillis
 import chat.stoat.api.realtime.frames.receivable.AnyFrame
@@ -316,6 +318,8 @@ object RealtimeSocket {
                 StoatAPIHost.platform.onRealtimeHydrated()
 
                 StoatAPI.closeHydration()
+                // durio: after every connect, with the caches filled (plan AN-24)
+                E2eeFrames.onReady()
             }
 
             "Message" -> {
@@ -1090,6 +1094,10 @@ object RealtimeSocket {
                 SyncedSettings.fetch()
                 LoadedSettings.hydrateWithSettings(SyncedSettings)
             }
+
+            // durio: E2EE doorbells and device lists (plan AN-24); group membership had no handler
+            in E2eeFrames.TYPES -> E2eeFrames.handle(type, rawFrame)
+            in GroupMembershipFrames.TYPES -> GroupMembershipFrames.handle(type, rawFrame)
 
             else -> {
                 Logger.i { "Unknown frame: $rawFrame" }
