@@ -1,6 +1,7 @@
 package chat.stoat.sheets
 
 import android.text.format.DateUtils
+import chat.stoat.fork.e2ee.ui.e2eeUserDevices
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -549,6 +550,8 @@ fun UserInfoSheet(
                 }
             }
         }
+
+        e2eeUserDevices(userId) // durio: their devices and "verify" (plan AN-30, AN-31)
 
         item(key = "actions", span = StaggeredGridItemSpan.FullLine) {
             UserButtons(

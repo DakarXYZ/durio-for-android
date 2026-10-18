@@ -126,6 +126,8 @@ import chat.stoat.screens.settings.DebugSettingsScreen
 import chat.stoat.screens.settings.ExperimentsSettingsScreen
 import chat.stoat.screens.settings.LanguagePickerSettingsScreen
 import chat.stoat.screens.settings.MfaSettingsScreen
+import chat.stoat.fork.e2ee.ui.E2eePrompts
+import chat.stoat.fork.e2ee.ui.e2eeScreens
 import chat.stoat.screens.settings.NotificationsSettingsScreen
 import chat.stoat.screens.settings.ProfileSettingsScreen
 import chat.stoat.screens.settings.SessionSettingsScreen
@@ -550,6 +552,8 @@ fun AppEntrypoint(
                 }
 
                 UpdatePrompt()
+                // durio: verification, new device, key loss (plan AN-31, AN-32, AN-42)
+                E2eePrompts(navController)
 
                 if (couldNotLogIn) {
                     AlertDialog(
@@ -780,6 +784,7 @@ fun AppEntrypoint(
                     composable("settings/account/mfa") { MfaSettingsScreen(navController) }
                     composable("settings/profile") { ProfileSettingsScreen(navController) }
                     composable("settings/sessions") { SessionSettingsScreen(navController) }
+                    e2eeScreens(navController) // durio: devices and encryption (plan AN-30..32, AN-42)
                     composable("settings/appearance") { AppearanceSettingsScreen(navController) }
                     composable("settings/chat") { ChatSettingsScreen(navController) }
                     composable("settings/notifications") { NotificationsSettingsScreen(navController) }

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: devices and encryption screen (stage 4, AN-30) -->
+<resources>
+    <string name="durio_e2ee_copied">Copied</string>
+    <string name="durio_e2ee_devices_title">Devices and encryption</string>
+    <string name="durio_e2ee_devices_status_ready">End-to-end encryption is on for this device.</string>
+    <string name="durio_e2ee_devices_status_starting">Encryption is starting…</string>
+    <string name="durio_e2ee_devices_status_off">This server does not offer end-to-end encryption.</string>
+    <string name="durio_e2ee_devices_status_unavailable">Encryption is not available right now. Check the connection or log in again.</string>
+    <string name="durio_e2ee_devices_status_key_lost">The encryption keys of this device are lost. Reset encryption to keep chatting in encrypted chats.</string>
+    <string name="durio_e2ee_devices_this">This device</string>
+    <string name="durio_e2ee_devices_fingerprint">Device key (compare it with the other screen when verifying; hold to copy)</string>
+    <string name="durio_e2ee_devices_other">Your other devices</string>
+    <string name="durio_e2ee_devices_load_failed">The device list could not be loaded.</string>
+    <string name="durio_e2ee_devices_unverified_hint">None of your other devices is verified. Verify this device with one of them: then it can share the keys of your earlier messages.</string>
+    <string name="durio_e2ee_devices_reinstall_hint">Reinstalled the app? The old installation stays in this list as a separate device until you log it out.</string>
+    <string name="durio_e2ee_devices_created">Signed in %1$s</string>
+    <string name="durio_e2ee_devices_last_seen">Last active %1$s</string>
+    <string name="durio_e2ee_devices_misses_keys">This device does not receive keys: its inbox on the server is full.</string>
+    <string name="durio_e2ee_devices_verify">Verify</string>
+    <string name="durio_e2ee_devices_logout">Log out</string>
+    <string name="durio_e2ee_devices_logout_confirm">Log out this device?</string>
+    <string name="durio_e2ee_devices_logout_text">The device is signed out and its encryption keys are removed from the server. It will not receive new encrypted messages.</string>
+    <string name="durio_e2ee_devices_trust_verified">Verified</string>
+    <string name="durio_e2ee_devices_trust_unverified">Not verified</string>
+    <string name="durio_e2ee_devices_trust_blocked">Blocked</string>
+    <string name="durio_e2ee_devices_trust_none">No encryption</string>
+    <string name="durio_e2ee_devices_trust_removed">Removed</string>
+    <string name="durio_e2ee_devices_backup">Recovery and key backup</string>
+    <string name="durio_e2ee_devices_backup_on">Key backup is on: the keys of your encrypted chats are stored on the server, encrypted with your recovery key.</string>
+    <string name="durio_e2ee_devices_backup_keys">Keys backed up: %1$d of %2$d</string>
+    <string name="durio_e2ee_devices_backup_none">No key backup on this device. Without it, a new device cannot read your earlier encrypted messages unless you verify it with another one.</string>
+    <string name="durio_e2ee_devices_backup_outdated">The backup was replaced on another device. Enter your recovery key to use it here.</string>
+    <string name="durio_e2ee_devices_set_up">New recovery key</string>
+    <string name="durio_e2ee_devices_restore">Restore history</string>
+    <string name="durio_e2ee_devices_rotate">Replace the backup (keeps the recovery key)</string>
+    <string name="durio_e2ee_devices_reset">Reset encryption</string>
+    <string name="durio_e2ee_devices_reset_text">Logs this device out. After you log in again it is a new device: restore your history with the recovery key or verify it with another device.</string>
+    <string name="durio_user_devices">Encryption devices</string>
+</resources>

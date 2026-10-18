@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: экран «Устройства и шифрование» (этап 4, AN-30) -->
+<resources>
+    <string name="durio_e2ee_copied">Скопировано</string>
+    <string name="durio_e2ee_devices_title">Устройства и шифрование</string>
+    <string name="durio_e2ee_devices_status_ready">Сквозное шифрование на этом устройстве включено.</string>
+    <string name="durio_e2ee_devices_status_starting">Шифрование запускается…</string>
+    <string name="durio_e2ee_devices_status_off">Этот сервер не поддерживает сквозное шифрование.</string>
+    <string name="durio_e2ee_devices_status_unavailable">Шифрование сейчас недоступно. Проверьте соединение или войдите заново.</string>
+    <string name="durio_e2ee_devices_status_key_lost">Ключи шифрования этого устройства утеряны. Сбросьте шифрование, чтобы продолжить общение в зашифрованных чатах.</string>
+    <string name="durio_e2ee_devices_this">Это устройство</string>
+    <string name="durio_e2ee_devices_fingerprint">Ключ устройства (сверяйте с другим экраном при проверке; удерживайте, чтобы скопировать)</string>
+    <string name="durio_e2ee_devices_other">Другие ваши устройства</string>
+    <string name="durio_e2ee_devices_load_failed">Не удалось загрузить список устройств.</string>
+    <string name="durio_e2ee_devices_unverified_hint">Ни одно из ваших других устройств не проверено. Сверьте это устройство с одним из них — тогда оно сможет передать ключи ваших прежних сообщений.</string>
+    <string name="durio_e2ee_devices_reinstall_hint">Переустановили приложение? Старая установка останется в этом списке отдельным устройством, пока вы не выйдете из неё.</string>
+    <string name="durio_e2ee_devices_created">Вход %1$s</string>
+    <string name="durio_e2ee_devices_last_seen">Активность %1$s</string>
+    <string name="durio_e2ee_devices_misses_keys">Это устройство не получает ключи: его ящик на сервере переполнен.</string>
+    <string name="durio_e2ee_devices_verify">Сверить</string>
+    <string name="durio_e2ee_devices_logout">Выйти</string>
+    <string name="durio_e2ee_devices_logout_confirm">Выйти на этом устройстве?</string>
+    <string name="durio_e2ee_devices_logout_text">Устройство выйдет из аккаунта, его ключи шифрования будут удалены с сервера. Новые зашифрованные сообщения оно получать не будет.</string>
+    <string name="durio_e2ee_devices_trust_verified">Проверено</string>
+    <string name="durio_e2ee_devices_trust_unverified">Не проверено</string>
+    <string name="durio_e2ee_devices_trust_blocked">Заблокировано</string>
+    <string name="durio_e2ee_devices_trust_none">Без шифрования</string>
+    <string name="durio_e2ee_devices_trust_removed">Удалено</string>
+    <string name="durio_e2ee_devices_backup">Восстановление и бэкап ключей</string>
+    <string name="durio_e2ee_devices_backup_on">Бэкап ключей включён: ключи ваших зашифрованных чатов хранятся на сервере, зашифрованные ключом восстановления.</string>
+    <string name="durio_e2ee_devices_backup_keys">В бэкапе ключей: %1$d из %2$d</string>
+    <string name="durio_e2ee_devices_backup_none">На этом устройстве нет бэкапа ключей. Без него новое устройство не прочитает прежние зашифрованные сообщения, если не сверить его с другим.</string>
+    <string name="durio_e2ee_devices_backup_outdated">Бэкап заменён на другом устройстве. Введите ключ восстановления, чтобы пользоваться им здесь.</string>
+    <string name="durio_e2ee_devices_set_up">Новый ключ восстановления</string>
+    <string name="durio_e2ee_devices_restore">Восстановить историю</string>
+    <string name="durio_e2ee_devices_rotate">Заменить бэкап (ключ восстановления прежний)</string>
+    <string name="durio_e2ee_devices_reset">Сбросить шифрование</string>
+    <string name="durio_e2ee_devices_reset_text">Это устройство выйдет из аккаунта. После нового входа оно станет новым устройством: восстановите историю ключом восстановления или сверьте его с другим устройством.</string>
+    <string name="durio_user_devices">Устройства шифрования</string>
+</resources>

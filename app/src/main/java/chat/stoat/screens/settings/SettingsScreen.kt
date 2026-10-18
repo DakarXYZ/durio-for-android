@@ -1,6 +1,7 @@
 package chat.stoat.screens.settings
 
 import android.content.Intent
+import chat.stoat.fork.e2ee.ui.E2eeSettingsEntry
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -177,6 +178,7 @@ fun SettingsScreen(
                             .testTag("settings_view_sessions")
                             .clickable { navController.navigate("settings/sessions") }
                     )
+                    E2eeSettingsEntry(navController) // durio: devices and encryption (plan AN-30)
 
                     ListHeader {
                         Text(stringResource(Res.string.settings_category_general))
