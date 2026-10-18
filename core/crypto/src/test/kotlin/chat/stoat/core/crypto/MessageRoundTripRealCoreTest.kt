@@ -90,6 +90,9 @@ class MessageRoundTripRealCoreTest {
 
             val shown = decryptor.decrypt(listOf(original)).single()
             assertEquals("hello B", shown.content)
+
+            // the echo of the own message (socket, other screens) is readable by the sender too
+            assertEquals("hello B", MessageDecryptor(a).decrypt(listOf(original)).single().content)
             assertIs<DecryptionStatus.Decrypted>(E2eeState.status[original.id])
 
             // the edit: edit_of = the message, edit_seq + 1; no new key needed
