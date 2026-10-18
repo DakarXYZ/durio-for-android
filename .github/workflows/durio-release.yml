@@ -1,6 +1,6 @@
 name: durio release
 
-# Signed release APK in GitHub Releases with update.json for the in-app update check
+# Signed release APKs (arm64-v8a, armeabi-v7a, x86_64 and universal, AN-41) in GitHub Releases with update.json for the in-app update check
 # (plan AN-14, AN-18, O2). Runs on a version tag, e.g. v1.8.1. AGPL: the release links to the
 # source of its tag.
 #
@@ -62,33 +62,49 @@ jobs:
           DURIO_LINK_HOST: ${{ vars.DURIO_LINK_HOST }}
         run: ./gradlew --no-daemon :app:assembleRelease
 
-      - name: Verify signature, hash, update manifest
+      # One APK per ABI plus the universal one (AN-41); update.json lists them all and the
+      # in-app check (AN-18) picks the device's ABI, else the universal APK
+      - name: Verify signatures, alignment, size; hashes and update manifest
         run: |
           build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
+          out=app/build/outputs/apk/release
           mkdir -p dist
-          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
-          "$build_tools/apksigner" verify --print-certs "$apk"
 
-          badging=$("$build_tools/aapt2" dump badging "$apk" | head -n 1)
+          badging=$("$build_tools/aapt2" dump badging "$out/app-universal-release.apk" | head -n 1)
           version_code=$(sed -E "s/.*versionCode='([0-9]+)'.*/\1/" <<<"$badging")
           version_name=$(sed -E "s/.*versionName='([^']+)'.*/\1/" <<<"$badging")
           test "v$version_name" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME does not match versionName $version_name"; exit 1; }
+          test $((version_code % 10)) -eq 0 || { echo "Universal versionCode $version_code must end in 0"; exit 1; }
 
-          # ABI splits (AN-41) add one entry per ABI; until then one universal APK
-          file="durio-$version_name-universal.apk"
-          cp "$apk" "dist/$file"
-          sha=$(sha256sum "dist/$file" | cut -d' ' -f1)
+          entries=""
+          for abi in arm64-v8a armeabi-v7a x86_64 universal; do
+            apk="$out/app-$abi-release.apk"
+            "$build_tools/apksigner" verify --print-certs "$apk"
+            abi_code=$("$build_tools/aapt2" dump badging "$apk" | head -n 1 | sed -E "s/.*versionCode='([0-9]+)'.*/\1/")
+            case $abi in armeabi-v7a) offset=1 ;; arm64-v8a) offset=2 ;; x86_64) offset=3 ;; *) offset=0 ;; esac
+            test "$abi_code" -eq $((version_code + offset)) || { echo "$abi: versionCode $abi_code, expected $((version_code + offset))"; exit 1; }
+            file="durio-$version_name-$abi.apk"
+            cp "$apk" "dist/$file"
+            sha=$(sha256sum "dist/$file" | cut -d' ' -f1)
+            entries="$entries${entries:+,
+              }{ \"abi\": \"$abi\", \"file\": \"$file\", \"sha256\": \"$sha\" }"
+          done
+          BUILD_TOOLS="$build_tools" bash scripts/check-apk.sh --release dist/*.apk
           (cd dist && sha256sum *.apk > SHA256SUMS)
+
+          # versionCode of the universal APK (base * 10): lower than every per-ABI APK of the
+          # same version and higher than any APK of an older one
           cat > dist/update.json <<JSON
           {
             "versionCode": $version_code,
             "versionName": "$version_name",
             "apks": [
-              { "abi": "universal", "file": "$file", "sha256": "$sha" }
+              $entries
             ]
           }
           JSON
           cat dist/update.json
+          python3 -m json.tool dist/update.json > /dev/null
 
       - name: Publish release
         env:

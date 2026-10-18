@@ -1,3 +1,4 @@
+import com.android.build.api.variant.FilterConfiguration
 import com.mikepenz.aboutlibraries.plugin.StrictMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
@@ -52,6 +53,13 @@ fun buildproperty(propertyName: String, fallbackEnv: String? = null): String? {
     return property("stoatbuild.properties", propertyName, fallbackEnv)
 }
 
+// durio: ABI splits for GitHub Releases (plan AN-41, O2). Every APK gets
+// versionCode = base * 10 + abiCode (universal = 0), so an update never goes "down" when a device
+// moves between the universal and a per-ABI APK. 32-bit x86 is left out: the E2EE core and RaTeX
+// ship no x86 library.
+val durioVersionCodeBase = Integer.parseInt("001_008_001".replace("_", ""), 10)
+val durioAbiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
+
 // durio: App Links only for our own server's host, set per build; none by default (plan AN-13, O12)
 val durioLinkHost = buildproperty("durio.link_host", "DURIO_LINK_HOST").orEmpty().trim()
 
@@ -64,7 +72,8 @@ android {
         applicationId = "io.github.dakarxyz.durio"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = Integer.parseInt("001_008_001".replace("_", ""), 10)
+        // durio: universal APK; the per-ABI ones are set in androidComponents below (AN-41)
+        versionCode = durioVersionCodeBase * 10
         versionName = "1.8.1"
 
         // durio: server prefilled on the login screen; empty = the user types the address (plan O13)
@@ -145,9 +154,32 @@ android {
         buildConfig = true
         resValues = true
     }
+    // durio: one APK per ABI plus the universal one (plan AN-41); not abiFilters, they clash
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(*durioAbiCodes.keys.toTypedArray())
+            isUniversalApk = true
+        }
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        // durio: ABIs we do not ship (AN-41). JNA brings its own jnidispatch for them and LiveKit,
+        // CameraX, ML Kit have x86; a device would then pick a lib folder without our E2EE core.
+        jniLibs {
+            excludes += listOf(
+                "lib/armeabi/**",
+                "lib/mips/**",
+                "lib/mips64/**",
+                "lib/x86/**",
+                "lib/loongarch64/**",
+                "lib/riscv64/**",
+                "lib/s390x/**",
+                "lib/ppc64le/**",
+            )
         }
     }
     androidResources {
@@ -373,6 +405,12 @@ abstract class GenerateLocaleConfig : DefaultTask() {
 
 androidComponents {
     onVariants { variant ->
+        // durio: per-ABI versionCode (AN-41)
+        variant.outputs.forEach { output ->
+            val abi = output.filters.firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
+            if (abi != null) output.versionCode.set(durioVersionCodeBase * 10 + durioAbiCodes.getValue(abi))
+        }
+
         if (durioLinkHost.isNotEmpty()) {
             variant.sources.manifests.addStaticManifestFile("src/links/AndroidManifest.xml")
         }
