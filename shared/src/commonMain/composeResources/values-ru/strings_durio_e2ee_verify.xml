@@ -23,7 +23,8 @@
     <string name="durio_verify_notification_channel">Сверка устройств</string>
     <string name="durio_verify_notification_title">Запрос на сверку</string>
     <string name="durio_verify_notification_text">Другое устройство хочет сверку. Откройте приложение, чтобы ответить.</string>
-    <!-- Названия эмодзи SAS: таблица Matrix (sas-emoji.json), по индексу -->
+    <!-- Названия эмодзи SAS: таблица Matrix (sas-emoji.json, translated_descriptions.ru), по индексу.
+         Отличие одно: 34 (Spanner) — «Гаечный ключ», в таблице «Ключ», как у 47 (Key) -->
     <string-array name="durio_sas_emoji">
         <item>Собака</item>
         <item>Кошка</item>
@@ -61,7 +62,7 @@
         <item>Очки</item>
         <item>Гаечный ключ</item>
         <item>Санта</item>
-        <item>Большой палец</item>
+        <item>Большой палец вверх</item>
         <item>Зонт</item>
         <item>Песочные часы</item>
         <item>Часы</item>
@@ -78,7 +79,7 @@
         <item>Флаг</item>
         <item>Поезд</item>
         <item>Велосипед</item>
-        <item>Самолёт</item>
+        <item>Самолет</item>
         <item>Ракета</item>
         <item>Кубок</item>
         <item>Мяч</item>
