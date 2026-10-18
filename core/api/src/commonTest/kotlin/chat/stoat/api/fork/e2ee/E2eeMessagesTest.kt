@@ -73,6 +73,21 @@ class E2eeMessagesTest {
     }
 
     @Test
+    fun pinnedPageIsDecryptedAndStaysPinned() = runTest {
+        // searchChannel(pinned = true) goes through the same hook (plan AN-40)
+        val pinned = encrypted().copy(pinned = true)
+        val waiting = encrypted().copy(pinned = true)
+        core.decryptResults[pinned.id!!] = decryptedResult(MessageDecryptorTest.PAYLOAD)
+
+        val page = E2eeMessages.history(MessagesInChannel(messages = listOf(pinned, waiting))).messages!!
+
+        assertEquals("hi", page[0].content)
+        assertEquals(true, page[0].pinned)
+        assertNull(page[1].content)
+        assertEquals(DecryptionStatus.Pending, E2eeState.status[waiting.id])
+    }
+
+    @Test
     fun editIsDecryptedAndTheUiFrameCarriesThePlaintext() = runTest {
         val old = encrypted()
         core.decryptResults[old.id!!] = decryptedResult(MessageDecryptorTest.PAYLOAD)

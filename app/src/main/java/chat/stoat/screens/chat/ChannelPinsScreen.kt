@@ -86,6 +86,8 @@ class ChannelPinsScreenViewModel : ViewModel() {
                 }
 
                 pinnedMessages.addAll(response.messages ?: emptyList())
+                // durio: cached, so a key that arrives later re-decrypts them (plan AN-40)
+                response.messages?.forEach { m -> m.id?.let { StoatAPI.messageCache.putIfAbsent(it, m) } }
             } catch (e: Exception) {
                 Log.e("ChannelPinsScreen", "Failed to load pinned messages", e)
                 error = e.message
@@ -208,7 +210,8 @@ internal fun PinnedMessageList(
             messages.size,
             key = { index -> messages[index].id ?: index },
         ) { index ->
-            val message = messages[index].copy(tail = false)
+            // durio: the cached copy is the one re-decrypted when its key arrives (AN-40)
+            val message = (messages[index].id?.let { StoatAPI.messageCache[it] } ?: messages[index]).copy(tail = false)
             val onClick = {
                 message.id?.let(onMessageSelected)
                 Unit

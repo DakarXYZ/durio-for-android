@@ -377,16 +377,17 @@ suspend fun searchChannel(
     }
         .bodyAsText()
 
+    // durio: pinned messages of encrypted chats are decrypted like history (plan AN-40)
     if (includeUsers == true) {
-        return StoatJson.decodeFromString(
+        return E2eeMessages.history(StoatJson.decodeFromString(
             MessagesInChannel.serializer(),
             response
-        )
+        ))
     } else {
-        val messages = StoatJson.decodeFromString(
+        val messages = E2eeMessages.history(StoatJson.decodeFromString(
             ListSerializer(Message.serializer()),
             response
-        )
+        ))
 
         return MessagesInChannel(
             messages = messages,
