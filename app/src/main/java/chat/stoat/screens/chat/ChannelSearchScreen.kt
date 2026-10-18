@@ -47,6 +47,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import chat.stoat.R
+import chat.stoat.api.fork.e2ee.E2eeChannels
+import chat.stoat.fork.e2ee.ui.SearchUnavailableInEncryptedChat
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.routes.channel.searchChannel
 import chat.stoat.composables.chat.SystemMessage
@@ -187,6 +189,8 @@ fun ChannelSearchScreen(
     modifier: Modifier = Modifier,
     viewModel: ChannelSearchScreenViewModel = viewModel()
 ) {
+    // durio: the server cannot search what it cannot read (BE-16, AN-27)
+    if (E2eeChannels.isEncrypted(channelId)) return SearchUnavailableInEncryptedChat(onBack = { navController.popBackStack() })
     Box(
         modifier = modifier
             .fillMaxSize()

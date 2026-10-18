@@ -85,6 +85,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import chat.stoat.R
+import chat.stoat.fork.e2ee.ui.EncryptedChannelBadge
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.internals.CategorisedChannelList
 import chat.stoat.api.internals.ChannelUtils
@@ -1359,6 +1360,8 @@ fun DMOrGroupItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            EncryptedChannelBadge(channel.id) // durio: lock + beta (plan AN-27)
 
             if (hasUnread && !isCurrent) {
                 Box(

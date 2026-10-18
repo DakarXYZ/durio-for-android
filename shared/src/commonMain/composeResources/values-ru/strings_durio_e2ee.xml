@@ -15,4 +15,23 @@
     <string name="durio_e2ee_send_unavailable">Не отправлено: шифрование на этом устройстве недоступно.</string>
     <string name="durio_e2ee_send_network">Не отправлено: не удалось передать ключи шифрования. Проверьте соединение и повторите.</string>
     <string name="durio_e2ee_send_refused">Не отправлено: сервер отклонил зашифрованное сообщение.</string>
+    <string name="durio_e2ee_beta">бета</string>
+    <string name="durio_e2ee_badge">Сквозное шифрование</string>
+    <string name="durio_e2ee_enable">Включить сквозное шифрование</string>
+    <string name="durio_e2ee_enable_title">Включить сквозное шифрование?</string>
+    <string name="durio_e2ee_enable_text">Сообщения и файлы в этом чате будут шифроваться на устройствах участников, сервер не сможет их прочитать. Отключить шифрование нельзя. Поиск здесь работать не будет, звонки не защищены сквозным шифрованием. Шифрование в бете: внешнего аудита не было.</string>
+    <string name="durio_e2ee_enable_text_group">Ботов и вебхуки в эту группу добавить будет нельзя.</string>
+    <string name="durio_e2ee_enable_confirm">Включить</string>
+    <string name="durio_e2ee_cancel">Отмена</string>
+    <string name="durio_e2ee_back">Назад</string>
+    <string name="durio_e2ee_enabled_info">Сквозное шифрование. Читать этот чат могут только устройства участников; поиск недоступен.</string>
+    <string name="durio_e2ee_enable_no_permission">У вас нет права менять эту группу.</string>
+    <string name="durio_e2ee_enable_not_encryptable">В чате есть бот или вебхуки, его нельзя зашифровать.</string>
+    <string name="durio_e2ee_enable_unavailable">Шифрование недоступно на этом сервере или устройстве.</string>
+    <string name="durio_e2ee_enable_failed">Не удалось включить шифрование. Повторите позже.</string>
+    <string name="durio_e2ee_downgraded">Сервер прислал этот чат без шифрования. Это устройство продолжает шифровать; возможна атака.</string>
+    <string name="durio_e2ee_suggest">Включить сквозное шифрование для этого чата</string>
+    <string name="durio_e2ee_call_not_encrypted">Звонки не защищены сквозным шифрованием, даже в зашифрованных чатах.</string>
+    <string name="durio_e2ee_system_enabled">%1$s включил(а) сквозное шифрование.</string>
+    <string name="durio_e2ee_search_unavailable">Поиск недоступен в чатах со сквозным шифрованием: сервер не может их прочитать.</string>
 </resources>

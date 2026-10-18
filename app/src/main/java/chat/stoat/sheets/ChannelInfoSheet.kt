@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
+import chat.stoat.fork.e2ee.ui.EncryptionSheetItem
 import chat.stoat.api.internals.ChannelUtils
 import chat.stoat.api.internals.PermissionBit
 import chat.stoat.api.internals.Roles
@@ -189,6 +190,9 @@ fun ChannelInfoSheet(channelId: String, onHideSheet: suspend () -> Unit) {
             else -> {}
         }
     }
+
+    // durio: end-to-end encryption of DMs and groups (plan AN-27)
+    EncryptionSheetItem(channelId, permissions)
 
     // FIXME: Waiting on backend!
     /*SheetButton(

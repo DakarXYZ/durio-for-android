@@ -15,4 +15,23 @@
     <string name="durio_e2ee_send_unavailable">Not sent: encryption is not available on this device.</string>
     <string name="durio_e2ee_send_network">Not sent: the encryption keys could not be shared. Check the connection and try again.</string>
     <string name="durio_e2ee_send_refused">Not sent: the server refused the encrypted message.</string>
+    <string name="durio_e2ee_beta">beta</string>
+    <string name="durio_e2ee_badge">End-to-end encrypted</string>
+    <string name="durio_e2ee_enable">Enable end-to-end encryption</string>
+    <string name="durio_e2ee_enable_title">Enable end-to-end encryption?</string>
+    <string name="durio_e2ee_enable_text">Messages and files in this chat will be encrypted on the participants’ devices; the server will not be able to read them. This cannot be turned off. Search will not work here, and calls are not end-to-end encrypted. Encryption is in beta: it has not been audited externally.</string>
+    <string name="durio_e2ee_enable_text_group">Bots and webhooks can no longer be added to this group.</string>
+    <string name="durio_e2ee_enable_confirm">Enable</string>
+    <string name="durio_e2ee_cancel">Cancel</string>
+    <string name="durio_e2ee_back">Back</string>
+    <string name="durio_e2ee_enabled_info">End-to-end encrypted. Only the participants’ devices can read this chat; search is not available.</string>
+    <string name="durio_e2ee_enable_no_permission">You are not allowed to change this group.</string>
+    <string name="durio_e2ee_enable_not_encryptable">This chat has a bot or webhooks and cannot be encrypted.</string>
+    <string name="durio_e2ee_enable_unavailable">Encryption is not available on this server or device.</string>
+    <string name="durio_e2ee_enable_failed">Encryption could not be enabled. Try again later.</string>
+    <string name="durio_e2ee_downgraded">The server sent this chat without encryption. This device keeps encrypting it; this may be an attack.</string>
+    <string name="durio_e2ee_suggest">Turn on end-to-end encryption for this chat</string>
+    <string name="durio_e2ee_call_not_encrypted">Calls are not end-to-end encrypted, even in encrypted chats.</string>
+    <string name="durio_e2ee_system_enabled">%1$s turned on end-to-end encryption.</string>
+    <string name="durio_e2ee_search_unavailable">Search is not available in end-to-end encrypted chats: the server cannot read them.</string>
 </resources>

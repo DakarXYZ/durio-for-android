@@ -142,6 +142,10 @@ import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.callbacks.Action
 import chat.stoat.callbacks.ActionChannel
 import chat.stoat.fork.e2ee.ui.E2eeSendErrors
+import chat.stoat.fork.e2ee.ui.EncryptedChannelBadge
+import chat.stoat.fork.e2ee.ui.EncryptionBanner
+import chat.stoat.fork.e2ee.ui.showCallNotEncryptedNotice
+import chat.stoat.api.fork.e2ee.E2eeChannels
 import chat.stoat.composables.LocalSnackbarHostState
 import chat.stoat.composables.chat.DateDivider
 import chat.stoat.composables.chat.Message
@@ -876,6 +880,8 @@ fun ChannelScreen(
                                     )
                                 }
 
+                                EncryptedChannelBadge(it.id) // durio: lock + beta (plan AN-27)
+
                                 Icon(
                                     painter = painterResource(R.drawable.ic_keyboard_arrow_right_24dp),
                                     contentDescription = null,
@@ -916,6 +922,7 @@ fun ChannelScreen(
                         ) {
                             IconButton(onClick = {
                                 scope.launch {
+                                    showCallNotEncryptedNotice(context, channelId) // durio: O7, Q32
                                     ActionChannel.send(
                                         Action.OpenVoiceChannelOverlay(channelId)
                                     )
@@ -927,7 +934,8 @@ fun ChannelScreen(
                                 )
                             }
                         }
-                        IconButton(onClick = {
+                        // durio: no search in encrypted chats, the server cannot read them (AN-27, O7)
+                        if (!E2eeChannels.isEncrypted(channelId)) IconButton(onClick = {
                             scope.launch {
                                 ActionChannel.send(
                                     Action.TopNavigate("channel/$channelId/search")
@@ -942,6 +950,12 @@ fun ChannelScreen(
                     }
                 )
                 VoiceCallBanner()
+                // durio: downgrade warning / "enable encryption" in an empty DM (AN-27, AN-39)
+                EncryptionBanner(
+                    channelId,
+                    empty = viewModel.didInitialChannelFetch &&
+                        viewModel.items.none { item -> item.messageIdOrNull() != null },
+                )
             }
         }
     ) { pv ->

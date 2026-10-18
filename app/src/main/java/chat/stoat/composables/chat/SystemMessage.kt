@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.internals.ULID
+import chat.stoat.fork.e2ee.ui.encryptionEnabledAsText
 import chat.stoat.composables.markdown.prose.ChatMarkdown
 import chat.stoat.core.model.schemas.Message
 import chat.stoat.shared.resources.Res
@@ -98,6 +99,8 @@ fun SystemMessage(
     message: Message,
     onClick: (() -> Unit)? = null,
 ) {
+    // durio: `encryption_enabled` is shown as a text system message (C12, AN-27)
+    @Suppress("NAME_SHADOWING") val message = encryptionEnabledAsText(message)
     if (message.system == null) return
     val serverId = StoatAPI.channelCache[message.channel]?.server
 
