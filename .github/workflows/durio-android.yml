@@ -33,6 +33,9 @@ jobs:
       - name: E2EE hygiene
         run: bash scripts/check-crypto-hygiene.sh
 
+      - name: E2EE message entry points (AN-46)
+        run: bash scripts/check-e2ee-entry-points.sh
+
       - name: No Sentry
         run: |
           if grep -rn "io.sentry" --include=*.kt --include=*.kts --include=*.toml --include=*.xml app core gradle build.gradle.kts settings.gradle.kts; then

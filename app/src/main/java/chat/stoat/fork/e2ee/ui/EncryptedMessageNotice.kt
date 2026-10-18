@@ -45,18 +45,23 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun EncryptedMessageNotice(message: Message): Boolean {
-    if (message.encrypted == null) return false
-    val status = message.id?.let { E2eeState.status[it] }
+    val notice = noticeFor(message, message.id?.let { E2eeState.status[it] }) ?: return false
+    NoticeLine(notice.text, warning = notice.warning, shimmer = notice.shimmer)
+    return notice.hidesBody
+}
 
+/** What the guard draws for a message; null: nothing (not encrypted, or clean). */
+internal class Notice(val text: StringResource, val warning: Boolean, val shimmer: Boolean, val hidesBody: Boolean)
+
+internal fun noticeFor(message: Message, status: DecryptionStatus?): Notice? {
+    if (message.encrypted == null) return null
     val text: StringResource = when (status) {
-        is DecryptionStatus.Decrypted -> {
-            when (status.verification) {
-                E2eeVerification.Unauthenticated -> NoticeLine(Res.string.durio_e2ee_unauthenticated, warning = false)
-                E2eeVerification.UnknownDevice, E2eeVerification.Mismatch ->
-                    NoticeLine(Res.string.durio_e2ee_mismatch, warning = true)
-                E2eeVerification.Verified, E2eeVerification.Unverified -> Unit
-            }
-            return false
+        is DecryptionStatus.Decrypted -> return when (status.verification) {
+            E2eeVerification.Unauthenticated ->
+                Notice(Res.string.durio_e2ee_unauthenticated, warning = false, shimmer = false, hidesBody = false)
+            E2eeVerification.UnknownDevice, E2eeVerification.Mismatch ->
+                Notice(Res.string.durio_e2ee_mismatch, warning = true, shimmer = false, hidesBody = false)
+            E2eeVerification.Verified, E2eeVerification.Unverified -> null
         }
         // no status yet: on its way through the decryptor
         null -> Res.string.durio_e2ee_decrypting
@@ -70,8 +75,7 @@ fun EncryptedMessageNotice(message: Message): Boolean {
         }
     }
     val pending = status == null || status == DecryptionStatus.Pending
-    NoticeLine(text, warning = status == DecryptionStatus.Suspicious, shimmer = pending)
-    return true
+    return Notice(text, warning = status == DecryptionStatus.Suspicious, shimmer = pending, hidesBody = true)
 }
 
 /** One line for reply previews and other single-line places; null: show the message's text. */

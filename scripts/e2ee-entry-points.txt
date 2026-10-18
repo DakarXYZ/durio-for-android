@@ -1,0 +1,35 @@
+# Reviewed message entry points (plan AN-46), checked by scripts/check-e2ee-entry-points.sh.
+# Format: kind|file|line text. Why each one cannot show the server's placeholder:
+#
+# RealtimeSocket "Message": E2eeMessages.incoming before the cache; "MessageUpdate": decoded,
+#   merged, then E2eeMessages.updated rewrites cache entry and UI frame; Append/React/Unreact
+#   copy a cached (already decrypted) message.
+# Channel.kt: fetchMessagesFromChannel, fetchSingleMessage, searchChannel return through
+#   E2eeMessages.history / single.
+# ChannelScreenViewModel: pages come from fetchMessagesFromChannel; WS frames from the socket
+#   (MessageUpdate data is the rewritten plaintext frame); items re-made from the cache.
+# InReplyTo: fetchSingleMessage. ChannelPinsScreen: searchChannel.
+cache|app/src/main/java/chat/stoat/composables/chat/InReplyTo.kt|StoatAPI.messageCache[messageId] = fetchSingleMessage(channelId, messageId)
+cache|app/src/main/java/chat/stoat/screens/chat/ChannelPinsScreen.kt|response.messages?.forEach { m -> m.id?.let { StoatAPI.messageCache.putIfAbsent(it, m) } }
+cache|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|it.id?.let { messageId -> StoatAPI.messageCache[messageId] = it }
+cache|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|message.id?.let { StoatAPI.messageCache[it] = message }
+cache|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|StoatAPI.messageCache[messageAppendFrame.id] = message!!
+cache|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|StoatAPI.messageCache[messageFrame.id!!] = messageFrame
+cache|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|StoatAPI.messageCache[messageReactFrame.id] =
+cache|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|StoatAPI.messageCache[messageUnreactFrame.id] =
+cache|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|StoatAPI.messageCache[messageUpdateFrame.id] = merged
+decode|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|StoatJson.decodeFromJsonElement(MessageFrame.serializer(), it.data)
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|MessageFrame.serializer(),
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/realtime/RealtimeSocket.kt|val messageFrame = E2eeMessages.incoming(StoatJson.decodeFromString(MessageFrame.serializer(), rawFrame))
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/routes/channel/Channel.kt|ListSerializer(Message.serializer()),
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/routes/channel/Channel.kt|ListSerializer(Message.serializer()),
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/routes/channel/Channel.kt|Message.serializer(),
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/routes/channel/Channel.kt|MessagesInChannel.serializer(),
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/routes/channel/Channel.kt|MessagesInChannel.serializer(),
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(m, currentMsg.mdAst)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(m, currentMsg.mdAst)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(m, currentMsg.mdAst)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(merged, ast)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(message, parseAst(message.content))
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|else -> ChannelScreenItem.RegularMessage(it, null)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|is ChannelScreenItem.RegularMessage -> ChannelScreenItem.RegularMessage(
