@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: экспорт/импорт ключей в файл и отчёт диагностики (этап 5, CR-21, CR-22) -->
+<resources>
+    <string name="durio_keys_section">Файлы ключей</string>
+    <string name="durio_keys_section_text">Сохраните ключи зашифрованных чатов в файл под парольной фразой или загрузите такой файл — например, после переустановки без бэкапа ключей.</string>
+    <string name="durio_keys_export">Экспорт ключей</string>
+    <string name="durio_keys_import">Импорт ключей</string>
+    <string name="durio_keys_export_intro">Любой, у кого есть этот файл и его парольная фраза, сможет читать ваши зашифрованные чаты. Выберите длинную фразу (несколько слов) и храните файл в надёжном месте. Восстановить фразу нельзя.</string>
+    <string name="durio_keys_passphrase">Парольная фраза</string>
+    <string name="durio_keys_passphrase_repeat">Повторите парольную фразу</string>
+    <string name="durio_keys_passphrase_mismatch">Фразы не совпадают.</string>
+    <string name="durio_keys_strength_too_short">Слишком коротко: не меньше %1$d символов.</string>
+    <string name="durio_keys_strength_weak">Слабая: легко подобрать. Используйте несколько слов.</string>
+    <string name="durio_keys_strength_fair">Средняя. Длиннее — надёжнее.</string>
+    <string name="durio_keys_strength_strong">Надёжная.</string>
+    <string name="durio_keys_all_chats">Все зашифрованные чаты</string>
+    <string name="durio_keys_no_chats">Зашифрованные чаты ещё не загружены: будут выгружены все ключи этого устройства.</string>
+    <string name="durio_keys_export_action">Экспортировать и сохранить</string>
+    <string name="durio_keys_working">Шифрование ключей…</string>
+    <string name="durio_keys_exported">Сохранено: ключи %1$d сессий.</string>
+    <string name="durio_keys_export_cancelled">Не сохранено: файл не выбран.</string>
+    <string name="durio_keys_too_many">Слишком много ключей для одного файла. Экспортируйте чаты по одному (снимите «Все зашифрованные чаты»).</string>
+    <string name="durio_keys_import_intro">Выберите файл ключей, выгруженный из dur.io или другого Matrix-приложения, и введите его парольную фразу. Уже имеющиеся ключи сохранятся; сообщения, ждавшие этих ключей, станут читаемыми.</string>
+    <string name="durio_keys_choose_file">Выбрать файл</string>
+    <string name="durio_keys_file_chosen">Файл выбран</string>
+    <string name="durio_keys_import_action">Импортировать</string>
+    <string name="durio_keys_importing">Расшифровка файла…</string>
+    <string name="durio_keys_imported">Импортировано ключей: %1$d из %2$d.</string>
+    <string name="durio_keys_imported_skipped">Пропущено ключей комнат других приложений: %1$d.</string>
+    <string name="durio_keys_imported_note">Сообщения, прочитанные импортированными ключами, помечены «автор не подтверждён»: файл не доказывает, кто их написал.</string>
+    <string name="durio_keys_wrong_passphrase">Неверная парольная фраза или файл изменён.</string>
+    <string name="durio_keys_invalid_file">Это не файл ключей, или он повреждён.</string>
+    <string name="durio_keys_file_too_large">Файл слишком большой (больше 64 МиБ).</string>
+    <string name="durio_keys_file_access">Не удалось прочитать или записать файл.</string>
+    <string name="durio_keys_failed">Что-то пошло не так. Повторите.</string>
+</resources>
+

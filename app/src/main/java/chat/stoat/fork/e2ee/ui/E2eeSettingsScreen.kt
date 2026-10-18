@@ -103,6 +103,10 @@ import chat.stoat.shared.resources.durio_e2ee_devices_trust_verified
 import chat.stoat.shared.resources.durio_e2ee_devices_unverified_hint
 import chat.stoat.shared.resources.durio_e2ee_devices_verify
 import chat.stoat.shared.resources.durio_e2ee_privacy
+import chat.stoat.shared.resources.durio_keys_export
+import chat.stoat.shared.resources.durio_keys_import
+import chat.stoat.shared.resources.durio_keys_section
+import chat.stoat.shared.resources.durio_keys_section_text
 import chat.stoat.shared.resources.durio_verify_not_started
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -168,7 +172,7 @@ class E2eeSettingsViewModel : ViewModel() {
 /**
  * "Devices and encryption" (plan AN-30): this device and its fingerprint, the account's other
  * devices (session = device, C22) with their verification and "log out", the key backup (AN-32),
- * the privacy options (AN-33) and "reset encryption" (AN-42).
+ * key files (CR-21), the privacy options (AN-33) and "reset encryption" (AN-42).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -236,6 +240,17 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
                         onRestore = { navController.navigate(E2eeRoutes.RESTORE) },
                         onRotate = { navController.navigate(E2eeRoutes.ROTATE) },
                     )
+                }
+                // CR-21: keys to and from a passphrase-protected file
+                item(key = "keysHeader") { ListHeader { Text(stringResource(Res.string.durio_keys_section)) } }
+                item(key = "keys") {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(Res.string.durio_keys_section_text), style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(onClick = { navController.navigate(E2eeRoutes.KEYS_EXPORT) }) { Text(stringResource(Res.string.durio_keys_export)) }
+                            FilledTonalButton(onClick = { navController.navigate(E2eeRoutes.KEYS_IMPORT) }) { Text(stringResource(Res.string.durio_keys_import)) }
+                        }
+                    }
                 }
             }
 

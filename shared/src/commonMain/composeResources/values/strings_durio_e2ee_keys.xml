@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: key export/import files and the diagnostic report (stage 5, CR-21, CR-22) -->
+<resources>
+    <string name="durio_keys_section">Key files</string>
+    <string name="durio_keys_section_text">Save the keys of your encrypted chats to a file protected with a passphrase, or load such a file — for example after reinstalling without a key backup.</string>
+    <string name="durio_keys_export">Export keys</string>
+    <string name="durio_keys_import">Import keys</string>
+    <string name="durio_keys_export_intro">Anyone with this file and its passphrase can read your encrypted chats. Choose a long passphrase (several words) and keep the file somewhere safe. The passphrase cannot be recovered.</string>
+    <string name="durio_keys_passphrase">Passphrase</string>
+    <string name="durio_keys_passphrase_repeat">Repeat the passphrase</string>
+    <string name="durio_keys_passphrase_mismatch">The passphrases do not match.</string>
+    <string name="durio_keys_strength_too_short">Too short: at least %1$d characters.</string>
+    <string name="durio_keys_strength_weak">Weak: easy to guess. Use several words.</string>
+    <string name="durio_keys_strength_fair">Fair. A longer passphrase is safer.</string>
+    <string name="durio_keys_strength_strong">Strong.</string>
+    <string name="durio_keys_all_chats">All encrypted chats</string>
+    <string name="durio_keys_no_chats">No encrypted chats are loaded yet: all keys this device has are exported.</string>
+    <string name="durio_keys_export_action">Export and save</string>
+    <string name="durio_keys_working">Encrypting the keys…</string>
+    <string name="durio_keys_exported">Saved: keys of %1$d sessions.</string>
+    <string name="durio_keys_export_cancelled">Not saved: no file was chosen.</string>
+    <string name="durio_keys_too_many">Too many keys for one file. Export the chats one by one (untick “All encrypted chats”).</string>
+    <string name="durio_keys_import_intro">Choose a key file exported from dur.io or another Matrix app and enter its passphrase. Keys you already have are kept; messages waiting for these keys become readable.</string>
+    <string name="durio_keys_choose_file">Choose file</string>
+    <string name="durio_keys_file_chosen">File chosen</string>
+    <string name="durio_keys_import_action">Import</string>
+    <string name="durio_keys_importing">Decrypting the file…</string>
+    <string name="durio_keys_imported">Imported %1$d of %2$d keys.</string>
+    <string name="durio_keys_imported_skipped">%1$d keys of rooms from other apps were left out.</string>
+    <string name="durio_keys_imported_note">Messages read with imported keys are marked “sender not confirmed”: a file cannot prove who wrote them.</string>
+    <string name="durio_keys_wrong_passphrase">Wrong passphrase, or the file was modified.</string>
+    <string name="durio_keys_invalid_file">This is not a key file, or it is damaged.</string>
+    <string name="durio_keys_file_too_large">The file is too large (more than 64 MiB).</string>
+    <string name="durio_keys_file_access">The file could not be read or written.</string>
+    <string name="durio_keys_failed">Something went wrong. Try again.</string>
+</resources>
+
