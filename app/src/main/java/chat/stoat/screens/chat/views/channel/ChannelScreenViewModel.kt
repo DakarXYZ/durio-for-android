@@ -49,6 +49,7 @@ import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
 import chat.stoat.api.fork.e2ee.E2eePayloadAttachment
 import chat.stoat.fork.e2ee.OutgoingMessages
+import chat.stoat.fork.e2ee.media.OutgoingAttachments
 import chat.stoat.fork.upstream.UpstreamServices
 import chat.stoat.internals.text.MessageProcessor
 import chat.stoat.internals.text.stripPUAChars
@@ -556,7 +557,13 @@ class ChannelScreenViewModel(
 
             takenAttachments.forEachIndexed { index, it ->
                 try {
-                    if (encrypted) error("Encrypted attachments are not supported yet")
+                    if (encrypted) {
+                        encryptedAttachments += OutgoingAttachments.prepare(it) { current, total ->
+                            attachmentUploadProgress =
+                                ((current.toFloat() / total.toFloat()) / totalTaken.toFloat()) + (index.toFloat() / totalTaken.toFloat())
+                        }
+                        return@forEachIndexed
+                    }
                     val id = uploadToAutumn(
                         it.file,
                         if (it.spoiler) "SPOILER_${it.filename}" else it.filename,

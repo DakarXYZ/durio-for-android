@@ -167,6 +167,9 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
     /** The message is too long to encrypt. */
     class PayloadTooLarge(cause: Throwable? = null) : E2eeException("Payload too large", cause)
 
+    /** An attachment blob is not the one the sender encrypted: show nothing (AN-28). */
+    class AttachmentHashMismatch(cause: Throwable? = null) : E2eeException("Attachment hash mismatch", cause)
+
     /** The core has no member list for the channel yet (`setChannelMembers` first). */
     class UnknownChannel(cause: Throwable? = null) : E2eeException("Unknown channel", cause)
 

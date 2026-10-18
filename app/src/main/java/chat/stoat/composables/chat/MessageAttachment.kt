@@ -33,6 +33,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import chat.stoat.R
+import chat.stoat.fork.e2ee.ui.EncryptedMessageAttachment
 import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.composables.media.AudioPlayer
 import chat.stoat.composables.media.VoiceMessagePlayer
@@ -221,6 +222,9 @@ fun MessageAttachment(
     waveformDurationMillis: Long? = null,
     onAttachmentClick: (AutumnResource) -> Unit,
 ) {
+    // durio: encrypted files are drawn from their keys, never from their URL (plan AN-28)
+    if (EncryptedMessageAttachment(attachment, onAttachmentClick)) return
+
     Box(
         modifier = Modifier
             .clip(if (waveform != null) CircleShape else MaterialTheme.shapes.medium)

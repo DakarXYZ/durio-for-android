@@ -52,6 +52,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.e2ee.OutgoingMessages
+import chat.stoat.fork.e2ee.media.OutgoingAttachments
 import chat.stoat.api.fork.e2ee.E2eePayloadAttachment
 import chat.stoat.api.internals.ULID
 import kotlinx.coroutines.CancellationException
@@ -231,7 +232,13 @@ class ShareTargetScreenViewModel(
 
             takenAttachments.forEachIndexed { index, it ->
                 try {
-                    if (encrypted) error("Encrypted attachments are not supported yet")
+                    if (encrypted) {
+                        encryptedAttachments += OutgoingAttachments.prepare(it) { current, total ->
+                            attachmentProgress =
+                                ((current.toFloat() / total.toFloat()) / totalTaken.toFloat()) + (index.toFloat() / totalTaken.toFloat())
+                        }
+                        return@forEachIndexed
+                    }
                     val id = uploadToAutumn(
                         it.file,
                         it.filename,

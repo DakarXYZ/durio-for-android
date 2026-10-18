@@ -34,4 +34,7 @@
     <string name="durio_e2ee_call_not_encrypted">Звонки не защищены сквозным шифрованием, даже в зашифрованных чатах.</string>
     <string name="durio_e2ee_system_enabled">%1$s включил(а) сквозное шифрование.</string>
     <string name="durio_e2ee_search_unavailable">Поиск недоступен в чатах со сквозным шифрованием: сервер не может их прочитать.</string>
+    <string name="durio_e2ee_attachment_failed">Не удалось открыть зашифрованный файл.</string>
+    <string name="durio_e2ee_attachment_gone">Ключей этого файла уже нет в памяти. Откройте чат заново.</string>
+    <string name="durio_e2ee_saved">Сохранено (расшифровано) на устройство.</string>
 </resources>

@@ -88,6 +88,7 @@ import androidx.media3.ui.compose.state.rememberProgressStateWithTickInterval
 import androidx.media3.ui.compose.state.rememberSeekBackButtonState
 import androidx.media3.ui.compose.state.rememberSeekForwardButtonState
 import chat.stoat.R
+import chat.stoat.fork.e2ee.ui.EncryptedMediaViewer
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.settings.LoadedSettings
@@ -136,6 +137,9 @@ class VideoViewActivity : ComponentActivity() {
             finish()
             return
         }
+
+        // durio: encrypted attachments open in their own viewer, keys from memory (plan AN-28)
+        if (EncryptedMediaViewer.show(this, autumnResource)) return
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 

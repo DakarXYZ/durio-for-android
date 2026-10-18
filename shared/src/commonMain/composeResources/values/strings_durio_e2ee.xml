@@ -34,4 +34,7 @@
     <string name="durio_e2ee_call_not_encrypted">Calls are not end-to-end encrypted, even in encrypted chats.</string>
     <string name="durio_e2ee_system_enabled">%1$s turned on end-to-end encryption.</string>
     <string name="durio_e2ee_search_unavailable">Search is not available in end-to-end encrypted chats: the server cannot read them.</string>
+    <string name="durio_e2ee_attachment_failed">Could not open the encrypted file.</string>
+    <string name="durio_e2ee_attachment_gone">The keys of this file are not in memory any more. Open the chat again.</string>
+    <string name="durio_e2ee_saved">Saved (decrypted) to this device.</string>
 </resources>

@@ -227,5 +227,6 @@ internal fun CryptoException.toE2ee(): E2eeException = when (this) {
     is CryptoException.RoomKeyNotShared -> E2eeException.RoomKeyNotShared(this)
     is CryptoException.PayloadTooLarge -> E2eeException.PayloadTooLarge(this)
     is CryptoException.UnknownChannel -> E2eeException.UnknownChannel(this)
+    is CryptoException.AttachmentHashMismatch -> E2eeException.AttachmentHashMismatch(this)
     else -> E2eeException.Core(this::class.simpleName ?: "Unknown", this)
 }

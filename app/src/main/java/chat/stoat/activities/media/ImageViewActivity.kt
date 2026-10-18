@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
 import chat.stoat.R
+import chat.stoat.fork.e2ee.ui.EncryptedMediaViewer
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.core.model.schemas.AutumnResource
@@ -78,6 +79,9 @@ class ImageViewActivity : ComponentActivity() {
             finish()
             return
         }
+
+        // durio: encrypted attachments open in their own viewer, keys from memory (plan AN-28)
+        if (EncryptedMediaViewer.show(this, autumnResource)) return
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 

@@ -17,6 +17,9 @@ import chat.stoat.api.fork.routes.fetchServerRoot
 import chat.stoat.api.realtime.DisconnectionState
 import chat.stoat.api.realtime.RealtimeSocket
 import chat.stoat.core.crypto.CryptoStores
+import chat.stoat.core.crypto.UniffiAttachmentCrypto
+import chat.stoat.api.fork.e2ee.E2eeAttachments
+import chat.stoat.fork.e2ee.media.EncryptedMedia
 import chat.stoat.fork.account.Account
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.keystore.KeyWrapper
@@ -89,6 +92,9 @@ object E2eeManager : E2eeSocketListener {
     private val mutex = Mutex()
 
     private lateinit var keys: E2eeStoreKeys
+
+    @Volatile
+    private var appContext: Context? = null
 
     lateinit var registry: CryptoRegistry
         private set
@@ -165,6 +171,9 @@ object E2eeManager : E2eeSocketListener {
             },
         )
         E2eeFrames.listener = this
+        // attachments need no account: the stateless half of the core (AN-28)
+        E2eeAttachments.crypto = UniffiAttachmentCrypto
+        appContext = context.applicationContext
     }
 
     private suspend fun openCore(accountKey: String): E2eeCore {
@@ -191,6 +200,8 @@ object E2eeManager : E2eeSocketListener {
         startJob?.cancel()
         mutex.withLock { stopLocked() }
         _status.value = E2eeStatus.Off
+        // nothing of the old account stays: decrypted images, downloaded ciphertext
+        appContext?.let { EncryptedMedia.clearCache(it) }
     }
 
     /** Logout (AN-11): stop, close the machine and delete its store and key. */
@@ -213,6 +224,7 @@ object E2eeManager : E2eeSocketListener {
             }
             keys.delete(accountKey)
         }
+        appContext?.let { EncryptedMedia.clearCache(it) }
     }
 
     private suspend fun startLocked() {

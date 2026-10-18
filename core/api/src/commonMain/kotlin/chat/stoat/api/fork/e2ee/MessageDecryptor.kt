@@ -111,7 +111,8 @@ class MessageDecryptor(
             state.attachmentKeys[a.id] = E2eeAttachmentKeys(messageId = id, attachment = a)
             AutumnResource(
                 id = a.id,
-                tag = "attachments",
+                // marks a decrypted attachment: viewers never fall back to its (ciphertext) URL
+                tag = E2eeAttachments.DECRYPTED_TAG,
                 // upstream marks spoilers by the file name (ChannelScreenViewModel, ImageAttachment)
                 filename = if (a.spoiler) "$SPOILER_PREFIX${a.name}" else a.name,
                 metadata = a.metadata(),
