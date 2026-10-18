@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: sharing and forwarding encrypted files (stage 4, AN-44) -->
+<resources>
+    <string name="durio_e2ee_share_file">Share file</string>
+    <string name="durio_e2ee_forward">Forward to a chat</string>
+</resources>

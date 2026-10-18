@@ -117,7 +117,11 @@ object EncryptedMedia {
     suspend fun clearCache(context: Context) = mutex.withLock {
         bitmaps.evictAll()
         verified.clear()
-        withContext(Dispatchers.IO) { File(context.cacheDir, CACHE_DIR).deleteRecursively() }
+        withContext(Dispatchers.IO) {
+            File(context.cacheDir, CACHE_DIR).deleteRecursively()
+            // decrypted copies shared to other apps (AN-44)
+            EncryptedShare.clear(context)
+        }
     }
 
     private const val CACHE_DIR = "e2ee"

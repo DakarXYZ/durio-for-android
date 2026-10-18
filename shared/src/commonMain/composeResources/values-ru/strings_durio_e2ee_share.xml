@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: «поделиться» и пересылка зашифрованных файлов (этап 4, AN-44) -->
+<resources>
+    <string name="durio_e2ee_share_file">Поделиться файлом</string>
+    <string name="durio_e2ee_forward">Переслать в чат</string>
+</resources>

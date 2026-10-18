@@ -67,11 +67,14 @@ import chat.stoat.composables.chat.VideoPlayButton
 import chat.stoat.core.model.schemas.AutumnResource
 import chat.stoat.fork.e2ee.media.EncryptedFileDataSource
 import chat.stoat.fork.e2ee.media.EncryptedMedia
+import chat.stoat.fork.e2ee.media.EncryptedShare
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.attachment_spoiler
 import chat.stoat.shared.resources.back
 import chat.stoat.shared.resources.durio_e2ee_attachment_failed
 import chat.stoat.shared.resources.durio_e2ee_attachment_gone
+import chat.stoat.shared.resources.durio_e2ee_forward
+import chat.stoat.shared.resources.durio_e2ee_share_file
 import chat.stoat.shared.resources.durio_e2ee_saved
 import chat.stoat.shared.resources.media_viewer_play
 import chat.stoat.shared.resources.media_viewer_save
@@ -285,10 +288,27 @@ private suspend fun save(context: android.content.Context, id: String) {
     Toast.makeText(context, getString(text), Toast.LENGTH_SHORT).show()
 }
 
+private suspend fun share(context: android.content.Context, id: String, forward: Boolean) {
+    val prepared = try {
+        EncryptedShare.prepare(context, id)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
+    }
+    if (prepared == null) {
+        Toast.makeText(context, getString(Res.string.durio_e2ee_attachment_failed), Toast.LENGTH_SHORT).show()
+        return
+    }
+    val (uri, type) = prepared
+    if (forward) EncryptedShare.forward(context, uri, type) else EncryptedShare.share(context, uri, type)
+}
+
 /**
  * The image and video viewers for encrypted attachments (AN-28), shown instead of upstream's
  * `ImageViewActivity`/`VideoViewActivity` screens, which load and share by URL. No "share
- * link" (a link to ciphertext is useless); "save" writes the decrypted file on request.
+ * link" (a link to ciphertext is useless); "save", "share file" and "forward" use the decrypted
+ * file on request (AN-28, AN-44).
  */
 object EncryptedMediaViewer {
     /** Shows the viewer if [resource] is an encrypted attachment; false: the upstream screen. */
@@ -326,8 +346,17 @@ private fun ViewerScreen(id: String, resource: AutumnResource, onClose: () -> Un
                     }
                 },
                 actions = {
-                    if (keys != null) IconButton(onClick = { scope.launch { save(context, id) } }) {
-                        Icon(painterResource(R.drawable.ic_download_24dp), contentDescription = stringResource(Res.string.media_viewer_save))
+                    if (keys != null) {
+                        // the decrypted file, never a link to the ciphertext (AN-44)
+                        IconButton(onClick = { scope.launch { share(context, id, forward = false) } }) {
+                            Icon(painterResource(R.drawable.ic_ios_share_24dp), contentDescription = stringResource(Res.string.durio_e2ee_share_file))
+                        }
+                        IconButton(onClick = { scope.launch { share(context, id, forward = true) } }) {
+                            Icon(painterResource(R.drawable.ic_send_24dp), contentDescription = stringResource(Res.string.durio_e2ee_forward))
+                        }
+                        IconButton(onClick = { scope.launch { save(context, id) } }) {
+                            Icon(painterResource(R.drawable.ic_download_24dp), contentDescription = stringResource(Res.string.media_viewer_save))
+                        }
                     }
                 }
             )
