@@ -82,7 +82,10 @@ interface E2eeCore : AutoCloseable {
     /** This device's public keys; users compare the Ed25519 one (AN-30). */
     suspend fun identityKeys(): E2eeIdentityKeys
 
-    /** Local trust of a device: by hand, without SAS (AN-30). */
+    /**
+     * Local trust of a device set by hand (AN-30): back to unverified, or blocked. Verified
+     * comes from a finished SAS only, so it cannot be asked for here (review O-3).
+     */
     suspend fun setDeviceTrust(userId: String, deviceId: String, trust: E2eeTrust)
 
     /**

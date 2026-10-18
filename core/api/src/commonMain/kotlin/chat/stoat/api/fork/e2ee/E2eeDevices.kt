@@ -11,8 +11,12 @@ data class E2eeIdentityKeys(val curve25519: String, val ed25519: String) {
     }
 }
 
-/** Local trust of a device (no cross-signing in v1: nothing is uploaded). */
-enum class E2eeTrust { Verified, Unverified, Blocked }
+/**
+ * Trust the app may set on a device by hand (no cross-signing in v1: nothing is uploaded).
+ * "Verified" is not here on purpose: a device becomes verified only by a finished SAS
+ * ([E2eeSasState.Done]), never by a button or "trust on first use" (review O-3, host contract).
+ */
+enum class E2eeTrust { Unverified, Blocked }
 
 /**
  * One SAS verification flow (plan AN-31) as the UI drives it. The core keeps the state and has

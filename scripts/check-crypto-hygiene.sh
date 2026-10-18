@@ -7,6 +7,8 @@
 #    travel to code that logs.
 # 2. :core:crypto does not log and does not build strings from values at all.
 # 3. E2EE code elsewhere never puts bodies, keys, payloads or plaintext into a log line.
+# 4. Review O-3: the app never sets "verified" by hand; Trust.VERIFIED in :core:crypto only in
+#    comparisons (a device is verified by SAS Done).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -32,6 +34,14 @@ hits=$(grep -rniE '(Logger\.[a-z]+|logcat|Log\.[a-z]+)\b.*\$\{?[a-z.]*(body|key|
     core/api/src/commonMain/kotlin/chat/stoat/api/fork/routes/e2ee --include=*.kt 2>/dev/null || true)
 if [[ -n "$hits" ]]; then
     echo "E2EE data in log lines:"
+    echo "$hits"
+    fail=1
+fi
+
+hits=$(grep -rnE 'Trust\.VERIFIED' core/crypto/src/main --include=*.kt \
+    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(\*|//|/\*)' | grep -vE '[=!]= *Trust\.VERIFIED' || true)
+if [[ -n "$hits" ]]; then
+    echo "Trust.VERIFIED set by the app (only SAS Done verifies, review O-3):"
     echo "$hits"
     fail=1
 fi

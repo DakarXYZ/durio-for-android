@@ -177,12 +177,14 @@ internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
         E2eeIdentityKeys(curve25519 = keys.curve25519, ed25519 = keys.ed25519)
     }
 
+    // Review O-3: the core accepts VERIFIED here (its tests need it); the app never passes it —
+    // E2eeTrust has no such value, and scripts/check-crypto-hygiene.sh keeps Trust.VERIFIED
+    // to comparisons in this module. Verified comes from SAS Done only.
     override suspend fun setDeviceTrust(userId: String, deviceId: String, trust: E2eeTrust) = core {
         machine.setDeviceTrust(
             userId,
             deviceId,
             when (trust) {
-                E2eeTrust.Verified -> Trust.VERIFIED
                 E2eeTrust.Unverified -> Trust.UNVERIFIED
                 E2eeTrust.Blocked -> Trust.BLOCKED
             }
