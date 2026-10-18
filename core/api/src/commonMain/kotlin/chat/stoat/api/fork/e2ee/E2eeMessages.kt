@@ -76,6 +76,15 @@ object E2eeMessages {
         redecrypt(decryptor.waitingFor(keys).toList())
     }
 
+    /**
+     * Keys came from elsewhere than the mailbox (a backup restore, AN-32): every message still
+     * waiting for its key is decrypted again.
+     */
+    suspend fun retryWaiting() {
+        if (decryptor == null) return
+        redecrypt(E2eeState.status.filterValues { it == DecryptionStatus.Pending }.keys.toList())
+    }
+
     private suspend fun redecrypt(ids: List<String>) {
         if (ids.isEmpty()) return
         val cached = ids.mapNotNull { StoatAPI.messageCache[it] }.filter { it.encrypted != null }

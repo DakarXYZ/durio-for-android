@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: recovery key, key backup, first prompt of a device (stage 4, AN-32) -->
+<resources>
+    <string name="durio_recovery_title">Recovery key</string>
+    <string name="durio_recovery_rotate_title">Replace the backup</string>
+    <string name="durio_recovery_intro">The recovery key unlocks the backup of your encryption keys. With it, a new device can read your earlier encrypted messages. The server cannot read the backup. Keep the key somewhere safe: nobody, not even the server, can recover it for you.</string>
+    <string name="durio_recovery_rotate_intro">Creates a new backup with a new backup key under the same recovery key, for example if you suspect that the backup key leaked. Needs your password.</string>
+    <string name="durio_recovery_exists">You already have a backup. A new recovery key replaces it: the old key stops working, and keys that only the old backup has are lost. If you have the old key, restore your history instead.</string>
+    <string name="durio_recovery_create">Create recovery key</string>
+    <string name="durio_recovery_key_title">Your recovery key</string>
+    <string name="durio_recovery_key_text">Write it down or save it to a file. It is shown only now.</string>
+    <string name="durio_recovery_copy">Copy</string>
+    <string name="durio_recovery_copy_warning_title">Copy the recovery key?</string>
+    <string name="durio_recovery_copy_warning">Other apps and keyboards with a clipboard history can read the clipboard. It is cleared after a minute. Writing the key down is safer.</string>
+    <string name="durio_recovery_copied">Copied. The clipboard is cleared in a minute.</string>
+    <string name="durio_recovery_save_file">Save to file</string>
+    <string name="durio_recovery_saved">Saved</string>
+    <string name="durio_recovery_written">I have saved my recovery key</string>
+    <string name="durio_recovery_activate">Turn on backup</string>
+    <string name="durio_recovery_done">Backup is on</string>
+    <string name="durio_recovery_done_text">The keys of your encrypted chats are backed up from now on.</string>
+    <string name="durio_recovery_restore_title">Restore history</string>
+    <string name="durio_recovery_restore_intro">Enter your recovery key (or its passphrase) to read your earlier encrypted messages on this device.</string>
+    <string name="durio_recovery_input">Recovery key</string>
+    <string name="durio_recovery_input_key">Looks like a recovery key</string>
+    <string name="durio_recovery_input_typo">There is a typo in the recovery key</string>
+    <string name="durio_recovery_input_passphrase">Will be used as a passphrase</string>
+    <string name="durio_recovery_restore">Restore</string>
+    <string name="durio_recovery_restore_progress">Restoring keys: %1$s of %2$s</string>
+    <string name="durio_recovery_restore_done">Restored %1$d keys</string>
+    <string name="durio_recovery_unauthenticated_note">Messages read with keys from the backup are marked “sender not confirmed”: the backup cannot prove who wrote them.</string>
+    <string name="durio_recovery_failed_typo">There is a typo in the recovery key.</string>
+    <string name="durio_recovery_failed_wrong">This is not the recovery key (or passphrase) of your backup.</string>
+    <string name="durio_recovery_failed_no_backup">There is no backup on the server.</string>
+    <string name="durio_recovery_failed_mismatch">The backup on the server does not match its recovery data. It was not used.</string>
+    <string name="durio_recovery_failed_network">The server could not be reached. Try again.</string>
+    <string name="durio_recovery_failed_other">Something went wrong. Try again.</string>
+    <string name="durio_onboarding_new_device_title">New device</string>
+    <string name="durio_onboarding_new_device">To read your earlier encrypted messages here, verify this device with another of your devices, or restore your history with the recovery key.</string>
+    <string name="durio_onboarding_verify">Verify with another device</string>
+    <string name="durio_onboarding_restore">Restore with recovery key</string>
+    <string name="durio_onboarding_later">Later</string>
+    <string name="durio_onboarding_set_up_title">Protect your encrypted history</string>
+    <string name="durio_onboarding_set_up_text">Create a recovery key, so you can read your encrypted messages on a new phone too.</string>
+    <string name="durio_onboarding_set_up">Create recovery key</string>
+</resources>

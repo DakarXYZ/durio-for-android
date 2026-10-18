@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: ключ восстановления, бэкап ключей, первый запрос устройства (этап 4, AN-32) -->
+<resources>
+    <string name="durio_recovery_title">Ключ восстановления</string>
+    <string name="durio_recovery_rotate_title">Замена бэкапа</string>
+    <string name="durio_recovery_intro">Ключ восстановления открывает бэкап ваших ключей шифрования. С ним новое устройство прочитает прежние зашифрованные сообщения. Сервер бэкап прочитать не может. Храните ключ в надёжном месте: восстановить его не сможет никто, даже сервер.</string>
+    <string name="durio_recovery_rotate_intro">Создаёт новый бэкап с новым ключом бэкапа под тем же ключом восстановления — например, если вы подозреваете утечку ключа бэкапа. Нужен ваш пароль.</string>
+    <string name="durio_recovery_exists">У вас уже есть бэкап. Новый ключ восстановления заменит его: старый ключ перестанет работать, а ключи, которые есть только в старом бэкапе, пропадут. Если старый ключ у вас есть — лучше восстановите историю.</string>
+    <string name="durio_recovery_create">Создать ключ восстановления</string>
+    <string name="durio_recovery_key_title">Ваш ключ восстановления</string>
+    <string name="durio_recovery_key_text">Запишите его или сохраните в файл. Он показывается только сейчас.</string>
+    <string name="durio_recovery_copy">Копировать</string>
+    <string name="durio_recovery_copy_warning_title">Скопировать ключ восстановления?</string>
+    <string name="durio_recovery_copy_warning">Буфер обмена могут прочитать другие приложения и клавиатуры с историей буфера. Он очистится через минуту. Записать ключ надёжнее.</string>
+    <string name="durio_recovery_copied">Скопировано. Буфер очистится через минуту.</string>
+    <string name="durio_recovery_save_file">Сохранить в файл</string>
+    <string name="durio_recovery_saved">Сохранено</string>
+    <string name="durio_recovery_written">Я сохранил ключ восстановления</string>
+    <string name="durio_recovery_activate">Включить бэкап</string>
+    <string name="durio_recovery_done">Бэкап включён</string>
+    <string name="durio_recovery_done_text">С этого момента ключи ваших зашифрованных чатов попадают в бэкап.</string>
+    <string name="durio_recovery_restore_title">Восстановление истории</string>
+    <string name="durio_recovery_restore_intro">Введите ключ восстановления (или его пароль), чтобы читать прежние зашифрованные сообщения на этом устройстве.</string>
+    <string name="durio_recovery_input">Ключ восстановления</string>
+    <string name="durio_recovery_input_key">Похоже на ключ восстановления</string>
+    <string name="durio_recovery_input_typo">В ключе восстановления опечатка</string>
+    <string name="durio_recovery_input_passphrase">Будет использован как пароль</string>
+    <string name="durio_recovery_restore">Восстановить</string>
+    <string name="durio_recovery_restore_progress">Восстанавливаем ключи: %1$s из %2$s</string>
+    <string name="durio_recovery_restore_done">Восстановлено ключей: %1$d</string>
+    <string name="durio_recovery_unauthenticated_note">Сообщения, прочитанные ключами из бэкапа, помечены «автор не подтверждён»: бэкап не доказывает, кто их написал.</string>
+    <string name="durio_recovery_failed_typo">В ключе восстановления опечатка.</string>
+    <string name="durio_recovery_failed_wrong">Это не ключ восстановления (и не пароль) вашего бэкапа.</string>
+    <string name="durio_recovery_failed_no_backup">На сервере нет бэкапа.</string>
+    <string name="durio_recovery_failed_mismatch">Бэкап на сервере не соответствует данным восстановления. Он не использован.</string>
+    <string name="durio_recovery_failed_network">Сервер недоступен. Попробуйте ещё раз.</string>
+    <string name="durio_recovery_failed_other">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="durio_onboarding_new_device_title">Новое устройство</string>
+    <string name="durio_onboarding_new_device">Чтобы читать здесь прежние зашифрованные сообщения, сверьте это устройство с другим своим устройством или восстановите историю ключом восстановления.</string>
+    <string name="durio_onboarding_verify">Сверить с другим устройством</string>
+    <string name="durio_onboarding_restore">Восстановить ключом</string>
+    <string name="durio_onboarding_later">Позже</string>
+    <string name="durio_onboarding_set_up_title">Защитите историю переписки</string>
+    <string name="durio_onboarding_set_up_text">Создайте ключ восстановления, чтобы читать зашифрованные сообщения и на новом телефоне.</string>
+    <string name="durio_onboarding_set_up">Создать ключ восстановления</string>
+</resources>

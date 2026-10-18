@@ -41,7 +41,11 @@ class MiniE2eeServer {
             MockEngine { request ->
                 val body = (request.body as? TextContent)?.text
                 val path = request.url.encodedPathAndQuery.removePrefix("/api")
-                respond(handle(user, device, request.method.value, path, body), HttpStatusCode.OK)
+                try {
+                    respond(handle(user, device, request.method.value, path, body, request.headers["x-mfa-ticket"]), HttpStatusCode.OK)
+                } catch (e: Status) {
+                    respond("", HttpStatusCode.fromValue(e.code))
+                }
             }
         )
 
@@ -61,8 +65,28 @@ class MiniE2eeServer {
 
     fun logSize(): Int = synchronized(this) { log.size }
 
+    /** A non-2xx answer of [handle]. */
+    class Status(val code: Int) : Exception()
+
+    // Key backup and secret storage of each user (AN-32): one active version, MFA to replace it
+    private class Backup(val version: String, val algorithm: String, val authData: JsonElement) {
+        val rooms = mutableMapOf<String, MutableMap<String, JsonElement>>()
+    }
+
+    private val backups = mutableMapOf<String, Backup>()
+    private val secrets = mutableMapOf<String, MutableMap<String, String>>()
+
+    /** The server's own replacement of a user's backup (another device, or an attacker). */
+    fun replaceBackupOf(user: String) = synchronized(this) {
+        val me = matrixId(user)
+        val old = backups[me] ?: return@synchronized
+        backups[me] = Backup(old.version + "x", old.algorithm, old.authData)
+    }
+
+    fun backupKeyCount(user: String): Int = synchronized(this) { backups[matrixId(user)]?.rooms?.values?.sumOf { it.size } ?: 0 }
+
     @Synchronized
-    fun handle(user: String, device: String, method: String, path: String, body: String?): String {
+    fun handle(user: String, device: String, method: String, path: String, body: String?, ticket: String? = null): String {
         log += "$device $method ${path.substringBefore('?')}"
         val json = body?.takeIf { it.isNotEmpty() }?.let { Json.parseToJsonElement(it).jsonObject }
         val me = matrixId(user)
@@ -131,6 +155,54 @@ class MiniE2eeServer {
                     }
                 }
                 "{}"
+            }
+            path == "/e2ee/backup/version" && method == "POST" -> {
+                if (backups[me] != null && ticket == null) throw Status(401)
+                seq += 1
+                val version = "V$seq"
+                backups[me] = Backup(version, json!!["algorithm"]!!.jsonPrimitive.content, json["auth_data"]!!)
+                buildJsonObject { put("version", version) }.toString()
+            }
+            path == "/e2ee/backup/version" && method == "GET" -> {
+                val backup = backups[me] ?: throw Status(404)
+                buildJsonObject {
+                    put("algorithm", backup.algorithm)
+                    put("auth_data", backup.authData)
+                    put("version", backup.version)
+                    put("etag", "0")
+                    put("count", backup.rooms.values.sumOf { it.size })
+                }.toString()
+            }
+            path.startsWith("/e2ee/backup/keys?version=") -> {
+                val backup = backups[me]?.takeIf { it.version == path.substringAfter("version=") } ?: throw Status(404)
+                if (method == "PUT") {
+                    json!!["rooms"]!!.jsonObject.forEach { (room, r) ->
+                        r.jsonObject["sessions"]!!.jsonObject.forEach { (session, data) ->
+                            backup.rooms.getOrPut(room) { mutableMapOf() }[session] = data
+                        }
+                    }
+                    buildJsonObject {
+                        put("etag", "1")
+                        put("count", backup.rooms.values.sumOf { it.size })
+                    }.toString()
+                } else {
+                    buildJsonObject {
+                        putJsonObject("rooms") {
+                            backup.rooms.forEach { (room, sessions) ->
+                                putJsonObject(room) { put("sessions", JsonObject(sessions)) }
+                            }
+                        }
+                    }.toString()
+                }
+            }
+            path.startsWith("/e2ee/secrets/") -> {
+                val type = path.removePrefix("/e2ee/secrets/")
+                if (method == "PUT") {
+                    secrets.getOrPut(me) { mutableMapOf() }[type] = body!!
+                    "{}"
+                } else {
+                    secrets[me]?.get(type) ?: throw Status(404)
+                }
             }
             else -> error("MiniE2eeServer: no route $method $path")
         }

@@ -212,6 +212,8 @@ object E2eeManager : E2eeSocketListener {
         startJob?.cancel()
         mutex.withLock { stopLocked() }
         _status.value = E2eeStatus.Off
+        // a restore of the old account's backup stops with it
+        E2eeRecovery.reset()
         // nothing of the old account stays: decrypted images, downloaded ciphertext
         appContext?.let { EncryptedMedia.clearCache(it) }
     }
@@ -226,6 +228,7 @@ object E2eeManager : E2eeSocketListener {
             if (session?.account?.key == accountKey) {
                 stopLocked()
                 _status.value = E2eeStatus.Off
+                E2eeRecovery.reset()
             }
             try {
                 registry.destroy(accountKey)

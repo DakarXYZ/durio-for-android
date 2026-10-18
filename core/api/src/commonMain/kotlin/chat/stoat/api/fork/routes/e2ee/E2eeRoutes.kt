@@ -5,6 +5,7 @@ import chat.stoat.api.fork.e2ee.E2eeRequest
 import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
 import io.ktor.client.plugins.retry
+import io.ktor.client.request.header
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -12,6 +13,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.content.TextContent
+import io.ktor.http.encodeURLParameter
+import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -37,6 +40,17 @@ object E2eeRoutes {
     const val TO_DEVICE_PATH = "/e2ee/to_device?limit=$TO_DEVICE_LIMIT"
     const val TO_DEVICE_ACK_PATH = "/e2ee/to_device/ack"
     const val KEYS_COUNT_PATH = "/e2ee/keys/count"
+    const val BACKUP_VERSION_PATH = "/e2ee/backup/version"
+    const val BACKUP_KEYS_PATH = "/e2ee/backup/keys"
+    const val SECRETS_PATH = "/e2ee/secrets"
+
+    /** Secret storage entries a restore reads (AN-32). */
+    const val SECRET_DEFAULT_KEY = "m.secret_storage.default_key"
+    const val SECRET_KEY_PREFIX = "m.secret_storage.key."
+    const val SECRET_MEGOLM_BACKUP = "m.megolm_backup.v1"
+
+    /** Header of an MFA ticket: replacing a backup needs one (Q13). */
+    const val MFA_TICKET_HEADER = "x-mfa-ticket"
 }
 
 /** Status and raw body; [retryAfterMs] from a 429. */
@@ -47,9 +61,24 @@ class E2eeResponse(val status: Int, val body: String, val retryAfterMs: Long? = 
     override fun toString() = "E2eeResponse($status)"
 }
 
-/** Runs one request of the core as it is: method, path (with its query) and JSON body. */
-suspend fun executeE2eeRequest(client: ApiClient, request: E2eeRequest): E2eeResponse =
-    e2eeCall(client, HttpMethod.parse(request.method.uppercase()), request.path, request.body)
+/**
+ * Runs one request of the core as it is: method, path (with its query) and JSON body; with
+ * [mfaTicket] for a backup version that replaces another (AN-32).
+ */
+suspend fun executeE2eeRequest(client: ApiClient, request: E2eeRequest, mfaTicket: String? = null): E2eeResponse =
+    e2eeCall(client, HttpMethod.parse(request.method.uppercase()), request.path, request.body, mfaTicket)
+
+/** `GET /e2ee/secrets/<type>`: an entry of the secret storage (ciphertext), 404 if none. */
+suspend fun fetchE2eeSecret(client: ApiClient, type: String): E2eeResponse =
+    e2eeCall(client, HttpMethod.Get, "${E2eeRoutes.SECRETS_PATH}/${type.encodeURLPathPart()}")
+
+/** `GET /e2ee/backup/version`: the active backup, 404 if none. */
+suspend fun fetchBackupVersion(client: ApiClient): E2eeResponse =
+    e2eeCall(client, HttpMethod.Get, E2eeRoutes.BACKUP_VERSION_PATH)
+
+/** `GET /e2ee/backup/keys?version=<v>`: every key of the backup (encrypted to its public key). */
+suspend fun fetchBackupKeys(client: ApiClient, version: String): E2eeResponse =
+    e2eeCall(client, HttpMethod.Get, "${E2eeRoutes.BACKUP_KEYS_PATH}?version=${version.encodeURLParameter()}")
 
 /** `GET /e2ee/to_device?limit=100`: the oldest messages of this device's mailbox. */
 suspend fun fetchToDevice(client: ApiClient): E2eeResponse =
@@ -71,10 +100,12 @@ private suspend fun e2eeCall(
     method: HttpMethod,
     path: String,
     body: String? = null,
+    mfaTicket: String? = null,
 ): E2eeResponse {
     val response = client.http.request(path.api(client)) {
         this.method = method
         retry { noRetry() }
+        if (mfaTicket != null) header(E2eeRoutes.MFA_TICKET_HEADER, mfaTicket)
         if (!body.isNullOrEmpty() && method != HttpMethod.Get) {
             setBody(TextContent(body, ContentType.Application.Json))
         }

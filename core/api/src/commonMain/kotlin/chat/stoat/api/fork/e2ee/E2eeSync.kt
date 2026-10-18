@@ -205,6 +205,40 @@ class E2eeSync(
         }
     }
 
+    /**
+     * Runs one request the user started (the backup version of a recovery setup, AN-32) right
+     * now, serialized with the loop, and marks it in the core; a request pass follows (secret
+     * and key uploads). [mfaTicket] goes along as `x-mfa-ticket`.
+     *
+     * @throws E2eeException.ActionRequired [E2eeAction.MfaRequired]: get a ticket and run the
+     *   same request again with it
+     * @throws E2eeRequestException any other failure; [E2eeRequestException.status] 0 without
+     *   an answer
+     */
+    suspend fun runNow(request: E2eeRequest, mfaTicket: String? = null) {
+        mutex.withLock {
+            val response = try {
+                executeE2eeRequest(client, request, mfaTicket)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.w { "E2EE ${request.kind} failed: ${e::class.simpleName}" }
+                core.markRequestFailed(request, 0)
+                throw E2eeRequestException(0)
+            }
+            if (response.isSuccess) {
+                core.markRequestSent(request, response.body)
+            } else {
+                Logger.w { "E2EE ${request.kind} failed: ${response.status}" }
+                // a 401 here is the missing MFA ticket: the core says so (ActionRequired)
+                core.markRequestFailed(request, response.status)
+                if (response.status == 401) unauthorized()
+                throw E2eeRequestException(response.status)
+            }
+        }
+        requestPass()
+    }
+
     private suspend fun run() {
         for (first in triggers) {
             pending.add(first)
@@ -434,6 +468,9 @@ sealed interface E2eeSyncEvent {
 /** The message could not be prepared for encryption; [retryable]: network or server trouble. */
 class E2eeSendPreparationException(val retryable: Boolean) :
     Exception(if (retryable) "Send preparation failed, retry later" else "Send preparation rejected")
+
+/** A request the user started failed; [status] 0: no answer. */
+class E2eeRequestException(val status: Int) : Exception("E2EE request failed: $status")
 
 /** Exponential backoff for network failures: 1 s doubling up to 5 min. */
 class Backoff(private val initialMs: Long = 1_000, private val maxMs: Long = 300_000) {
