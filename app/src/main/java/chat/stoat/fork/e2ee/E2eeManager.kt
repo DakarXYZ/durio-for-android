@@ -1,6 +1,7 @@
 package chat.stoat.fork.e2ee
 
 import android.content.Context
+import chat.stoat.api.fork.e2ee.E2eeAction
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeFrames
@@ -318,6 +319,9 @@ object E2eeManager : E2eeSocketListener {
                     // messages waiting for these keys are decrypted and re-shown (AN-25)
                     is E2eeSyncEvent.RoomKeys -> E2eeMessages.onRoomKeys(event.keys)
                     E2eeSyncEvent.Unauthorized -> _status.value = E2eeStatus.SessionExpired
+                    // the server has other keys for this session: only a new login helps (AN-42, C22)
+                    is E2eeSyncEvent.ActionRequired ->
+                        if (event.action == E2eeAction.DeviceKeysConflict) _status.value = E2eeStatus.KeyLost
                     else -> Unit
                 }
             }

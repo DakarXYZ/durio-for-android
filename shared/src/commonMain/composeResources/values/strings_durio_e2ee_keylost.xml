@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: lost keys and device reset (stage 4, AN-42) -->
+<resources>
+    <string name="durio_keylost_title">Encryption was reset</string>
+    <string name="durio_keylost_text">The encryption keys of this device are lost (the app data was restored or cleared, or the server has other keys for this device). Encrypted messages cannot be read or sent here.</string>
+    <string name="durio_reset_manual">Resetting encryption logs this device out. Use it if encrypted chats keep failing on this device.</string>
+    <string name="durio_keylost_steps">1. Log out — the old keys of this device are deleted.\n2. Log in again — this becomes a new device.\n3. Restore your history with the recovery key, or verify the device with another one.</string>
+    <string name="durio_keylost_action">Log out and log in again</string>
+    <string name="durio_keylost_later">Later</string>
+    <string name="durio_keylost_confirm">Log out now?</string>
+    <string name="durio_keylost_confirm_text">Without a recovery key or another device, earlier encrypted messages cannot be read on this device afterwards.</string>
+</resources>
