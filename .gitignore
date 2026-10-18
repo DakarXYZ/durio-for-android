@@ -28,3 +28,5 @@ copilot.data.migration*xml
 keystore.properties
 *.jks
 *.keystore
+# durio: local build of the E2EE core (scripts/durio-crypto-local.sh); binaries never go to git
+/.durio-crypto/

@@ -30,6 +30,9 @@ jobs:
       - name: No hard-coded upstream hosts
         run: bash scripts/check-upstream-hosts.sh
 
+      - name: E2EE hygiene
+        run: bash scripts/check-crypto-hygiene.sh
+
       - name: No Sentry
         run: |
           if grep -rn "io.sentry" --include=*.kt --include=*.kts --include=*.toml --include=*.xml app core gradle build.gradle.kts settings.gradle.kts; then
@@ -39,7 +42,7 @@ jobs:
 
       - name: No secrets in git
         run: |
-          if git ls-files | grep -E '(^|/)google-services\.json$|\.jks$|\.keystore$|(^|/)keystore\.properties$'; then
+          if git ls-files | grep -E '(^|/)google-services\.json$|\.jks$|\.keystore$|(^|/)keystore\.properties$|\.aar$|\.so$'; then
             echo "Secrets must not be committed"
             exit 1
           fi
@@ -70,11 +73,13 @@ jobs:
       - name: Placeholder google-services.json
         run: bash scripts/ci-google-services.sh app/google-services.json
 
+      # The E2EE core AAR comes from the durio-crypt GitHub Release (ivy repo in
+      # settings.gradle.kts), checked against gradle/verification-metadata.xml (AN-20)
       - name: Build debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
       - name: Unit tests
-        # `test` covers :app only; allTests runs the KMP modules (:core:api, :core:model)
+        # `test` covers :app and :core:crypto; allTests runs the KMP modules (:core:api, :core:model)
         run: ./gradlew --no-daemon test allTests
 
       - name: Test reports

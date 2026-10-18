@@ -32,6 +32,9 @@ coil = "3.4.0"
 coroutines = "1.10.2"
 turbine = "1.2.1"
 robolectric = "4.17"
+# durio: E2EE core AAR (plan AN-20); bump together with gradle/verification-metadata.xml
+stoat-crypto = "0.1.0"
+jna = "5.17.0"
 
 [libraries]
 android-core-ktx = { module = "androidx.core:core-ktx", version = "1.16.0" }
@@ -75,6 +78,8 @@ compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 android-test-core-ktx = { module = "androidx.test:core-ktx", version = "1.7.0" }

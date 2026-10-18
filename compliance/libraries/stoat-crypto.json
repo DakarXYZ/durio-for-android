@@ -1,0 +1,16 @@
+{
+  "uniqueId": "io.github.dakarxyz.durio:stoat-crypto",
+  "developers": [
+    {
+      "name": "DakarX",
+      "organisationUrl": "https://github.com/DakarXYZ"
+    }
+  ],
+  "artifactVersion": "0.1.0",
+  "description": "dur.io end-to-end encryption core: matrix-sdk-crypto and vodozemac (Rust) behind a Stoat adapter, UniFFI bindings.",
+  "name": "stoat-crypto",
+  "website": "https://github.com/DakarXYZ/durio-crypt",
+  "licenses": [
+    "Apache-2.0"
+  ]
+}

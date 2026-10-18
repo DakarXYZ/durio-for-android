@@ -172,6 +172,7 @@ kotlin {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:api"))
+    implementation(project(":core:crypto"))
     implementation(project(":core:designsystem"))
     implementation(project(":shared"))
     implementation(libs.compose.multiplatform.resources)
@@ -311,6 +312,8 @@ aboutLibraries {
             "BSD-3-Clause", "The 3-Clause BSD License",
             "BSD License",
             "EPL-1.0",
+            // durio: JNA for the E2EE core is "LGPL-2.1-or-later OR Apache-2.0" (plan AN-20, AN-41)
+            "LGPL-2.1-or-later",
             "MIT",
             "ML Kit Terms of Service",
             "OFL",

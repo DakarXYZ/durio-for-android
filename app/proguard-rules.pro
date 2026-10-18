@@ -109,4 +109,3 @@
     public <fields>;
 }
 
--keep class chat.stoat.ndk.AstNode { *; }
