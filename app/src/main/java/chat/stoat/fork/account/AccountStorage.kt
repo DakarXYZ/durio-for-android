@@ -85,8 +85,10 @@ class AccountStorage internal constructor(
         fun deleteFiles(context: Context, key: String) {
             context.preferencesDataStoreFile(kvName(key)).delete()
             context.deleteDatabase(databaseName(key))
-            // stage 4 keeps the crypto store here (AN-22)
+            // the E2EE store and its wrapped key (AN-22, E2eeStoreKeys); normally destroyed
+            // by E2eeManager.destroy already, this catches what a failed destroy left
             File(context.noBackupFilesDir, "crypto/$key").deleteRecursively()
+            File(context.noBackupFilesDir, "keys/$key.bin").delete()
         }
     }
 }
