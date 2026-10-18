@@ -187,6 +187,24 @@ class E2eeSync(
         throw E2eeSendPreparationException(retryable = true)
     }
 
+    /**
+     * One mailbox fetch and request pass right now, for push handling (AN-29): a room key that
+     * came with the push's message is in the mailbox. Serialized with the loop; room keys go out
+     * on [events] as usual. Returns whether the mailbox could be read.
+     */
+    suspend fun syncOnce(): Boolean = mutex.withLock {
+        try {
+            if (mailbox() != Step.Ok) return@withLock false
+            requestPasses()
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Logger.w { "E2EE one-off sync failed: ${e::class.simpleName}" }
+            false
+        }
+    }
+
     private suspend fun run() {
         for (first in triggers) {
             pending.add(first)

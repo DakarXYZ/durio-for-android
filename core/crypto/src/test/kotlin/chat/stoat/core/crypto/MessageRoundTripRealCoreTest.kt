@@ -2,6 +2,7 @@ package chat.stoat.core.crypto
 
 import chat.stoat.api.fork.e2ee.DecryptionStatus
 import chat.stoat.api.fork.e2ee.E2eeNoRecipientDevicesException
+import chat.stoat.api.fork.e2ee.E2eePushDecryptor
 import chat.stoat.api.fork.e2ee.E2eeSender
 import chat.stoat.api.fork.e2ee.E2eeState
 import chat.stoat.api.fork.e2ee.E2eeSync
@@ -115,6 +116,36 @@ class MessageRoundTripRealCoreTest {
             a.close()
             b.close()
             E2eeState.clear()
+        }
+    }
+
+    @Test
+    fun pushOfAReplyIsReadWithOneMailboxPass() = runBlocking {
+        val server = MiniE2eeServer()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val a = CryptoStores.openInMemory(userA, deviceA)
+        val b = CryptoStores.openInMemory(userB, deviceB)
+        try {
+            val syncA = E2eeSync(a, server.client(userA, deviceA), scope)
+            val syncB = E2eeSync(b, server.client(userB, deviceB), scope)
+            syncA.start()
+            syncB.start()
+            awaitUntil("both devices uploaded their keys") { server.hasKeysOf(deviceA) && server.hasKeysOf(deviceB) }
+
+            // a reply: the push carries the envelope, not the open replies (AN-29)
+            val envelope = E2eeSender(a, syncA).encrypt(
+                channel, listOf(userA, userB), E2eeSender.message("ping", ULID.makeNext(), listOf(REPLY), ts = 1),
+            )
+            val pushed = Message(id = ULID.makeNext(), channel = channel, author = userA, encrypted = envelope)
+
+            // the room key is still in B's mailbox: one pass inside the push budget
+            val outcome = E2eePushDecryptor(b, syncB).decrypt(pushed, repliesKnown = false)
+            assertEquals("ping", assertIs<E2eePushDecryptor.Outcome.Text>(outcome).content)
+            assertEquals(0, server.mailboxSize(deviceB))
+        } finally {
+            scope.cancel()
+            a.close()
+            b.close()
         }
     }
 

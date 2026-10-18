@@ -24,6 +24,9 @@ class FakeE2eeCore(
     var closed = false
     var refuseMembers = false
 
+    /** Runs when a mailbox page comes in (a key arrives). */
+    var onToDevice: (() -> Unit)? = null
+
     override suspend fun setServerLimits(limits: E2eeLimits) {
         calls += "limits"
     }
@@ -48,6 +51,7 @@ class FakeE2eeCore(
 
     override suspend fun receiveToDevice(body: String): ToDeviceOutcome {
         calls += "toDevice $body"
+        onToDevice?.invoke()
         return pages.removeFirstOrNull() ?: ToDeviceOutcome(0, emptyList(), emptyList(), emptyList())
     }
 

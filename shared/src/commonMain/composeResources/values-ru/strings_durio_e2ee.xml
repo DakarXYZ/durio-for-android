@@ -37,4 +37,6 @@
     <string name="durio_e2ee_attachment_failed">Не удалось открыть зашифрованный файл.</string>
     <string name="durio_e2ee_attachment_gone">Ключей этого файла уже нет в памяти. Откройте чат заново.</string>
     <string name="durio_e2ee_saved">Сохранено (расшифровано) на устройство.</string>
+    <string name="durio_push_encrypted_file">Отправил(а) файл</string>
+    <string name="durio_push_encrypted_voice">Голосовое сообщение</string>
 </resources>

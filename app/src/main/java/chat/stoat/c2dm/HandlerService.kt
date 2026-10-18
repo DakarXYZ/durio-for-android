@@ -29,6 +29,7 @@ import chat.stoat.fork.account.AccountBadges
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.account.PushResubscribe
 import chat.stoat.fork.push.NotificationKeys
+import chat.stoat.fork.push.PushDecryption
 import chat.stoat.fork.push.PushMessage
 import chat.stoat.fork.push.PushNotifications
 import chat.stoat.fork.push.PushRouter
@@ -123,8 +124,11 @@ class HandlerService : FirebaseMessagingService() {
             return
         }
 
-        // durio: body and image are optional (encrypted messages, AN-29): generic text, letter avatar
-        val body = data["body"] ?: getStringBlocking(Res.string.durio_push_new_message)
+        // durio: body and image are optional (encrypted messages, AN-29): generic text, letter avatar;
+        // an encrypted message is decrypted here with the account's own core
+        val encrypted = PushDecryption.isEncrypted(data)
+        val decrypted = if (encrypted) runBlocking { PushDecryption.text(this@HandlerService, account, data) } else null
+        val body = decrypted ?: data["body"]?.takeIf { !encrypted } ?: getStringBlocking(Res.string.durio_push_new_message)
 
         val image = data["image"]
 
@@ -329,6 +333,11 @@ class HandlerService : FirebaseMessagingService() {
 
         // durio: which account, once there is more than one
         if (AccountManager.state.value.accounts.size > 1) builder.setSubText(PushNotifications.label(account))
+        // durio: encrypted text stays off the lock screen; undecrypted: try again later (AN-29)
+        if (encrypted) {
+            PushDecryption.protect(this, builder, notificationChannel)
+            if (decrypted == null) PushDecryption.retryLater(this, accountKey, channelId, messageId, authorId)
+        }
 
         // Android 11 bubbles
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
