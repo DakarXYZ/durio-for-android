@@ -39,4 +39,6 @@
     <string name="durio_e2ee_saved">Сохранено (расшифровано) на устройство.</string>
     <string name="durio_push_encrypted_file">Отправил(а) файл</string>
     <string name="durio_push_encrypted_voice">Голосовое сообщение</string>
+    <string name="durio_e2ee_reply_not_sent">Ответ не отправлен</string>
+    <string name="durio_e2ee_reply_not_sent_text">Зашифрованный ответ отправить не удалось. Откройте чат и отправьте его заново.</string>
 </resources>

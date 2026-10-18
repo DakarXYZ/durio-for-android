@@ -39,4 +39,6 @@
     <string name="durio_e2ee_saved">Saved (decrypted) to this device.</string>
     <string name="durio_push_encrypted_file">Sent a file</string>
     <string name="durio_push_encrypted_voice">Voice message</string>
+    <string name="durio_e2ee_reply_not_sent">Reply not sent</string>
+    <string name="durio_e2ee_reply_not_sent_text">The encrypted reply could not be sent. Open the chat and send it again.</string>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.RemoteInput
 import chat.stoat.api.routes.channel.sendMessage
+import chat.stoat.fork.push.EncryptedReplies
 import chat.stoat.fork.push.NotificationKeys
 import chat.stoat.fork.push.PushNotifications
 import chat.stoat.fork.push.PushRouter
@@ -42,6 +43,12 @@ class ReplyReceiver : BroadcastReceiver() {
                 return@launchAsync
             }
             http.use { client ->
+                // durio: an encrypted chat (or one that cannot be checked now) gets its reply
+                // encrypted by a job; the text stays in memory (plan AN-43)
+                if (EncryptedReplies.isEncrypted(key, channelId, client) != false) {
+                    EncryptedReplies.enqueue(context, key, channelId, content)
+                    return@use
+                }
                 runCatching { sendMessage(channelId, content, client = client) }
                     .onFailure { logcat(LogPriority.ERROR) { "Send failed: ${it.asLog()}" } }
             }
