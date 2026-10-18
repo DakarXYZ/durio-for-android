@@ -14,9 +14,18 @@ import javax.crypto.SecretKey
  * tokens in the background. StrongBox when the device has it.
  */
 object AndroidKeystoreWrapKey {
-    private const val KEYSTORE = "AndroidKeyStore"
-    private const val ALIAS = "stoat.wrap.v1"
+    private val key = AndroidKeystoreAesKey("stoat.wrap.v1")
 
+    fun get(): SecretKey = key.get()
+
+    fun wrapper(): KeyWrapper = AesGcmKeyWrapper(::get)
+}
+
+/**
+ * An AES-256-GCM key under [alias] in Android Keystore, created on first use and kept for the
+ * process. Its own class so instrumented tests (AN-34) use an alias of their own.
+ */
+class AndroidKeystoreAesKey(private val alias: String) {
     @Volatile
     private var cached: SecretKey? = null
 
@@ -24,7 +33,7 @@ object AndroidKeystoreWrapKey {
     fun get(): SecretKey {
         cached?.let { return it }
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        val key = (keyStore.getKey(ALIAS, null) as? SecretKey) ?: generate()
+        val key = (keyStore.getKey(alias, null) as? SecretKey) ?: generate()
         cached = key
         return key
     }
@@ -42,7 +51,7 @@ object AndroidKeystoreWrapKey {
 
     private fun generate(strongBox: Boolean): SecretKey {
         val spec = KeyGenParameterSpec.Builder(
-            ALIAS,
+            alias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -63,5 +72,7 @@ object AndroidKeystoreWrapKey {
             .generateKey()
     }
 
-    fun wrapper(): KeyWrapper = AesGcmKeyWrapper(::get)
+    private companion object {
+        const val KEYSTORE = "AndroidKeyStore"
+    }
 }

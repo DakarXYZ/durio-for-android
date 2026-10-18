@@ -60,4 +60,14 @@ class KeyWrapperTest {
         assertFailsWith<UnwrapException> { wrapper.unwrap(blob) }
         assertFailsWith<UnwrapException> { wrapper.unwrap(byteArrayOf(1, 0, 0)) }
     }
+
+    @Test
+    fun keystoreKeyGoneIsATypedError() {
+        // Android Keystore throws ProviderException or UnrecoverableKeyException when the key
+        // went away under a live handle or cannot be loaded (AN-42)
+        val blob = AesGcmKeyWrapper(softwareKey().let { key -> { key } }).wrap("token".toByteArray())
+
+        assertFailsWith<UnwrapException> { AesGcmKeyWrapper { throw java.security.ProviderException("Keystore operation failed") }.unwrap(blob) }
+        assertFailsWith<UnwrapException> { AesGcmKeyWrapper { throw java.security.UnrecoverableKeyException("gone") }.unwrap(blob) }
+    }
 }

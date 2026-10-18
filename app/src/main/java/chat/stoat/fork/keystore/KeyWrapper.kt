@@ -1,6 +1,7 @@
 package chat.stoat.fork.keystore
 
 import java.security.GeneralSecurityException
+import java.security.ProviderException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -45,6 +46,9 @@ class AesGcmKeyWrapper(private val key: () -> SecretKey) : KeyWrapper {
             )
             cipher.doFinal(blob, 1 + IV_BYTES, blob.size - 1 - IV_BYTES)
         } catch (e: GeneralSecurityException) {
+            throw UnwrapException("Could not unwrap", e)
+        } catch (e: ProviderException) {
+            // Android Keystore: the key was deleted or invalidated under a live handle (AN-42)
             throw UnwrapException("Could not unwrap", e)
         }
     }

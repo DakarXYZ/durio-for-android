@@ -34,9 +34,12 @@ import org.jetbrains.compose.resources.stringResource
  * another device.
  */
 @Composable
-fun KeyLostScreen(navController: NavController) {
+fun KeyLostScreen(
+    navController: NavController,
+    accountKey: String? = AccountManager.active?.key,
+    logout: (String?) -> Unit = AccountManager::logout,
+) {
     var confirm by remember { mutableStateOf(false) }
-    val account = AccountManager.active
     if (confirm) {
         AlertDialog(
             onDismissRequest = { confirm = false },
@@ -45,7 +48,7 @@ fun KeyLostScreen(navController: NavController) {
             confirmButton = {
                 Button(onClick = {
                     confirm = false
-                    AccountManager.logout(account?.key)
+                    logout(accountKey)
                 }) { Text(stringResource(Res.string.durio_keylost_action)) }
             },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(Res.string.durio_e2ee_cancel)) } },
@@ -55,6 +58,6 @@ fun KeyLostScreen(navController: NavController) {
         val status by E2eeManager.status.collectAsState()
         Text(stringResource(if (status == E2eeStatus.KeyLost) Res.string.durio_keylost_text else Res.string.durio_reset_manual))
         Text(stringResource(Res.string.durio_keylost_steps))
-        OutlinedButton(enabled = account != null, onClick = { confirm = true }) { Text(stringResource(Res.string.durio_keylost_action)) }
+        OutlinedButton(enabled = accountKey != null, onClick = { confirm = true }) { Text(stringResource(Res.string.durio_keylost_action)) }
     }
 }

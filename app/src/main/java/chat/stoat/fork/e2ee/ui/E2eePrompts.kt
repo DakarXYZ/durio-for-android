@@ -113,18 +113,12 @@ fun E2eePrompts(navController: NavController) {
     VerificationDialog()
 
     if (status == E2eeStatus.KeyLost && !keyLostSeen) {
-        AlertDialog(
-            onDismissRequest = { keyLostSeen = true },
-            icon = { Icon(painterResource(R.drawable.ic_error_24dp), contentDescription = null) },
-            title = { Text(stringResource(Res.string.durio_keylost_title)) },
-            text = { Text(stringResource(Res.string.durio_keylost_text)) },
-            confirmButton = {
-                Button(onClick = {
-                    keyLostSeen = true
-                    navController.navigate(E2eeRoutes.RESET)
-                }) { Text(stringResource(Res.string.durio_keylost_action)) }
+        KeyLostPrompt(
+            onReset = {
+                keyLostSeen = true
+                navController.navigate(E2eeRoutes.RESET)
             },
-            dismissButton = { TextButton(onClick = { keyLostSeen = true }) { Text(stringResource(Res.string.durio_keylost_later)) } },
+            onLater = { keyLostSeen = true },
         )
         return
     }
@@ -164,6 +158,19 @@ fun E2eePrompts(navController: NavController) {
         )
         null -> Unit
     }
+}
+
+/** "Encryption on this device was reset" (AN-42): to the reset screen, or later. */
+@Composable
+internal fun KeyLostPrompt(onReset: () -> Unit, onLater: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onLater,
+        icon = { Icon(painterResource(R.drawable.ic_error_24dp), contentDescription = null) },
+        title = { Text(stringResource(Res.string.durio_keylost_title)) },
+        text = { Text(stringResource(Res.string.durio_keylost_text)) },
+        confirmButton = { Button(onClick = onReset) { Text(stringResource(Res.string.durio_keylost_action)) } },
+        dismissButton = { TextButton(onClick = onLater) { Text(stringResource(Res.string.durio_keylost_later)) } },
+    )
 }
 
 /** The profile sheets' hook (AN-30): devices of another user and "verify", if E2EE knows them. */

@@ -32,6 +32,7 @@ import chat.stoat.api.fork.e2ee.E2eeCancelReason
 import chat.stoat.api.fork.e2ee.E2eeSasEmoji
 import chat.stoat.api.fork.e2ee.E2eeSasState
 import chat.stoat.fork.e2ee.E2eeVerifications
+import chat.stoat.fork.e2ee.VerificationController
 import chat.stoat.fork.e2ee.VerificationShown
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_e2ee_cancel
@@ -63,8 +64,7 @@ import org.jetbrains.compose.resources.stringResource
  * core's ([E2eeVerifications.controller]); the dialog only shows it.
  */
 @Composable
-fun VerificationDialog() {
-    val controller = E2eeVerifications.controller
+fun VerificationDialog(controller: VerificationController = E2eeVerifications.controller) {
     val shown by controller.shown.collectAsState()
     val flow = shown ?: return
     LaunchedEffect(flow.flowId) { E2eeVerifications.cancelNotification() }

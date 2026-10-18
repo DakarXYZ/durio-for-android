@@ -296,17 +296,23 @@ fun RecoverySetupScreen(navController: NavController, rotate: Boolean, viewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecoveryRestoreScreen(navController: NavController) {
+fun RecoveryRestoreScreen(
+    navController: NavController,
+    // null without an E2EE device; the input is wiped by the caller
+    keyCheck: (ByteArray) -> E2eeRecoveryKeyCheck? = { E2eeManager.active?.core?.recoveryKeyCheck(it) },
+) {
     val restore by E2eeRecovery.restore.collectAsState()
     var input by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var failure by remember { mutableStateOf<RecoveryFailure?>(null) }
     val scope = rememberCoroutineScope()
     val check = remember(input) {
-        if (input.isBlank()) null else E2eeManager.active?.core?.let { core ->
+        if (input.isBlank()) {
+            null
+        } else {
             val bytes = input.trim().encodeToByteArray()
             try {
-                core.recoveryKeyCheck(bytes)
+                keyCheck(bytes)
             } catch (e: Exception) {
                 null
             } finally {
