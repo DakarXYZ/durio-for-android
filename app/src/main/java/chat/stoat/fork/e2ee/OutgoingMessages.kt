@@ -62,6 +62,9 @@ object OutgoingMessages {
      * A new message of the active account (or of [accountKey] over [client], AN-43). [nonce]
      * is the request nonce and the payload's `client_nonce`; [fileIds] the open `attachments`
      * (blobs and thumbnails, C9) that belong to [attachments].
+     *
+     * Encrypted once: retries send the same envelope with the same nonce (block 5E), and
+     * [resend] says an earlier run already sent this nonce (a retried notification reply).
      */
     suspend fun send(
         channel: Channel,
@@ -69,7 +72,8 @@ object OutgoingMessages {
         nonce: String,
         replies: List<SendMessageReply> = emptyList(),
         attachments: List<E2eePayloadAttachment> = emptyList(),
-        idempotencyKey: String = ULID.makeNext(),
+        idempotencyKey: String = nonce,
+        resend: Boolean = false,
         accountKey: String? = AccountManager.active?.key,
         selfId: String? = StoatAPI.selfId,
         client: ApiClient = ApiClient.Active,
@@ -97,6 +101,8 @@ object OutgoingMessages {
             replies = replies,
             attachments = payload.fileIds(),
             idempotencyKey = idempotencyKey,
+            resend = resend,
+            selfId = selfId,
             client = client,
         )
     }
@@ -138,7 +144,12 @@ object OutgoingMessages {
         is E2eeException.PayloadTooLarge -> E2eeSendError.TooLong
         is E2eeUnavailableException, is E2eeException.StoreLocked -> E2eeSendError.Unavailable
         is E2eeSendPreparationException -> if (e.retryable) E2eeSendError.Network else E2eeSendError.Refused
-        is EncryptedSendException -> if (e.status == 422) E2eeSendError.TooLong else E2eeSendError.Refused
+        is EncryptedSendException -> when {
+            e.status == 422 -> E2eeSendError.TooLong
+            // still failing after the outbox's retries (block 5E): try again later
+            e.status >= 500 || e.status == 429 -> E2eeSendError.Network
+            else -> E2eeSendError.Refused
+        }
         else -> E2eeSendError.Network
     }
 }

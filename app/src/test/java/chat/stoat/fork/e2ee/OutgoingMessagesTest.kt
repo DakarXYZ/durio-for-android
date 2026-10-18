@@ -21,6 +21,9 @@ class OutgoingMessagesTest {
             E2eeSendPreparationException(retryable = true) to E2eeSendError.Network,
             E2eeSendPreparationException(retryable = false) to E2eeSendError.Refused,
             EncryptedSendException(400, "EncryptedChannelViolation") to E2eeSendError.Refused,
+            // still failing after the outbox's retries (block 5E)
+            EncryptedSendException(503, null) to E2eeSendError.Network,
+            EncryptedSendException(429, "RateLimited") to E2eeSendError.Network,
             IOException("offline") to E2eeSendError.Network,
         )
         for ((e, expected) in cases) assertEquals(e::class.simpleName, expected, OutgoingMessages.reason(e))

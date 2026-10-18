@@ -9,6 +9,9 @@
 # ChannelScreenViewModel: pages come from fetchMessagesFromChannel; WS frames from the socket
 #   (MessageUpdate data is the rewritten plaintext frame); items re-made from the cache.
 # InReplyTo: fetchSingleMessage. ChannelPinsScreen: searchChannel.
+# MessageOutbox (block 5E): a send's answer and the nonce lookup go through E2eeMessages.single
+#   before SentMessage.message; the raw answer is never shown. ChannelScreenViewModel
+#   showRecoveredSend takes that decrypted SentMessage.message.
 cache|app/src/main/java/chat/stoat/composables/chat/InReplyTo.kt|StoatAPI.messageCache[messageId] = fetchSingleMessage(channelId, messageId)
 cache|app/src/main/java/chat/stoat/screens/chat/ChannelPinsScreen.kt|response.messages?.forEach { m -> m.id?.let { StoatAPI.messageCache.putIfAbsent(it, m) } }
 cache|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|it.id?.let { messageId -> StoatAPI.messageCache[messageId] = it }
@@ -33,3 +36,8 @@ item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewMo
 item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|ChannelScreenItem.RegularMessage(message, parseAst(message.content))
 item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|else -> ChannelScreenItem.RegularMessage(it, null)
 item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|is ChannelScreenItem.RegularMessage -> ChannelScreenItem.RegularMessage(
+cache|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|if (!shown) StoatAPI.messageCache[id] = message
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/fork/routes/MessageOutbox.kt|StoatJson.decodeFromString(ListSerializer(Message.serializer()), response.bodyAsText())
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/fork/routes/MessageOutbox.kt|StoatJson.decodeFromString(Message.serializer(), text)
+decode|core/api/src/commonMain/kotlin/chat/stoat/api/fork/routes/MessageOutbox.kt|return SentMessage(shown, StoatJson.encodeToString(Message.serializer(), found), recovered = true)
+item|app/src/main/java/chat/stoat/screens/chat/views/channel/ChannelScreenViewModel.kt|else -> ChannelScreenItem.RegularMessage(message, it.mdAst)

@@ -33,7 +33,7 @@ import chat.stoat.api.routes.channel.SendMessageReply
 import chat.stoat.api.routes.channel.ackChannel
 import chat.stoat.api.routes.channel.editMessage
 import chat.stoat.api.routes.channel.fetchMessagesFromChannel
-import chat.stoat.api.routes.channel.sendMessage
+import chat.stoat.api.fork.routes.sendPlainMessage
 import chat.stoat.api.routes.microservices.autumn.FileArgs
 import chat.stoat.api.routes.microservices.autumn.MAX_ATTACHMENTS_PER_MESSAGE
 import chat.stoat.api.routes.microservices.autumn.uploadToAutumn
@@ -619,20 +619,22 @@ class ChannelScreenViewModel(
             }
 
             try {
-                if (encrypted) OutgoingMessages.send(
+                // durio: retried with the same nonce; a refusal is an error now (block 5E)
+                val sent = if (encrypted) OutgoingMessages.send(
                     channel = channel ?: return@launch,
                     content = content,
                     nonce = nonce,
                     replies = replyTo,
                     attachments = encryptedAttachments,
-                ) else sendMessage(
+                ) else sendPlainMessage(
                     channelId = channel?.id ?: return@launch,
                     content = content,
                     nonce = nonce,
                     replies = replyTo,
                     attachments = attachmentIds,
-                    idempotencyKey = ULID.makeNext()
+                    selfId = StoatAPI.selfId,
                 )
+                if (sent.recovered) sent.message?.let { showRecoveredSend(nonce, it) }
             } catch (e: Exception) {
                 Log.e("ChannelScreenViewModel", "Failed to send message", e)
                 updateItems(
@@ -646,6 +648,25 @@ class ChannelScreenViewModel(
                 isSending = false
             }
         }
+    }
+
+    /**
+     * durio: a send that took a retry or was found by its nonce (block 5E): its socket event may
+     * never come, the pending item becomes the server's message here. [message] is decrypted.
+     */
+    private suspend fun showRecoveredSend(nonce: String, message: Message) {
+        val id = message.id ?: return
+        val pending = items.any { it is ChannelScreenItem.ProspectiveMessage && it.message.id == nonce }
+        if (!pending) return
+        val shown = items.any { it is ChannelScreenItem.RegularMessage && it.message.id == id }
+        if (!shown) StoatAPI.messageCache[id] = message
+        updateItems(items.mapNotNull {
+            when {
+                it !is ChannelScreenItem.ProspectiveMessage || it.message.id != nonce -> it
+                shown -> null
+                else -> ChannelScreenItem.RegularMessage(message, it.mdAst)
+            }
+        })
     }
 
     private suspend fun fetchMessagePage(

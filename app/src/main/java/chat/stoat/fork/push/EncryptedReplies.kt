@@ -122,17 +122,20 @@ class EncryptedReplyWorker(context: Context, params: WorkerParameters) : Corouti
             try {
                 val channel = fetchSingleChannel(channelId, client)
                 val encrypted = EncryptedReplies.isEncrypted(key, channelId, client) ?: true
+                // the reply id is the nonce: a retried job sends the same message again, the
+                // server answers with the one already stored (block 5E)
                 if (encrypted) {
                     OutgoingMessages.send(
                         channel = channel,
                         content = text,
-                        nonce = ULID.makeNext(),
+                        nonce = replyId,
+                        resend = runAttemptCount > 0,
                         accountKey = key,
                         selfId = account.userId,
                         client = client,
                     )
                 } else {
-                    sendMessage(channelId, text, client = client)
+                    sendMessage(channelId, text, nonce = replyId, client = client)
                 }
                 true
             } catch (e: CancellationException) {

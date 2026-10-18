@@ -9,6 +9,8 @@ import chat.stoat.api.apiError
 import chat.stoat.api.fork.e2ee.E2eeMessages
 import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
+import chat.stoat.api.fork.routes.MessageSendException
+import chat.stoat.api.fork.routes.sendPlainMessage
 import chat.stoat.api.internals.ULID
 import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
@@ -18,7 +20,6 @@ import chat.stoat.core.model.schemas.ServerInvite
 import chat.stoat.core.model.schemas.User
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -111,24 +112,16 @@ suspend fun sendMessage(
     nonce: String = ULID.makeNext(),
     replies: List<SendMessageReply>? = null,
     attachments: List<String>? = null,
-    idempotencyKey: String = ULID.makeNext(),
+    idempotencyKey: String = nonce,
     client: ApiClient = ApiClient.Active,
 ): String {
-    val response = client.http.post("/channels/$channelId/messages".api(client)) {
-        contentType(ContentType.Application.Json)
-        setBody(
-            SendMessageBody(
-                content = content,
-                nonce = nonce,
-                replies = replies ?: emptyList(),
-                attachments = attachments
-            )
-        )
-        header("Idempotency-Key", idempotencyKey)
+    // durio: retried with the same nonce, "probably sent" looked up by it (block 5E); a refusal
+    // still returns the server's answer, as upstream did
+    return try {
+        sendPlainMessage(channelId, content, nonce, replies, attachments, idempotencyKey, client = client).raw
+    } catch (e: MessageSendException) {
+        e.body
     }
-        .bodyAsText()
-
-    return response
 }
 
 suspend fun editMessage(channelId: String, messageId: String, newContent: String? = null) {

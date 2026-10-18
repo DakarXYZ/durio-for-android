@@ -5,9 +5,7 @@ import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
 import chat.stoat.api.routes.channel.SendMessageReply
 import chat.stoat.core.model.fork.EncryptedEnvelope
-import io.ktor.client.request.header
 import io.ktor.client.request.patch
-import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -41,7 +39,10 @@ private class EncryptedEditBody(val encrypted: EncryptedEnvelope)
 /**
  * `POST /channels/{id}/messages` with `encrypted` instead of `content` (plan AN-26): no
  * `content`, `embeds`, `masquerade` or mentions (C10). The envelope is encrypted once and the
- * same body is retried (`StoatHttp` retries; the Megolm index is not spent twice).
+ * same body is retried by [MessageOutbox] (block 5E): the Megolm index is not spent twice, and a
+ * repeat of the nonce is answered with the stored message.
+ *
+ * @throws EncryptedSendException refused (4xx), or 5xx after every retry
  */
 suspend fun sendEncryptedMessage(
     channelId: String,
@@ -49,16 +50,26 @@ suspend fun sendEncryptedMessage(
     nonce: String,
     replies: List<SendMessageReply> = emptyList(),
     attachments: List<String>? = null,
-    idempotencyKey: String,
+    idempotencyKey: String = nonce,
+    resend: Boolean = false,
+    selfId: String? = null,
     client: ApiClient = ApiClient.Active,
-) {
+    retry: SendRetry = SendRetry(),
+): SentMessage {
     val body = EncryptedSendBody(envelope, nonce, replies, attachments?.takeIf { it.isNotEmpty() })
-    val response = client.http.post("/channels/$channelId/messages".api(client)) {
-        setBody(TextContent(StoatJson.encodeToString(EncryptedSendBody.serializer(), body), ContentType.Application.Json))
-        header("Idempotency-Key", idempotencyKey)
-    }
-    if (!response.status.isSuccess()) {
-        throw EncryptedSendException(response.status.value, errorType(response.bodyAsText()))
+    return try {
+        MessageOutbox.send(
+            channelId = channelId,
+            nonce = nonce,
+            body = StoatJson.encodeToString(EncryptedSendBody.serializer(), body),
+            idempotencyKey = idempotencyKey,
+            resend = resend,
+            selfId = selfId,
+            client = client,
+            retry = retry,
+        )
+    } catch (e: MessageSendException) {
+        throw EncryptedSendException(e.status, e.type)
     }
 }
 
