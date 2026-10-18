@@ -6,6 +6,7 @@ import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.api
 import chat.stoat.api.apiError
+import chat.stoat.api.fork.e2ee.E2eeMessages
 import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
 import chat.stoat.api.internals.ULID
@@ -54,16 +55,17 @@ suspend fun fetchMessagesFromChannel(
     }
         .bodyAsText()
 
+    // durio: encrypted messages are decrypted before any screen sees them (plan AN-25, AN-46)
     if (includeUsers) {
-        return StoatJson.decodeFromString(
+        return E2eeMessages.history(StoatJson.decodeFromString(
             MessagesInChannel.serializer(),
             response
-        )
+        ))
     } else {
-        val messages = StoatJson.decodeFromString(
+        val messages = E2eeMessages.history(StoatJson.decodeFromString(
             ListSerializer(Message.serializer()),
             response
-        )
+        ))
 
         return MessagesInChannel(
             messages = messages,
@@ -199,10 +201,11 @@ suspend fun fetchSingleMessage(
     val response = client.http.get("/channels/$channelId/messages/$messageId".api(client))
         .bodyAsText()
 
-    return StoatJson.decodeFromString(
+    // durio: decrypted for the active account; push decrypts with its own core (AN-25, AN-29)
+    return E2eeMessages.single(StoatJson.decodeFromString(
         Message.serializer(),
         response
-    )
+    ), client)
 }
 
 suspend fun leaveDeleteOrCloseChannel(channelId: String, leaveSilently: Boolean = false) {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: сквозное шифрование (этап 4), отдельно от strings.xml ради чистых слияний с upstream -->
+<resources>
+    <string name="durio_e2ee_decrypting">Расшифровка…</string>
+    <string name="durio_e2ee_waiting_key">Ожидание ключа для расшифровки сообщения…</string>
+    <string name="durio_e2ee_no_device">Зашифрованное сообщение. На этом устройстве шифрование не настроено.</string>
+    <string name="durio_e2ee_withheld">Устройство отправителя не передало ключ к этому сообщению.</string>
+    <string name="durio_e2ee_update_app">Зашифровано более новой версией приложения. Обновите приложение, чтобы прочитать.</string>
+    <string name="durio_e2ee_broken">Не удалось расшифровать сообщение.</string>
+    <string name="durio_e2ee_suspicious">Подозрительное сообщение: его изменили или повторили по пути, оно скрыто.</string>
+    <string name="durio_e2ee_unauthenticated">Отправителя этого сообщения нельзя подтвердить (ключ из резервной копии).</string>
+    <string name="durio_e2ee_mismatch">Отправлено с неизвестного или несовпадающего устройства.</string>
+</resources>

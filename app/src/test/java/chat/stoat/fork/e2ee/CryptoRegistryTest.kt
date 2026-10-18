@@ -1,11 +1,5 @@
 package chat.stoat.fork.e2ee
 
-import chat.stoat.api.fork.e2ee.E2eeChannelSettings
-import chat.stoat.api.fork.e2ee.E2eeCore
-import chat.stoat.api.fork.e2ee.E2eeLimits
-import chat.stoat.api.fork.e2ee.E2eeRequest
-import chat.stoat.api.fork.e2ee.E2eeUndeliveredDevice
-import chat.stoat.api.fork.e2ee.ToDeviceOutcome
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -18,27 +12,7 @@ import org.junit.Test
 
 // One core per account and process, closed when unused (plan AN-23)
 class CryptoRegistryTest {
-    private class Core(val key: String) : E2eeCore {
-        var closed = false
-        override val userId = "u"
-        override val deviceId = "d"
-        override suspend fun setServerLimits(limits: E2eeLimits) = Unit
-        override suspend fun outgoingRequests() = emptyList<E2eeRequest>()
-        override suspend fun markRequestSent(request: E2eeRequest, body: String) = Unit
-        override suspend fun markRequestFailed(request: E2eeRequest, status: Int) = Unit
-        override suspend fun wakeupInMs(): Long? = null
-        override suspend fun receiveToDevice(body: String) = ToDeviceOutcome(0, emptyList(), emptyList(), emptyList())
-        override suspend fun markAckSent(ids: List<String>) = Unit
-        override suspend fun receiveDeviceListUpdate(users: List<String>) = Unit
-        override suspend fun receiveReconnect() = Unit
-        override suspend fun receiveOtkCounts(body: String) = Unit
-        override suspend fun setChannelMembers(channelId: String, members: List<String>, settings: E2eeChannelSettings) = Unit
-        override suspend fun prepareSend(channelId: String) = emptyList<E2eeRequest>()
-        override suspend fun undeliveredDevices() = emptyList<E2eeUndeliveredDevice>()
-        override fun close() {
-            closed = true
-        }
-    }
+    private class Core(val key: String) : TestE2eeCore()
 
     private val opened = mutableListOf<Core>()
     private val destroyed = mutableListOf<String>()

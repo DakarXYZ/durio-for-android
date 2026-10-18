@@ -1,5 +1,6 @@
 package chat.stoat.core.model.schemas
 
+import chat.stoat.core.model.fork.ChannelEncryption
 import kotlinx.datetime.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -87,7 +88,9 @@ data class Channel(
     val nsfw: Boolean? = null,
     val voice: VoiceInformation? = null,
     val slowmode: Long? = null,
-    val type: String? = null // this is _only_ used for websocket events!
+    val type: String? = null, // this is _only_ used for websocket events!
+    // durio: E2EE of a DM or group, irreversible (plan AN-27, AN-39)
+    val encryption: ChannelEncryption? = null,
 ) {
     fun mergeWithPartial(partial: Channel): Channel {
         return Channel(
@@ -108,7 +111,8 @@ data class Channel(
             nsfw = partial.nsfw ?: nsfw,
             voice = partial.voice ?: voice,
             slowmode = partial.slowmode ?: slowmode,
-            type = partial.type ?: type
+            type = partial.type ?: type,
+            encryption = partial.encryption ?: encryption,
         )
     }
 }

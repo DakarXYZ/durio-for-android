@@ -6,6 +6,7 @@ import chat.stoat.api.StoatAPIHost
 import chat.stoat.api.StoatHttp
 import chat.stoat.api.StoatJson
 import chat.stoat.api.fork.e2ee.E2eeFrames
+import chat.stoat.api.fork.e2ee.E2eeMessages
 import chat.stoat.api.fork.realtime.GroupMembershipFrames
 import chat.stoat.api.internals.ActiveSlowmode
 import chat.stoat.api.internals.elapsedRealtimeMillis
@@ -323,7 +324,8 @@ object RealtimeSocket {
             }
 
             "Message" -> {
-                val messageFrame = StoatJson.decodeFromString(MessageFrame.serializer(), rawFrame)
+                // durio: decrypted before the cache and the UI see it (plan AN-25)
+                val messageFrame = E2eeMessages.incoming(StoatJson.decodeFromString(MessageFrame.serializer(), rawFrame))
                 Logger.d {
                     "Received message frame for ${messageFrame.id} in channel ${messageFrame.channel}."
                 }
@@ -404,8 +406,10 @@ object RealtimeSocket {
                     "Merging message ${messageUpdateFrame.id} with updated partial."
                 }
 
-                StoatAPI.messageCache[messageUpdateFrame.id] =
-                    oldMessage.mergeWithPartial(rawMessage)
+                // durio: an edited encrypted message is decrypted; the UI gets the plaintext frame (AN-25)
+                val (merged, uiFrame) =
+                    E2eeMessages.updated(messageUpdateFrame, oldMessage, oldMessage.mergeWithPartial(rawMessage))
+                StoatAPI.messageCache[messageUpdateFrame.id] = merged
 
                 messageUpdateFrame.channel.let {
                     if (StoatAPI.channelCache[it] == null) {
@@ -414,7 +418,7 @@ object RealtimeSocket {
                     }
                 }
 
-                StoatAPI.wsFrameChannel.emit(messageUpdateFrame)
+                StoatAPI.wsFrameChannel.emit(uiFrame)
             }
 
             "MessageDelete" -> {

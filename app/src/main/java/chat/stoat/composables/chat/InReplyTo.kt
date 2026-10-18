@@ -30,6 +30,7 @@ import chat.stoat.api.internals.SpecialUsers
 import chat.stoat.api.routes.channel.fetchSingleMessage
 import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.composables.generic.UserAvatar
+import chat.stoat.fork.e2ee.ui.encryptedMessagePreview
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.User
 import chat.stoat.shared.resources.Res
@@ -140,7 +141,17 @@ fun InReplyTo(
                     }
                 )
 
-                if (message.content.isNullOrBlank()) {
+                // durio: never the server's placeholder of an encrypted message (plan AN-25)
+                val e2eePreview = encryptedMessagePreview(message)
+                if (e2eePreview != null) {
+                    Text(
+                        text = e2eePreview,
+                        fontSize = 12.sp,
+                        color = contentColor.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                } else if (message.content.isNullOrBlank()) {
                     Text(
                         text = stringResource(Res.string.reply_message_empty_has_attachments),
                         fontSize = 12.sp,

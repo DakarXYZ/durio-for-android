@@ -56,6 +56,12 @@ interface E2eeCore : AutoCloseable {
 
     /** Devices whose mailbox stays full and that miss keys (shown in AN-30). */
     suspend fun undeliveredDevices(): List<E2eeUndeliveredDevice>
+
+    /**
+     * A page of messages, results in input order (AN-25). A failure is a value, not an
+     * exception; `WaitingForKey` ones are decrypted again on [E2eeSyncEvent.RoomKeys].
+     */
+    suspend fun decrypt(messages: List<E2eeIncomingMessage>): List<E2eeDecryptResult>
 }
 
 enum class E2eeRequestKind {

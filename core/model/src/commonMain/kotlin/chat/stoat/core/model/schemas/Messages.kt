@@ -1,5 +1,6 @@
 package chat.stoat.core.model.schemas
 
+import chat.stoat.core.model.fork.EncryptedEnvelope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -27,7 +28,9 @@ data class Message(
      */
     val flags: Int? = null,
     val type: String? = null, // this is _only_ used for websocket events!
-    val tail: Boolean? = null // this is used to determine if the message is the last in a message group
+    val tail: Boolean? = null, // this is used to determine if the message is the last in a message group
+    // durio: E2EE envelope; `content` then holds the server's placeholder (plan AN-25)
+    val encrypted: EncryptedEnvelope? = null,
 ) {
 
     fun mergeWithPartial(partial: Message): Message {
@@ -45,7 +48,14 @@ data class Message(
             mentions = partial.mentions ?: mentions,
             masquerade = partial.masquerade ?: masquerade,
             type = partial.type ?: type,
-            tail = partial.tail ?: tail
+            tail = partial.tail ?: tail,
+            // durio: upstream lost these on every update (plan AN-25)
+            system = partial.system ?: system,
+            webhook = partial.webhook ?: webhook,
+            interactions = partial.interactions ?: interactions,
+            pinned = partial.pinned ?: pinned,
+            flags = partial.flags ?: flags,
+            encrypted = partial.encrypted ?: encrypted,
         )
     }
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io end-to-end encryption (stage 4), kept apart from strings.xml for clean upstream merges -->
+<resources>
+    <string name="durio_e2ee_decrypting">Decrypting…</string>
+    <string name="durio_e2ee_waiting_key">Waiting for the key to decrypt this message…</string>
+    <string name="durio_e2ee_no_device">Encrypted message. Encryption is not set up on this device.</string>
+    <string name="durio_e2ee_withheld">The sender’s device did not share the key for this message.</string>
+    <string name="durio_e2ee_update_app">Encrypted by a newer app version. Update the app to read it.</string>
+    <string name="durio_e2ee_broken">Could not decrypt this message.</string>
+    <string name="durio_e2ee_suspicious">Suspicious message: it was changed or replayed on the way and is hidden.</string>
+    <string name="durio_e2ee_unauthenticated">The sender of this message cannot be confirmed (key from backup).</string>
+    <string name="durio_e2ee_mismatch">Sent from an unknown or mismatching device.</string>
+</resources>

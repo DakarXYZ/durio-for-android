@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import chat.stoat.R
+import chat.stoat.fork.e2ee.ui.EncryptedMessageNotice
 import chat.stoat.activities.media.ImageViewActivity
 import chat.stoat.activities.media.VideoViewActivity
 import chat.stoat.api.StoatAPI
@@ -509,8 +510,11 @@ fun Message(
                             }
                         }
 
+                        // durio: an encrypted message never shows the server's placeholder (plan AN-25, AN-46)
+                        val e2eeHidden = EncryptedMessageNotice(message)
+
                         key(message.content) {
-                            message.content?.takeIf { voiceMessageMetadata == null }?.let {
+                            message.content?.takeIf { voiceMessageMetadata == null && !e2eeHidden }?.let {
                                 val content = it.stripPUAChars()
                                 if (content.isBlank()) return@let // if only an attachment is sent
 
@@ -537,7 +541,7 @@ fun Message(
                             }
                         }
 
-                        message.attachments?.let {
+                        message.attachments?.takeIf { !e2eeHidden }?.let {
                             it.forEach { attachment ->
                                 Spacer(modifier = Modifier.height(2.dp))
                                 MessageAttachment(
@@ -582,7 +586,7 @@ fun Message(
                             }
                         }
 
-                        message.embeds?.let {
+                        message.embeds?.takeIf { !e2eeHidden }?.let {
                             it.forEach { embed ->
                                 when (embed.type) {
                                     "Website", "Text" -> {

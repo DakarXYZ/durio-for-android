@@ -3,19 +3,28 @@ package chat.stoat.core.crypto
 import chat.stoat.api.fork.e2ee.E2eeAction
 import chat.stoat.api.fork.e2ee.E2eeChannelSettings
 import chat.stoat.api.fork.e2ee.E2eeCore
+import chat.stoat.api.fork.e2ee.E2eeDecryptResult
 import chat.stoat.api.fork.e2ee.E2eeException
+import chat.stoat.api.fork.e2ee.E2eeFailureKind
+import chat.stoat.api.fork.e2ee.E2eeIncomingMessage
 import chat.stoat.api.fork.e2ee.E2eeLimits
 import chat.stoat.api.fork.e2ee.E2eeRequest
 import chat.stoat.api.fork.e2ee.E2eeRequestKind
 import chat.stoat.api.fork.e2ee.E2eeRoomKey
 import chat.stoat.api.fork.e2ee.E2eeUndeliveredDevice
+import chat.stoat.api.fork.e2ee.E2eeVerification
 import chat.stoat.api.fork.e2ee.ToDeviceOutcome
 import uniffi.stoat_crypto.ChannelEncryptionSettings
 import uniffi.stoat_crypto.CryptoException
 import uniffi.stoat_crypto.CryptoMachine
+import uniffi.stoat_crypto.DecryptFailureKind
+import uniffi.stoat_crypto.DecryptResult
+import uniffi.stoat_crypto.DecryptedMessage
+import uniffi.stoat_crypto.IncomingEncryptedMessage
 import uniffi.stoat_crypto.OutgoingRequest
 import uniffi.stoat_crypto.RequestKind
 import uniffi.stoat_crypto.ServerLimits
+import uniffi.stoat_crypto.Verification
 
 /**
  * [E2eeCore] over the UniFFI [CryptoMachine] (plan AN-20). Only maps types and errors; the host
@@ -99,6 +108,28 @@ internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
         }
     }
 
+    override suspend fun decrypt(messages: List<E2eeIncomingMessage>): List<E2eeDecryptResult> = core {
+        if (messages.isEmpty()) return@core emptyList()
+        val incoming = messages.map {
+            IncomingEncryptedMessage(
+                messageId = it.messageId,
+                channelId = it.channelId,
+                author = it.author,
+                envelopeJson = it.envelopeJson,
+                replies = it.replies,
+                timestamp = it.timestampMs.coerceAtLeast(0).toULong(),
+            )
+        }
+        // the generated DecryptedMessage carries the plaintext in its toString(): mapped field
+        // by field and dropped right here
+        machine.decryptBatch(incoming).map { result ->
+            when (result) {
+                is DecryptResult.Decrypted -> result.message.toE2ee()
+                is DecryptResult.Failed -> E2eeDecryptResult.Failed(result.kind.toE2ee(), result.code)
+            }
+        }
+    }
+
     override fun close() = machine.close()
 }
 
@@ -109,6 +140,35 @@ private fun OutgoingRequest.toE2ee() = E2eeRequest(
     path = path,
     body = body,
 )
+
+private fun DecryptedMessage.toE2ee() = E2eeDecryptResult.Decrypted(
+    payloadJson = payloadJson,
+    senderUser = senderUser,
+    senderDevice = senderDevice,
+    verification = when (verification) {
+        Verification.VERIFIED -> E2eeVerification.Verified
+        Verification.UNVERIFIED -> E2eeVerification.Unverified
+        Verification.UNKNOWN_DEVICE -> E2eeVerification.UnknownDevice
+        Verification.UNAUTHENTICATED -> E2eeVerification.Unauthenticated
+        Verification.MISMATCH -> E2eeVerification.Mismatch
+    },
+    sessionId = sessionId,
+    messageIndex = messageIndex.toLong(),
+    isReplay = isReplay,
+    staleEdit = staleEdit,
+    editMismatch = editMismatch,
+    replyMismatch = replyMismatch,
+    isClean = isClean,
+)
+
+private fun DecryptFailureKind.toE2ee(): E2eeFailureKind = when (this) {
+    DecryptFailureKind.WaitingForKey -> E2eeFailureKind.WaitingForKey
+    is DecryptFailureKind.Withheld -> E2eeFailureKind.Withheld(reason.name)
+    DecryptFailureKind.UpdateApp -> E2eeFailureKind.UpdateApp
+    DecryptFailureKind.Suspicious -> E2eeFailureKind.Suspicious
+    DecryptFailureKind.Broken -> E2eeFailureKind.Broken
+    DecryptFailureKind.RetryLater -> E2eeFailureKind.RetryLater
+}
 
 private fun RequestKind.toE2ee() = when (this) {
     RequestKind.KEYS_UPLOAD -> E2eeRequestKind.KeysUpload

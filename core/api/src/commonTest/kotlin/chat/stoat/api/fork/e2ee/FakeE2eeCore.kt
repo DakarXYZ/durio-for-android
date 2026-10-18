@@ -79,10 +79,45 @@ class FakeE2eeCore(
 
     override suspend fun undeliveredDevices(): List<E2eeUndeliveredDevice> = emptyList()
 
+    /** What `decrypt` answers per message id; unknown ids wait for their key. */
+    val decryptResults = mutableMapOf<String, E2eeDecryptResult>()
+    val decrypted = mutableListOf<E2eeIncomingMessage>()
+    var decryptThrows: E2eeException? = null
+
+    override suspend fun decrypt(messages: List<E2eeIncomingMessage>): List<E2eeDecryptResult> {
+        calls += "decrypt ${messages.joinToString(",") { it.messageId }}"
+        decryptThrows?.let { throw it }
+        decrypted += messages
+        return messages.map {
+            decryptResults[it.messageId] ?: E2eeDecryptResult.Failed(E2eeFailureKind.WaitingForKey, "MissingRoomKey")
+        }
+    }
+
     override fun close() {
         closed = true
     }
 }
+
+/** A clean decryption of [payloadJson]. */
+fun decryptedResult(
+    payloadJson: String,
+    verification: E2eeVerification = E2eeVerification.Unverified,
+    isReplay: Boolean = false,
+    staleEdit: Boolean = false,
+    replyMismatch: Boolean = false,
+) = E2eeDecryptResult.Decrypted(
+    payloadJson = payloadJson,
+    senderUser = "01AUTHOR",
+    senderDevice = "01AUTHORDEVICE",
+    verification = verification,
+    sessionId = "s1",
+    messageIndex = 0,
+    isReplay = isReplay,
+    staleEdit = staleEdit,
+    editMismatch = false,
+    replyMismatch = replyMismatch,
+    isClean = !isReplay && !staleEdit && !replyMismatch && verification != E2eeVerification.Mismatch,
+)
 
 fun request(id: String, kind: E2eeRequestKind = E2eeRequestKind.KeysUpload, method: String = "POST", path: String = "/e2ee/keys/upload") =
     E2eeRequest(id, kind, method, path, """{"r":"$id"}""")

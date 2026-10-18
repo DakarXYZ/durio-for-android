@@ -5,6 +5,8 @@ import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeFrames
 import chat.stoat.api.fork.e2ee.E2eeLimits
+import chat.stoat.api.fork.e2ee.E2eeMessages
+import chat.stoat.api.fork.e2ee.MessageDecryptor
 import chat.stoat.api.fork.e2ee.E2eeSocketListener
 import chat.stoat.api.fork.e2ee.E2eeSync
 import chat.stoat.api.fork.e2ee.E2eeSyncEvent
@@ -253,12 +255,19 @@ object E2eeManager : E2eeSocketListener {
         sessionScope.launch(start = CoroutineStart.UNDISPATCHED) {
             sync.events.collect { event ->
                 _events.emit(event)
-                if (event == E2eeSyncEvent.Unauthorized) _status.value = E2eeStatus.SessionExpired
+                when (event) {
+                    // messages waiting for these keys are decrypted and re-shown (AN-25)
+                    is E2eeSyncEvent.RoomKeys -> E2eeMessages.onRoomKeys(event.keys)
+                    E2eeSyncEvent.Unauthorized -> _status.value = E2eeStatus.SessionExpired
+                    else -> Unit
+                }
             }
         }
         session = Session(account, core, http, sync, job)
         sync.start()
         _status.value = E2eeStatus.Ready
+        // messages that came in before the device was ready are decrypted now
+        sessionScope.launch { E2eeMessages.install(MessageDecryptor(core)) }
 
         // Ready came before we were here: the contract wants it after every connect
         if (RealtimeSocket.disconnectionState == DisconnectionState.Connected) sync.onReady()
@@ -267,6 +276,7 @@ object E2eeManager : E2eeSocketListener {
     private suspend fun stopLocked() {
         val current = session ?: return
         session = null
+        E2eeMessages.install(null)
         current.sync.stop()
         current.job.cancel()
         current.http.close()
