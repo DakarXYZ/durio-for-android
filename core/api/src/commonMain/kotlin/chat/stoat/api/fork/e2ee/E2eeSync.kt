@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.concurrent.Volatile
 
 /**
  * Runs the crypto core's network side for one account (plan AN-21, AN-24): request passes, the
@@ -35,7 +36,9 @@ import kotlinx.coroutines.sync.withLock
  * - [onToDevice] (`E2eeToDevice` doorbell): mailbox pages of 100 → core → ack → `markAckSent`
  *   while the page was full; [onKeysLow]: `keys/count`;
  * - [onDeviceListUpdate], [onChannelMembers]: into the core, then a pass;
- * - after every cycle the core's `wakeupInMs` schedules the next pass.
+ * - after every cycle the core's `wakeupInMs` schedules the next pass;
+ * - [setForeground]: in the foreground a mailbox pass about once a minute regardless of
+ *   doorbells (block 5E: a socket that went quiet, a lost doorbell).
  *
  * One actor per account: triggers are merged and handled by one coroutine, and a mutex
  * serializes cycles with [prepareSend] (the core does not want parallel claims/shares for a
@@ -53,6 +56,7 @@ class E2eeSync(
     private val client: ApiClient,
     private val scope: CoroutineScope,
     private val backoff: Backoff = Backoff(),
+    private val safetyIntervalMs: Long = SAFETY_PASS_MS,
 ) {
     enum class State { Idle, Running, BackingOff, Unauthorized, Stopped }
 
@@ -104,6 +108,9 @@ class E2eeSync(
     private val inFlight = mutableSetOf<String>()
     private var loop: Job? = null
     private var timer: Job? = null
+
+    @Volatile
+    private var safety: Job? = null
     private var holding = false
 
     private val _state = MutableStateFlow(State.Idle)
@@ -123,9 +130,26 @@ class E2eeSync(
     /** Stops the loop; the core stays open (its owner closes it). */
     fun stop() {
         timer?.cancel()
+        safety?.cancel()
         loop?.cancel()
         triggers.close()
         if (_state.value != State.Unauthorized) _state.value = State.Stopped
+    }
+
+    /**
+     * The app is in the foreground (true) or not (block 5E, `load-chaos.md` §5): in front, the
+     * mailbox is read every [safetyIntervalMs] whatever the doorbells did, so a socket the server
+     * left silent or a doorbell lost on the way costs at most that long. In the background push
+     * wakes the account instead (AN-29). A pass that is due anyway is merged with it.
+     */
+    fun setForeground(foreground: Boolean) {
+        safety?.cancel()
+        safety = if (!foreground) null else scope.launch {
+            while (true) {
+                delay(safetyIntervalMs)
+                if (triggers.trySend(Trigger.Mailbox).isClosed) break
+            }
+        }
     }
 
     fun requestPass() {
@@ -470,6 +494,9 @@ class E2eeSync(
     companion object {
         private const val MAX_PASSES = 16
         private const val MAX_MAILBOX_PAGES = 50
+
+        /** The foreground safety mailbox pass (block 5E). */
+        const val SAFETY_PASS_MS = 60_000L
     }
 }
 

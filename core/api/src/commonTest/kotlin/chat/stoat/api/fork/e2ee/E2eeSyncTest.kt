@@ -312,6 +312,45 @@ class E2eeSyncTest {
     }
 
     @Test
+    fun foregroundReadsTheMailboxAboutOnceAMinute() = runTest {
+        val (_, server, sync) = setup()
+        server.handler = { ok("""{"messages":[]}""") }
+        sync.start()
+        runCurrent()
+        assertTrue(server.log.isEmpty())
+        val mailbox = "GET /e2ee/to_device?limit=100"
+
+        // no doorbell at all: the safety pass reads the mailbox (block 5E)
+        sync.setForeground(true)
+        advanceTimeBy(E2eeSync.SAFETY_PASS_MS - 1)
+        runCurrent()
+        assertTrue(server.log.isEmpty())
+        advanceTimeBy(2)
+        runCurrent()
+        assertEquals(listOf(mailbox), server.log)
+        advanceTimeBy(E2eeSync.SAFETY_PASS_MS)
+        runCurrent()
+        assertEquals(listOf(mailbox, mailbox), server.log)
+
+        // background: nothing more until the app is in front again
+        sync.setForeground(false)
+        advanceTimeBy(10 * E2eeSync.SAFETY_PASS_MS)
+        runCurrent()
+        assertEquals(2, server.log.size)
+
+        sync.setForeground(true)
+        sync.setForeground(true) // twice: still one timer
+        advanceTimeBy(E2eeSync.SAFETY_PASS_MS + 1)
+        runCurrent()
+        assertEquals(3, server.log.size)
+
+        sync.stop()
+        advanceTimeBy(10 * E2eeSync.SAFETY_PASS_MS)
+        runCurrent()
+        assertEquals(3, server.log.size)
+    }
+
+    @Test
     fun wakeupSchedulesThePass() = runTest {
         val (core, _, sync) = setup()
         core.wakeup = 10_000

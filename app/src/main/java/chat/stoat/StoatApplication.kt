@@ -8,6 +8,7 @@ import chat.stoat.api.realtime.RealtimeConnectionMonitor
 import chat.stoat.di.appModule
 import chat.stoat.di.viewModelModule
 import chat.stoat.fork.account.AccountManager
+import chat.stoat.fork.e2ee.E2eeForeground
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
 import coil3.ImageLoader
@@ -49,6 +50,8 @@ class StoatApplication : Application(), SingletonImageLoader.Factory {
         }
 
         RealtimeConnectionMonitor(this).start()
+        // durio: the E2EE safety mailbox pass runs only in the foreground (block 5E)
+        E2eeForeground.start()
 
         if (BuildConfig.DEBUG) {
             // Enable strict mode primarily to catch non-API usage, although we detect all

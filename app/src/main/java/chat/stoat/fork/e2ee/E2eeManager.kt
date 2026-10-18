@@ -122,6 +122,10 @@ object E2eeManager : E2eeSocketListener {
     @Volatile
     private var startJob: Job? = null
 
+    // the app is in the foreground: the sync's safety mailbox pass runs (block 5E)
+    @Volatile
+    private var foreground = false
+
     private val _status = MutableStateFlow<E2eeStatus>(E2eeStatus.Off)
     val status: StateFlow<E2eeStatus> = _status.asStateFlow()
 
@@ -346,12 +350,22 @@ object E2eeManager : E2eeSocketListener {
         }
         session = Session(account, core, http, sync, job)
         sync.start()
+        sync.setForeground(foreground)
         _status.value = E2eeStatus.Ready
         // messages that came in before the device was ready are decrypted now
         sessionScope.launch { E2eeMessages.install(MessageDecryptor(core)) }
 
         // Ready came before we were here: the contract wants it after every connect
         if (RealtimeSocket.disconnectionState == DisconnectionState.Connected) onReady()
+    }
+
+    /**
+     * The app came to the foreground or left it ([E2eeForeground], block 5E): the active
+     * account's mailbox is read about once a minute while in front.
+     */
+    fun setForeground(value: Boolean) {
+        foreground = value
+        session?.sync?.setForeground(value)
     }
 
     /** Members of every encrypted DM/group known so far (contract step 5). */
