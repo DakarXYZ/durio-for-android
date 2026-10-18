@@ -3,6 +3,7 @@ package chat.stoat.api
 import androidx.compose.runtime.mutableStateMapOf
 import chat.stoat.api.StoatAPI.initialize
 import chat.stoat.api.fork.http.SessionTokenPlugin
+import chat.stoat.api.fork.realtime.awaitReadyOrClosed
 import chat.stoat.api.internals.ActiveSlowmode
 import chat.stoat.api.internals.Members
 import chat.stoat.api.internals.platformUserAgent
@@ -42,7 +43,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
@@ -53,7 +53,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
 import kotlinx.io.IOException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
@@ -193,8 +192,8 @@ object StoatAPI {
                 var reconnectDelay = INITIAL_RECONNECT_DELAY
                 while (isActive && sessionToken == token) {
                     try {
-                        connectOnce(token)
-                        reconnectDelay = INITIAL_RECONNECT_DELAY
+                        // durio: back to the short delay only after a Ready (block 5E)
+                        if (connectOnce(token)) reconnectDelay = INITIAL_RECONNECT_DELAY
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: IOException) {
@@ -222,7 +221,7 @@ object StoatAPI {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private suspend fun connectOnce(token: String) = coroutineScope {
+    private suspend fun connectOnce(token: String): Boolean = coroutineScope {
         val connectionReady = CompletableDeferred<Unit>()
         val connection = async(realtimeContext) {
             RealtimeSocket.connect(token) {
@@ -231,16 +230,13 @@ object StoatAPI {
         }
 
         try {
-            try {
-                withTimeout(CONNECTION_READY_TIMEOUT) {
-                    connectionReady.await()
-                }
-            } catch (_: TimeoutCancellationException) {
-                throw RealtimeReadyTimeoutException(
+            // durio: a socket the server closes before Ready ends the wait at once (block 5E)
+            val ready = awaitReadyOrClosed(connectionReady, connection, CONNECTION_READY_TIMEOUT)
+                ?: throw RealtimeReadyTimeoutException(
                     "WebSocket did not authenticate within $CONNECTION_READY_TIMEOUT."
                 )
-            }
             connection.await()
+            ready
         } finally {
             connection.cancelAndJoin()
         }
