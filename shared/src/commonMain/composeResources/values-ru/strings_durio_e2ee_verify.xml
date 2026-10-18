@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: сверка устройств SAS (этап 4, AN-31) -->
+<resources>
+    <string name="durio_verify_title">Сверка устройства</string>
+    <string name="durio_verify_incoming_self">Другое ваше устройство хочет сверить это. Принимайте, только если начали сверку сами.</string>
+    <string name="durio_verify_incoming_other">%1$s хочет сверить ваше устройство.</string>
+    <string name="durio_verify_waiting">Ждём другое устройство…</string>
+    <string name="durio_verify_waiting_other">Ждём подтверждения другого устройства…</string>
+    <string name="durio_verify_compare">Проверьте, что на другом экране те же эмодзи в том же порядке.</string>
+    <string name="durio_verify_compare_numbers">Проверьте, что на другом экране те же числа.</string>
+    <string name="durio_verify_accept">Принять</string>
+    <string name="durio_verify_match">Совпадают</string>
+    <string name="durio_verify_no_match">Не совпадают</string>
+    <string name="durio_verify_close">Закрыть</string>
+    <string name="durio_verify_done">Проверено</string>
+    <string name="durio_verify_done_text">Устройство проверено. Ваши проверенные устройства передают друг другу ключи прежних сообщений.</string>
+    <string name="durio_verify_mismatch">Возможная атака</string>
+    <string name="durio_verify_mismatch_text">Коды не совпали. Возможно, кто-то посередине: устройство не проверено. Повторите сверку, когда будете рядом.</string>
+    <string name="durio_verify_timeout">Время сверки истекло.</string>
+    <string name="durio_verify_cancelled">Сверка отменена.</string>
+    <string name="durio_verify_failed">Шаг не удался. Попробуйте ещё раз.</string>
+    <string name="durio_verify_not_started">Не удалось начать сверку. Попробуйте чуть позже.</string>
+    <string name="durio_verify_notification_channel">Сверка устройств</string>
+    <string name="durio_verify_notification_title">Запрос на сверку</string>
+    <string name="durio_verify_notification_text">Другое устройство хочет сверку. Откройте приложение, чтобы ответить.</string>
+    <!-- Названия эмодзи SAS: таблица Matrix (sas-emoji.json), по индексу -->
+    <string-array name="durio_sas_emoji">
+        <item>Собака</item>
+        <item>Кошка</item>
+        <item>Лев</item>
+        <item>Лошадь</item>
+        <item>Единорог</item>
+        <item>Свинья</item>
+        <item>Слон</item>
+        <item>Кролик</item>
+        <item>Панда</item>
+        <item>Петух</item>
+        <item>Пингвин</item>
+        <item>Черепаха</item>
+        <item>Рыба</item>
+        <item>Осьминог</item>
+        <item>Бабочка</item>
+        <item>Цветок</item>
+        <item>Дерево</item>
+        <item>Кактус</item>
+        <item>Гриб</item>
+        <item>Глобус</item>
+        <item>Луна</item>
+        <item>Облако</item>
+        <item>Огонь</item>
+        <item>Банан</item>
+        <item>Яблоко</item>
+        <item>Клубника</item>
+        <item>Кукуруза</item>
+        <item>Пицца</item>
+        <item>Торт</item>
+        <item>Сердце</item>
+        <item>Улыбка</item>
+        <item>Робот</item>
+        <item>Шляпа</item>
+        <item>Очки</item>
+        <item>Гаечный ключ</item>
+        <item>Санта</item>
+        <item>Большой палец</item>
+        <item>Зонт</item>
+        <item>Песочные часы</item>
+        <item>Часы</item>
+        <item>Подарок</item>
+        <item>Лампочка</item>
+        <item>Книга</item>
+        <item>Карандаш</item>
+        <item>Скрепка</item>
+        <item>Ножницы</item>
+        <item>Замок</item>
+        <item>Ключ</item>
+        <item>Молоток</item>
+        <item>Телефон</item>
+        <item>Флаг</item>
+        <item>Поезд</item>
+        <item>Велосипед</item>
+        <item>Самолёт</item>
+        <item>Ракета</item>
+        <item>Кубок</item>
+        <item>Мяч</item>
+        <item>Гитара</item>
+        <item>Труба</item>
+        <item>Колокол</item>
+        <item>Якорь</item>
+        <item>Наушники</item>
+        <item>Папка</item>
+        <item>Булавка</item>
+    </string-array>
+</resources>

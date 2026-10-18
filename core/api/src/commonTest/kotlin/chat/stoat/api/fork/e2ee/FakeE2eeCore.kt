@@ -117,6 +117,109 @@ class FakeE2eeCore(
         }
     }
 
+    var identity = E2eeIdentityKeys("curve", "ed25519key")
+    val trust = mutableMapOf<String, E2eeTrust>()
+    val flows = mutableMapOf<String, FakeSas>()
+
+    override suspend fun identityKeys() = identity
+
+    override suspend fun setDeviceTrust(userId: String, deviceId: String, trust: E2eeTrust) {
+        calls += "trust $deviceId $trust"
+        this.trust[deviceId] = trust
+    }
+
+    override suspend fun requestVerification(userId: String, deviceId: String): E2eeSas {
+        calls += "verify $userId $deviceId"
+        return FakeSas("flow-$deviceId", userId, deviceId, E2eeSasState.Requested).also { flows[it.flowId] = it }
+    }
+
+    override suspend fun verification(flowId: String): E2eeSas? = flows[flowId]
+
+    override suspend fun verifications(): List<E2eeSas> = flows.values.filter { !it.current.isFinal }
+
+    /** The backup as the fake server and core see it. */
+    var recoveryKey = "EsTc LW2K PGiF wKEA 3As5 g5c4 BXwk qeeJ ZJV8 Q9fu gUMN UE4d"
+    var backupVersion: String? = null
+    var unlockedSecrets: E2eeRecoverySecrets? = null
+    var restoreTotal = 3L
+
+    override suspend fun createRecovery(passphrase: ByteArray?): E2eeRecoverySetup {
+        calls += "createRecovery"
+        return E2eeRecoverySetup(recoveryKey, request("bv1", E2eeRequestKind.BackupVersionCreate, "POST", "/e2ee/backup/version"))
+    }
+
+    override suspend fun rotateBackup(): E2eeRecoverySetup {
+        calls += "rotateBackup"
+        if (backupVersion == null) throw E2eeException.NoBackup()
+        return E2eeRecoverySetup(null, request("bv2", E2eeRequestKind.BackupVersionCreate, "POST", "/e2ee/backup/version"))
+    }
+
+    override suspend fun unlockBackup(input: ByteArray, secrets: E2eeRecoverySecrets): String {
+        calls += "unlock"
+        unlockedSecrets = secrets
+        if (input.decodeToString() != recoveryKey) throw E2eeException.WrongRecoveryKey()
+        return "v1".also { backupVersion = it }
+    }
+
+    override suspend fun restoreBackup(keysBody: String): E2eeBackupRestore {
+        calls += "restore $keysBody"
+        if (backupVersion == null) throw E2eeException.NoBackup()
+        return object : E2eeBackupRestore {
+            var done = 0L
+            override suspend fun progress() = E2eeRestoreProgress(done, restoreTotal, done, 0, done >= restoreTotal)
+            override suspend fun next(max: Int): E2eeRestoreProgress {
+                done = (done + 2).coerceAtMost(restoreTotal)
+                return progress()
+            }
+            override fun close() {
+                calls += "restore closed"
+            }
+        }
+    }
+
+    override suspend fun backupStatus() =
+        E2eeBackupStatus(backupVersion, backupVersion != null, backupVersion != null, false, 10, 10)
+
+    override suspend fun disableBackup() {
+        backupVersion = null
+    }
+
+    override fun recoveryKeyCheck(input: ByteArray) =
+        if (input.decodeToString() == recoveryKey) E2eeRecoveryKeyCheck.Valid else E2eeRecoveryKeyCheck.NotAKey
+
+    override fun close() {
+        closed = true
+    }
+}
+
+/** A scripted SAS flow: [current] is what [state] reports; actions are recorded. */
+class FakeSas(
+    override val flowId: String,
+    override val otherUserId: String,
+    private val device: String?,
+    var current: E2eeSasState,
+    override val isSelfVerification: Boolean = false,
+) : E2eeSas {
+    val actions = mutableListOf<String>()
+    var closed = false
+
+    override fun otherDeviceId() = device
+    override fun state() = current
+    override suspend fun accept() {
+        actions += "accept"
+    }
+    override suspend fun start() {
+        actions += "start"
+    }
+    override suspend fun confirm() {
+        actions += "confirm"
+    }
+    override suspend fun mismatch() {
+        actions += "mismatch"
+    }
+    override suspend fun cancel() {
+        actions += "cancel"
+    }
     override fun close() {
         closed = true
     }

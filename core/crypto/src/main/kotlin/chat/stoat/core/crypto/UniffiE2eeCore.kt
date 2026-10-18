@@ -1,6 +1,18 @@
 package chat.stoat.core.crypto
 
 import chat.stoat.api.fork.e2ee.E2eeAction
+import chat.stoat.api.fork.e2ee.E2eeBackupRestore
+import chat.stoat.api.fork.e2ee.E2eeBackupStatus
+import chat.stoat.api.fork.e2ee.E2eeCancelReason
+import chat.stoat.api.fork.e2ee.E2eeIdentityKeys
+import chat.stoat.api.fork.e2ee.E2eeRecoveryKeyCheck
+import chat.stoat.api.fork.e2ee.E2eeRecoverySecrets
+import chat.stoat.api.fork.e2ee.E2eeRecoverySetup
+import chat.stoat.api.fork.e2ee.E2eeRestoreProgress
+import chat.stoat.api.fork.e2ee.E2eeSas
+import chat.stoat.api.fork.e2ee.E2eeSasEmoji
+import chat.stoat.api.fork.e2ee.E2eeSasState
+import chat.stoat.api.fork.e2ee.E2eeTrust
 import chat.stoat.api.fork.e2ee.E2eeChannelSettings
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeDecryptResult
@@ -15,6 +27,8 @@ import chat.stoat.api.fork.e2ee.E2eeRoomKey
 import chat.stoat.api.fork.e2ee.E2eeUndeliveredDevice
 import chat.stoat.api.fork.e2ee.E2eeVerification
 import chat.stoat.api.fork.e2ee.ToDeviceOutcome
+import uniffi.stoat_crypto.BackupRestore
+import uniffi.stoat_crypto.CancelReason
 import uniffi.stoat_crypto.ChannelEncryptionSettings
 import uniffi.stoat_crypto.CryptoException
 import uniffi.stoat_crypto.CryptoMachine
@@ -23,10 +37,16 @@ import uniffi.stoat_crypto.DecryptResult
 import uniffi.stoat_crypto.DecryptedMessage
 import uniffi.stoat_crypto.IncomingEncryptedMessage
 import uniffi.stoat_crypto.OutgoingRequest
+import uniffi.stoat_crypto.RecoveryKeyCheck
+import uniffi.stoat_crypto.RecoverySecrets
+import uniffi.stoat_crypto.RestoreProgress
 import uniffi.stoat_crypto.RequestKind
+import uniffi.stoat_crypto.SasHandle
+import uniffi.stoat_crypto.SasState
 import uniffi.stoat_crypto.ServerLimits
 import uniffi.stoat_crypto.Trust
 import uniffi.stoat_crypto.Verification
+import uniffi.stoat_crypto.recoveryKeyCheck as checkRecoveryKey
 
 /**
  * [E2eeCore] over the UniFFI [CryptoMachine] (plan AN-20). Only maps types and errors; the host
@@ -149,8 +169,142 @@ internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
         }
     }
 
+    override suspend fun identityKeys(): E2eeIdentityKeys = core {
+        val keys = machine.identityKeys()
+        E2eeIdentityKeys(curve25519 = keys.curve25519, ed25519 = keys.ed25519)
+    }
+
+    override suspend fun setDeviceTrust(userId: String, deviceId: String, trust: E2eeTrust) = core {
+        machine.setDeviceTrust(
+            userId,
+            deviceId,
+            when (trust) {
+                E2eeTrust.Verified -> Trust.VERIFIED
+                E2eeTrust.Unverified -> Trust.UNVERIFIED
+                E2eeTrust.Blocked -> Trust.BLOCKED
+            }
+        )
+    }
+
+    override suspend fun requestVerification(userId: String, deviceId: String): E2eeSas = core {
+        UniffiSas(machine.requestVerification(userId, deviceId))
+    }
+
+    override suspend fun verification(flowId: String): E2eeSas? = core {
+        machine.verification(flowId)?.let(::UniffiSas)
+    }
+
+    override suspend fun verifications(): List<E2eeSas> = core {
+        machine.verifications().map(::UniffiSas)
+    }
+
+    // RecoverySetup (generated) prints the recovery key in its toString(): mapped field by field
+    override suspend fun createRecovery(passphrase: ByteArray?): E2eeRecoverySetup = core {
+        val setup = machine.createRecovery(passphrase)
+        E2eeRecoverySetup(setup.recoveryKey, setup.request.toE2ee())
+    }
+
+    override suspend fun rotateBackup(): E2eeRecoverySetup = core {
+        val setup = machine.rotateBackup()
+        E2eeRecoverySetup(setup.recoveryKey, setup.request.toE2ee())
+    }
+
+    override suspend fun unlockBackup(input: ByteArray, secrets: E2eeRecoverySecrets): String = core {
+        machine.unlockBackup(
+            input,
+            RecoverySecrets(
+                defaultKey = secrets.defaultKey,
+                keyDescription = secrets.keyDescription,
+                backupSecret = secrets.backupSecret,
+                backupVersion = secrets.backupVersion,
+            )
+        )
+    }
+
+    override suspend fun restoreBackup(keysBody: String): E2eeBackupRestore = core {
+        UniffiBackupRestore(machine.restoreBackup(keysBody))
+    }
+
+    override suspend fun backupStatus(): E2eeBackupStatus = core {
+        val status = machine.backupStatus()
+        E2eeBackupStatus(
+            version = status.version,
+            enabled = status.enabled,
+            recoverySetUp = status.recoverySetUp,
+            outdated = status.outdated,
+            keysTotal = status.keysTotal.toLong(),
+            keysBackedUp = status.keysBackedUp.toLong(),
+        )
+    }
+
+    override suspend fun disableBackup() = core { machine.disableBackup() }
+
+    override fun recoveryKeyCheck(input: ByteArray): E2eeRecoveryKeyCheck = core {
+        when (checkRecoveryKey(input)) {
+            RecoveryKeyCheck.VALID -> E2eeRecoveryKeyCheck.Valid
+            RecoveryKeyCheck.TYPO -> E2eeRecoveryKeyCheck.Typo
+            RecoveryKeyCheck.NOT_A_KEY -> E2eeRecoveryKeyCheck.NotAKey
+        }
+    }
+
     override fun close() = machine.close()
 }
+
+/** [E2eeSas] over the UniFFI handle; [close] releases its hold on the machine. */
+private class UniffiSas(private val handle: SasHandle) : E2eeSas {
+    override val flowId: String = handle.flowId()
+    override val otherUserId: String = core { handle.otherUserId() }
+    override val isSelfVerification: Boolean = core { handle.isSelfVerification() }
+
+    override fun otherDeviceId(): String? = core { handle.otherDeviceId() }
+
+    override fun state(): E2eeSasState = core {
+        when (val state = handle.state()) {
+            SasState.Requested -> E2eeSasState.Requested
+            SasState.Incoming -> E2eeSasState.Incoming
+            SasState.Ready -> E2eeSasState.Ready
+            SasState.Started -> E2eeSasState.Started
+            is SasState.ShowCodes -> E2eeSasState.ShowCodes(
+                emoji = state.emoji.map { E2eeSasEmoji(it.index.toInt(), it.symbol, it.description) },
+                decimals = state.decimals.map { it.toInt() },
+            )
+            SasState.Confirmed -> E2eeSasState.Confirmed
+            SasState.Done -> E2eeSasState.Done
+            is SasState.Cancelled -> E2eeSasState.Cancelled(
+                reason = when (state.reason) {
+                    CancelReason.USER -> E2eeCancelReason.User
+                    CancelReason.TIMEOUT -> E2eeCancelReason.Timeout
+                    CancelReason.MISMATCH -> E2eeCancelReason.Mismatch
+                    CancelReason.ACCEPTED_ELSEWHERE -> E2eeCancelReason.AcceptedElsewhere
+                    CancelReason.OTHER -> E2eeCancelReason.Other
+                },
+                code = state.code,
+                byUs = state.byUs,
+            )
+        }
+    }
+
+    override suspend fun accept() = core { handle.accept() }
+    override suspend fun start() = core { handle.start() }
+    override suspend fun confirm() = core { handle.confirm() }
+    override suspend fun mismatch() = core { handle.mismatch() }
+    override suspend fun cancel() = core { handle.cancel() }
+    override fun close() = handle.close()
+}
+
+private class UniffiBackupRestore(private val restore: BackupRestore) : E2eeBackupRestore {
+    override suspend fun progress() = core { restore.progress().toE2ee() }
+    override suspend fun next(max: Int) = core { restore.next(max.coerceAtLeast(0).toUInt()).toE2ee() }
+    override fun close() = restore.close()
+}
+
+private fun RestoreProgress.toE2ee() = E2eeRestoreProgress(
+    done = done.toLong(),
+    total = total.toLong(),
+    imported = imported.toLong(),
+    failed = failed.toLong(),
+    finished = finished,
+)
 
 private fun OutgoingRequest.toE2ee() = E2eeRequest(
     id = id,
@@ -228,5 +382,10 @@ internal fun CryptoException.toE2ee(): E2eeException = when (this) {
     is CryptoException.PayloadTooLarge -> E2eeException.PayloadTooLarge(this)
     is CryptoException.UnknownChannel -> E2eeException.UnknownChannel(this)
     is CryptoException.AttachmentHashMismatch -> E2eeException.AttachmentHashMismatch(this)
+    is CryptoException.RecoveryKeyTypo -> E2eeException.RecoveryKeyTypo(this)
+    is CryptoException.WrongRecoveryKey -> E2eeException.WrongRecoveryKey(this)
+    is CryptoException.BackupKeyMismatch, is CryptoException.InvalidRecoveryData ->
+        E2eeException.BackupKeyMismatch(this)
+    is CryptoException.NoBackup, is CryptoException.NoRecovery -> E2eeException.NoBackup(this)
     else -> E2eeException.Core(this::class.simpleName ?: "Unknown", this)
 }

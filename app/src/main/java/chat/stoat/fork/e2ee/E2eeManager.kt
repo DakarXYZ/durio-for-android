@@ -71,6 +71,12 @@ sealed interface E2eeStatus {
 }
 
 /**
+ * The active account's E2EE device for the screens of AN-30..32: its core, sync and HTTP. Valid
+ * while [E2eeManager.status] is [E2eeStatus.Ready] for [account]; do not keep it longer.
+ */
+class E2eeActive(val account: Account, val core: E2eeCore, val sync: E2eeSync, val http: AccountHttp)
+
+/**
  * The E2EE device of each account (plan AN-23): opens the crypto core after login of the active
  * account (if its server has `features.e2ee.enabled`), runs its [E2eeSync] and hears the socket
  * for it (AN-24); stops it on account switch, destroys the store on logout (AN-11).
@@ -128,6 +134,10 @@ object E2eeManager : E2eeSocketListener {
     val activeSync: E2eeSync?
         get() = session?.sync
 
+    /** The active account's device for the settings, verification and backup (AN-30..32). */
+    val active: E2eeActive?
+        get() = session?.let { E2eeActive(it.account, it.core, it.sync, it.http) }
+
     /**
      * The core and sync of [accountKey] for one piece of work (send, edit, push, notification
      * reply; AN-26, AN-29, AN-43): the running session of the active account, else the account's
@@ -174,6 +184,7 @@ object E2eeManager : E2eeSocketListener {
         // attachments need no account: the stateless half of the core (AN-28)
         E2eeAttachments.crypto = UniffiAttachmentCrypto
         appContext = context.applicationContext
+        E2eeVerifications.init(context)
     }
 
     private suspend fun openCore(accountKey: String): E2eeCore {
@@ -325,6 +336,8 @@ object E2eeManager : E2eeSocketListener {
     private suspend fun stopLocked() {
         val current = session ?: return
         session = null
+        // an open verification holds the core (and its store lock) until closed
+        E2eeVerifications.controller.clear()
         E2eeMessages.install(null)
         current.sync.stop()
         current.job.cancel()

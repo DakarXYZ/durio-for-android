@@ -9,7 +9,7 @@ package chat.stoat.api.fork.e2ee
  * (host contract in `stoat-crypto/crates/stoat-crypto/src/lib.rs`). One instance per account and
  * process; [close] releases the store lock.
  *
- * Decrypt/encrypt (AN-25/26), devices, SAS and backup (AN-30..32) are added with their tasks.
+ * Decrypt/encrypt (AN-25/26), devices and trust (AN-30), SAS (AN-31) and the key backup (AN-32).
  */
 interface E2eeCore : AutoCloseable {
     val userId: String
@@ -74,6 +74,52 @@ interface E2eeCore : AutoCloseable {
 
     /** Known devices of [userId] (ULID); empty if it has none with E2EE (AN-26, AN-30). */
     suspend fun devices(userId: String): List<E2eeDevice>
+
+    /** This device's public keys; users compare the Ed25519 one (AN-30). */
+    suspend fun identityKeys(): E2eeIdentityKeys
+
+    /** Local trust of a device: by hand, without SAS (AN-30). */
+    suspend fun setDeviceTrust(userId: String, deviceId: String, trust: E2eeTrust)
+
+    /**
+     * Asks a device to verify with SAS (AN-31); the request leaves with the next request pass.
+     * @throws E2eeException.Core `UnknownDevice` for this device or one the core does not know
+     */
+    suspend fun requestVerification(userId: String, deviceId: String): E2eeSas
+
+    /** The flow of an id from [ToDeviceOutcome.verifications]; null if this core never saw it. */
+    suspend fun verification(flowId: String): E2eeSas?
+
+    /** Flows that are not finished, incoming ones included. */
+    suspend fun verifications(): List<E2eeSas>
+
+    /**
+     * A new recovery key and backup (AN-32): show [E2eeRecoverySetup.recoveryKey] once, then run
+     * its request (`POST /e2ee/backup/version`). [passphrase] (UTF-8) is wiped by the caller.
+     */
+    suspend fun createRecovery(passphrase: ByteArray? = null): E2eeRecoverySetup
+
+    /** A new backup under the same recovery key (always needs MFA); `NoRecovery` without one. */
+    suspend fun rotateBackup(): E2eeRecoverySetup
+
+    /**
+     * Unlocks the server's backup with the recovery key or passphrase ([input], UTF-8; the caller
+     * wipes it) and the secret storage bodies. Returns the backup version.
+     * @throws E2eeException.RecoveryKeyTypo, E2eeException.WrongRecoveryKey,
+     *   E2eeException.BackupKeyMismatch
+     */
+    suspend fun unlockBackup(input: ByteArray, secrets: E2eeRecoverySecrets): String
+
+    /** `GET /e2ee/backup/keys?version=<v>` body → an import in batches. */
+    suspend fun restoreBackup(keysBody: String): E2eeBackupRestore
+
+    suspend fun backupStatus(): E2eeBackupStatus
+
+    /** Stops uploading from this device; the server copy stays. */
+    suspend fun disableBackup()
+
+    /** What the recovery field holds, as the user types; [input] is wiped by the caller. */
+    fun recoveryKeyCheck(input: ByteArray): E2eeRecoveryKeyCheck
 }
 
 /** A device of a user as the core knows it. Keys are public. */
@@ -172,6 +218,21 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
 
     /** The core has no member list for the channel yet (`setChannelMembers` first). */
     class UnknownChannel(cause: Throwable? = null) : E2eeException("Unknown channel", cause)
+
+    /** Shaped like a recovery key, with a typo in it (AN-32). */
+    class RecoveryKeyTypo(cause: Throwable? = null) : E2eeException("Recovery key typo", cause)
+
+    /** Neither the recovery key nor the passphrase of this backup. */
+    class WrongRecoveryKey(cause: Throwable? = null) : E2eeException("Wrong recovery key", cause)
+
+    /**
+     * The server's backup or secret storage does not fit together (a version of its own, or a
+     * damaged secret): never restored from, never uploaded to.
+     */
+    class BackupKeyMismatch(cause: Throwable? = null) : E2eeException("Backup key mismatch", cause)
+
+    /** No backup (to restore, or set up on this device to rotate). */
+    class NoBackup(cause: Throwable? = null) : E2eeException("No backup", cause)
 
     /** Everything else; [code] is the core's error code. */
     class Core(val code: String, cause: Throwable? = null) : E2eeException("Core error $code", cause)

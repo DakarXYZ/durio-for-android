@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: SAS verification of devices (stage 4, AN-31) -->
+<resources>
+    <string name="durio_verify_title">Verify device</string>
+    <string name="durio_verify_incoming_self">Another of your devices wants to verify this one. Accept only if you started it yourself.</string>
+    <string name="durio_verify_incoming_other">%1$s wants to verify your device.</string>
+    <string name="durio_verify_waiting">Waiting for the other device…</string>
+    <string name="durio_verify_waiting_other">Waiting for the other device to confirm…</string>
+    <string name="durio_verify_compare">Check that the other screen shows the same emoji in the same order.</string>
+    <string name="durio_verify_compare_numbers">Check that the other screen shows the same numbers.</string>
+    <string name="durio_verify_accept">Accept</string>
+    <string name="durio_verify_match">They match</string>
+    <string name="durio_verify_no_match">They differ</string>
+    <string name="durio_verify_close">Close</string>
+    <string name="durio_verify_done">Verified</string>
+    <string name="durio_verify_done_text">The device is verified. Your own verified devices share the keys of earlier messages with each other.</string>
+    <string name="durio_verify_mismatch">Possible attack</string>
+    <string name="durio_verify_mismatch_text">The codes did not match. Somebody may be in the middle: the device was not verified. Try again when you are together.</string>
+    <string name="durio_verify_timeout">The verification timed out.</string>
+    <string name="durio_verify_cancelled">The verification was cancelled.</string>
+    <string name="durio_verify_failed">This step failed. Try again.</string>
+    <string name="durio_verify_not_started">The verification could not be started. Try again in a moment.</string>
+    <string name="durio_verify_notification_channel">Device verification</string>
+    <string name="durio_verify_notification_title">Verification request</string>
+    <string name="durio_verify_notification_text">Another device wants to verify. Open the app to answer.</string>
+    <!-- SAS emoji names: the Matrix table (sas-emoji.json), by index -->
+    <string-array name="durio_sas_emoji">
+        <item>Dog</item>
+        <item>Cat</item>
+        <item>Lion</item>
+        <item>Horse</item>
+        <item>Unicorn</item>
+        <item>Pig</item>
+        <item>Elephant</item>
+        <item>Rabbit</item>
+        <item>Panda</item>
+        <item>Rooster</item>
+        <item>Penguin</item>
+        <item>Turtle</item>
+        <item>Fish</item>
+        <item>Octopus</item>
+        <item>Butterfly</item>
+        <item>Flower</item>
+        <item>Tree</item>
+        <item>Cactus</item>
+        <item>Mushroom</item>
+        <item>Globe</item>
+        <item>Moon</item>
+        <item>Cloud</item>
+        <item>Fire</item>
+        <item>Banana</item>
+        <item>Apple</item>
+        <item>Strawberry</item>
+        <item>Corn</item>
+        <item>Pizza</item>
+        <item>Cake</item>
+        <item>Heart</item>
+        <item>Smiley</item>
+        <item>Robot</item>
+        <item>Hat</item>
+        <item>Glasses</item>
+        <item>Spanner</item>
+        <item>Santa</item>
+        <item>Thumbs Up</item>
+        <item>Umbrella</item>
+        <item>Hourglass</item>
+        <item>Clock</item>
+        <item>Gift</item>
+        <item>Light Bulb</item>
+        <item>Book</item>
+        <item>Pencil</item>
+        <item>Paperclip</item>
+        <item>Scissors</item>
+        <item>Lock</item>
+        <item>Key</item>
+        <item>Hammer</item>
+        <item>Telephone</item>
+        <item>Flag</item>
+        <item>Train</item>
+        <item>Bicycle</item>
+        <item>Aeroplane</item>
+        <item>Rocket</item>
+        <item>Trophy</item>
+        <item>Ball</item>
+        <item>Guitar</item>
+        <item>Trumpet</item>
+        <item>Bell</item>
+        <item>Anchor</item>
+        <item>Headphones</item>
+        <item>Folder</item>
+        <item>Pin</item>
+    </string-array>
+</resources>
