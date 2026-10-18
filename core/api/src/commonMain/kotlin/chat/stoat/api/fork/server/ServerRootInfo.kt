@@ -49,6 +49,13 @@ data class ServerRootInfo(
     data class E2ee(
         val enabled: Boolean? = null,
         @SerialName("envelope_versions") val envelopeVersions: List<Int>? = null,
+        // durio: limits for the crypto core and the send path (AN-21, AN-23, AN-26)
+        @SerialName("max_envelope_bytes") val maxEnvelopeBytes: Int? = null,
+        @SerialName("default_for_new_dms") val defaultForNewDms: Boolean? = null,
+        @SerialName("max_to_device_batch") val maxToDeviceBatch: Int? = null,
+        @SerialName("max_to_device_bytes") val maxToDeviceBytes: Int? = null,
+        @SerialName("max_attachments") val maxAttachments: Int? = null,
+        @SerialName("max_request_bytes") val maxRequestBytes: Int? = null,
     )
 
     val e2eeEnabled: Boolean

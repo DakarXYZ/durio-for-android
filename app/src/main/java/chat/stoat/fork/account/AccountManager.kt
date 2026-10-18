@@ -19,6 +19,7 @@ import chat.stoat.api.routes.push.subscribePush
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.User
+import chat.stoat.fork.e2ee.E2eeManager
 import chat.stoat.fork.keystore.AndroidKeystoreWrapKey
 import chat.stoat.fork.keystore.UnwrapException
 import chat.stoat.fork.push.PushNotifications
@@ -118,7 +119,9 @@ object AccountManager {
                 produceFile = { app.preferencesDataStoreFile(AccountStore.FILE) }
             )
         )
-        registry = AccountStorageRegistry(app, AndroidKeystoreWrapKey.wrapper())
+        val wrapper = AndroidKeystoreWrapKey.wrapper()
+        registry = AccountStorageRegistry(app, wrapper)
+        E2eeManager.init(app, wrapper)
         migration = LegacyAccountMigration(
             device = app.stoatKVStorage,
             legacyServer = { LegacyServer.load(app) },
@@ -277,10 +280,11 @@ object AccountManager {
     /**
      * After `StoatAPI.loginAs` succeeded for the active account: refresh the name and avatar shown
      * in the account switcher and subscribe to push (AN-11: on every login, not only from the
-     * notification banner).
+     * notification banner). Opens the account's E2EE device if its server has E2EE (AN-23).
      */
     fun onLoggedIn() {
         val account = active ?: return
+        E2eeManager.start(account)
         val self = StoatAPI.selfId?.let { StoatAPI.userCache[it] }
         ioScope.launch {
             if (self != null) updateProfile(account.key, self)
@@ -407,7 +411,8 @@ object AccountManager {
                 SessionRevoker.unsubscribeAndRevoke(app, account.endpoints, token, account.sessionId)
             }
         }
-        // stage 4: close the account's E2EE machine here, before its files go
+        // the E2EE machine is closed and its store destroyed before the files go (AN-22, AN-23)
+        E2eeManager.destroy(account.key)
 
         registry.remove(account.key, deleteFiles = true)
         _state.value = store.remove(account.key)
@@ -443,6 +448,8 @@ object AccountManager {
      * deleting its data or ending its session.
      */
     private suspend fun teardownActive() {
+        // the E2EE machine first: nothing of it may run under the next account (AN-23)
+        E2eeManager.stop()
         AccountReset.resetGlobalState()
         pendingServer = null
     }

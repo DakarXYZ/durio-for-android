@@ -3,6 +3,7 @@ package chat.stoat.api.fork.routes
 import chat.stoat.api.StoatJson
 import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.http.api
+import chat.stoat.api.fork.server.ServerRootInfo
 import chat.stoat.core.model.schemas.User
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -20,6 +21,16 @@ suspend fun fetchSelfUser(client: ApiClient): User {
     val response = client.http.get("/users/@me".api(client))
     if (!response.status.isSuccess()) throw AccountRequestException(response.status.value)
     return StoatJson.decodeFromString(User.serializer(), response.bodyAsText())
+}
+
+/**
+ * `GET /` of the account's server (plan AN-23): features, `features.e2ee` and its limits. The
+ * tolerant [ServerRootInfo], not upstream's `Root`.
+ */
+suspend fun fetchServerRoot(client: ApiClient): ServerRootInfo {
+    val response = client.http.get("/".api(client))
+    if (!response.status.isSuccess()) throw AccountRequestException(response.status.value)
+    return StoatJson.decodeFromString(ServerRootInfo.serializer(), response.bodyAsText())
 }
 
 /**
