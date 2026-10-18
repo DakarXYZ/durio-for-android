@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: privacy of encrypted chats (stage 4, AN-33) -->
+<resources>
+    <string name="durio_e2ee_privacy">Privacy of encrypted chats</string>
+    <string name="durio_privacy_hide_text">Hide text in notifications</string>
+    <string name="durio_privacy_hide_text_summary">Notifications of encrypted chats show “New message” only. Android keeps a notification history, and watches and cars copy notifications.</string>
+    <string name="durio_privacy_secure">Block screenshots</string>
+    <string name="durio_privacy_secure_summary">No screenshots or screen recording of encrypted chats; the chat is hidden in recent apps.</string>
+    <string name="durio_privacy_keyboard">Incognito keyboard</string>
+    <string name="durio_privacy_keyboard_summary">Asks the keyboard not to learn from what you type in encrypted chats. Keyboards may ignore it.</string>
+</resources>

@@ -184,6 +184,7 @@ object E2eeManager : E2eeSocketListener {
         // attachments need no account: the stateless half of the core (AN-28)
         E2eeAttachments.crypto = UniffiAttachmentCrypto
         appContext = context.applicationContext
+        E2eePrivacy.init(context)
         E2eeVerifications.init(context)
     }
 

@@ -24,6 +24,7 @@ import chat.stoat.core.model.schemas.Message
 import chat.stoat.fork.account.Account
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.e2ee.E2eeManager
+import chat.stoat.fork.e2ee.E2eePrivacy
 import chat.stoat.internals.extensions.getStringBlocking
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_push_encrypted_file
@@ -52,8 +53,9 @@ object PushDecryption {
 
     fun isEncrypted(data: Map<String, String>) = data["encrypted"] == "1"
 
-    /** The notification text, or null: show the generic one. */
+    /** The notification text, or null: show the generic one (always, if the user asked so: AN-33). */
     suspend fun text(context: Context, account: Account, data: Map<String, String>): String? {
+        if (E2eePrivacy.hideNotificationText(context)) return null
         val messageId = data["message"] ?: return null
         val channelId = data["channel"] ?: return null
         val author = data["author"] ?: return null
@@ -122,6 +124,7 @@ object PushDecryption {
 
     /** The generic line went out: decrypt again later and replace it (ids only, Q38). */
     fun retryLater(context: Context, accountKey: String, channelId: String, messageId: String, authorId: String) {
+        if (E2eePrivacy.hideNotificationText(context)) return
         val request = OneTimeWorkRequestBuilder<PushRedecryptWorker>()
             .setInputData(
                 workDataOf(

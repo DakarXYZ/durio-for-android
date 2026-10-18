@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: приватность зашифрованных чатов (этап 4, AN-33) -->
+<resources>
+    <string name="durio_e2ee_privacy">Приватность зашифрованных чатов</string>
+    <string name="durio_privacy_hide_text">Скрывать текст в уведомлениях</string>
+    <string name="durio_privacy_hide_text_summary">Уведомления зашифрованных чатов показывают только «Новое сообщение». Android хранит историю уведомлений, а часы и автомобили копируют их.</string>
+    <string name="durio_privacy_secure">Запретить снимки экрана</string>
+    <string name="durio_privacy_secure_summary">Никаких снимков и записи экрана в зашифрованных чатах; чат скрыт в списке недавних приложений.</string>
+    <string name="durio_privacy_keyboard">Клавиатура инкогнито</string>
+    <string name="durio_privacy_keyboard_summary">Просит клавиатуру не запоминать то, что вы пишете в зашифрованных чатах. Клавиатура может не послушаться.</string>
+</resources>

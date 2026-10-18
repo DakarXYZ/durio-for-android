@@ -142,6 +142,8 @@ import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.callbacks.Action
 import chat.stoat.callbacks.ActionChannel
 import chat.stoat.fork.e2ee.ui.E2eeSendErrors
+import chat.stoat.fork.e2ee.ui.EncryptedChannelPrivacy
+import chat.stoat.fork.e2ee.ui.IncognitoKeyboard
 import chat.stoat.fork.e2ee.ui.EncryptedChannelBadge
 import chat.stoat.fork.e2ee.ui.EncryptionBanner
 import chat.stoat.fork.e2ee.ui.showCallNotEncryptedNotice
@@ -283,6 +285,8 @@ fun ChannelScreen(
     }
     // durio: why an encrypted message was not sent (plan AN-26)
     E2eeSendErrors()
+    // durio: no screenshots of an encrypted chat, if the user asked (plan AN-33)
+    EncryptedChannelPrivacy(channelId)
     // </editor-fold>
     // <editor-fold desc="Load/switch channel">
     val channelPermissions by rememberChannelPermissions(channelId, viewModel.ensuredSelfMember)
@@ -1429,7 +1433,7 @@ fun ChannelScreen(
                                     ) { deny ->
                                         if (!deny) {
                                             Column(modifier = Modifier.fillMaxWidth()) {
-                                                MessageField(
+                                                IncognitoKeyboard(channelId) { MessageField( // durio: AN-33
                                                     initialValue = viewModel.initialTextFieldValue,
                                                     initialValueDirtyMarker = viewModel.initialTextFieldValueDirtyMarker,
                                                     onValueChange = viewModel::putDraftContent,
@@ -1646,7 +1650,7 @@ fun ChannelScreen(
                                                             )
                                                         }
                                                     },
-                                                )
+                                                ) }
 
                                                 DropdownMenu(
                                                     expanded = viewModel.activePane == ChannelScreenActivePane.AttachmentPicker && notEnoughSpaceForPanes,
