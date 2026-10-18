@@ -1,0 +1,4 @@
+-- durio: version 1 → 2, EncryptedChannel (plan AN-39); cache_<key>.db files from stage 1 exist
+CREATE TABLE IF NOT EXISTS EncryptedChannel (
+    id TEXT PRIMARY KEY NOT NULL
+);

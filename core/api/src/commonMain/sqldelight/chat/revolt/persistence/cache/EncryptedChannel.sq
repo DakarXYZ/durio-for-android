@@ -1,0 +1,15 @@
+-- durio: DMs and groups this account has seen encrypted (plan AN-39). Never removed: a server
+-- that later sends the channel without `encryption` does not turn encryption off here.
+-- A table of its own: `Channel` rows are replaced (INSERT OR REPLACE) on every update.
+CREATE TABLE EncryptedChannel (
+    id TEXT PRIMARY KEY NOT NULL
+);
+
+pin:
+INSERT OR IGNORE
+INTO EncryptedChannel (id)
+VALUES (?);
+
+selectAll:
+SELECT id
+FROM EncryptedChannel;

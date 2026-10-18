@@ -554,6 +554,7 @@ object RealtimeSocket {
                 }
 
                 StoatAPI.channelCache[channelUpdateFrame.id] = combined
+                E2eeFrames.onServerChannel(combined) // durio: encryption enabled / pinned (AN-27, AN-39)
                 if ((combined.slowmode ?: 0) <= 0) {
                     StoatAPI.userSlowmodeCache.remove(channelUpdateFrame.id)
                 }
@@ -583,6 +584,7 @@ object RealtimeSocket {
                 }
 
                 StoatAPI.channelCache[channelCreateFrame.id!!] = channelCreateFrame
+                E2eeFrames.onServerChannel(channelCreateFrame) // durio: created encrypted (AN-27, O6)
                 channelCreateFrame.server?.let { serverId ->
                     StoatAPI.serverCache[serverId]?.let { server ->
                         if (channelCreateFrame.id !in server.channels.orEmpty()) {

@@ -1,6 +1,8 @@
 package chat.stoat.api.fork.e2ee
 
+import chat.stoat.api.StoatAPI
 import chat.stoat.api.StoatJson
+import chat.stoat.core.model.schemas.Channel
 import co.touchlab.kermit.Logger
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -72,7 +74,18 @@ object E2eeFrames {
 
     /** End of the `Ready` handler. */
     fun onReady() {
+        // pins every encrypted DM/group and notes downgrades (AN-39), before the members go out
+        StoatAPI.channelCache.values.toList().forEach { E2eeChannels.observe(it) }
         listener?.onReady()
+    }
+
+    /**
+     * `ChannelCreate` / `ChannelUpdate`, after the cache took it: a channel that became
+     * encrypted (enabled, or created encrypted, AN-27) gets its members into the core.
+     */
+    fun onServerChannel(channel: Channel) {
+        val id = channel.id ?: return
+        if (E2eeChannels.observe(channel)) onChannelMembers(id, E2eeChannels.members(channel))
     }
 
     fun onChannelMembers(channelId: String, members: List<String>) {
