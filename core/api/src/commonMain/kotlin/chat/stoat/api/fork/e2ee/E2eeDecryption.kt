@@ -76,7 +76,7 @@ sealed interface E2eeDecryptResult {
         /** Nothing suspicious: show it as a normal message (the shield still applies). */
         val isClean: Boolean,
     ) : E2eeDecryptResult {
-        override fun toString() = "Decrypted(session=$sessionId, index=$messageIndex, $verification, clean=$isClean)"
+        override fun toString() = "Decrypted($verification, clean=$isClean)"
     }
 
     /** [code] is the core's stable error code (diagnostics). */
