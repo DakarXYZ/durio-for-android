@@ -8,6 +8,7 @@ import uniffi.stoat_crypto.CryptoException
 import uniffi.stoat_crypto.CryptoMachine
 import uniffi.stoat_crypto.StoreConfig
 import uniffi.stoat_crypto.Timing
+import uniffi.stoat_crypto.coreVersion as libraryVersion
 import uniffi.stoat_crypto.destroyStore
 import java.io.File
 
@@ -18,6 +19,9 @@ import java.io.File
  */
 object CryptoStores {
     const val KEY_BYTES = 32
+
+    /** Version of the core library in the APK (semver of the stoat-crypto crates, CR-23). */
+    fun coreVersion(): String = libraryVersion()
 
     /**
      * Opens the machine of [userId] (ULID) on [deviceId] (= session id). Wipes [key] before

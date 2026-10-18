@@ -46,6 +46,21 @@ object EncryptedShare {
         return uri to keys.contentType.ifBlank { "application/octet-stream" }
     }
 
+    /**
+     * A text file of the app (the diagnostic report, CR-22) shared the same way: same directory,
+     * same cleanup after [TTL_MS].
+     */
+    suspend fun prepareText(context: Context, name: String, text: String): Uri {
+        val file = withContext(Dispatchers.IO) {
+            val root = File(context.cacheDir, DIR)
+            sweep(root, System.currentTimeMillis())
+            val dir = File(root, UUID.randomUUID().toString()).apply { mkdirs() }
+            File(dir, safeName(name)).apply { writeText(text) }
+        }
+        scheduleCleanup(context, file.parentFile!!.name)
+        return FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+    }
+
     /** The system share sheet with the decrypted copy. */
     fun share(context: Context, uri: Uri, type: String) {
         val send = Intent(Intent.ACTION_SEND).apply {

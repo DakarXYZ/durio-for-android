@@ -70,9 +70,10 @@ object E2eeRoutes {
     const val RESET = "settings/e2ee/reset"
     const val KEYS_EXPORT = "settings/e2ee/keys/export"
     const val KEYS_IMPORT = "settings/e2ee/keys/import"
+    const val DIAGNOSTICS = "settings/e2ee/diagnostics"
 }
 
-/** `MainActivity`'s hook: the screens of AN-30..32, AN-42 and the key files (CR-21). */
+/** `MainActivity`'s hook: the screens of AN-30..32, AN-42 and the key files (CR-21), the diagnostic report (CR-22). */
 fun NavGraphBuilder.e2eeScreens(navController: NavController) {
     composable(E2eeRoutes.DEVICES) { E2eeSettingsScreen(navController) }
     composable(E2eeRoutes.SETUP) { RecoverySetupScreen(navController, rotate = false) }
@@ -81,6 +82,7 @@ fun NavGraphBuilder.e2eeScreens(navController: NavController) {
     composable(E2eeRoutes.RESET) { KeyLostScreen(navController) }
     composable(E2eeRoutes.KEYS_EXPORT) { KeyExportScreen(navController) }
     composable(E2eeRoutes.KEYS_IMPORT) { KeyImportScreen(navController) }
+    composable(E2eeRoutes.DIAGNOSTICS) { DiagnosticsScreen(navController) }
 }
 
 /** The settings list's hook: "Devices and encryption" under "Sessions". */

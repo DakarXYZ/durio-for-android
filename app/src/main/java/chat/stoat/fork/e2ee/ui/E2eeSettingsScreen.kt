@@ -103,6 +103,9 @@ import chat.stoat.shared.resources.durio_e2ee_devices_trust_verified
 import chat.stoat.shared.resources.durio_e2ee_devices_unverified_hint
 import chat.stoat.shared.resources.durio_e2ee_devices_verify
 import chat.stoat.shared.resources.durio_e2ee_privacy
+import chat.stoat.shared.resources.durio_diag_section
+import chat.stoat.shared.resources.durio_diag_send
+import chat.stoat.shared.resources.durio_diag_text
 import chat.stoat.shared.resources.durio_keys_export
 import chat.stoat.shared.resources.durio_keys_import
 import chat.stoat.shared.resources.durio_keys_section
@@ -172,7 +175,8 @@ class E2eeSettingsViewModel : ViewModel() {
 /**
  * "Devices and encryption" (plan AN-30): this device and its fingerprint, the account's other
  * devices (session = device, C22) with their verification and "log out", the key backup (AN-32),
- * key files (CR-21), the privacy options (AN-33) and "reset encryption" (AN-42).
+ * key files (CR-21), the privacy options (AN-33), the diagnostic report (CR-22) and "reset
+ * encryption" (AN-42).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -279,6 +283,15 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
 
             item(key = "privacyHeader") { ListHeader { Text(stringResource(Res.string.durio_e2ee_privacy)) } }
             item(key = "privacy") { E2eePrivacySettings() }
+
+            // CR-22: a report the user reads and sends, instead of Sentry
+            item(key = "diagHeader") { ListHeader { Text(stringResource(Res.string.durio_diag_section)) } }
+            item(key = "diag") {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.durio_diag_text), style = MaterialTheme.typography.bodySmall)
+                    OutlinedButton(onClick = { navController.navigate(E2eeRoutes.DIAGNOSTICS) }) { Text(stringResource(Res.string.durio_diag_send)) }
+                }
+            }
 
             item(key = "reset") {
                 Column(Modifier.padding(16.dp)) {

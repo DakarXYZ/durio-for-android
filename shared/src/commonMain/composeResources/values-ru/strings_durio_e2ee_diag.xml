@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: отчёт диагностики вместо Sentry (этап 5, CR-22) -->
+<resources>
+    <string name="durio_diag_section">Диагностика</string>
+    <string name="durio_diag_send">Отправить отчёт диагностики</string>
+    <string name="durio_diag_text">Собирает отчёт для разработчиков: счётчики, состояния и коды ошибок шифрования на этом устройстве, версии приложения и Android. Без сообщений, ключей, адреса сервера и ID других людей. Вы увидите отчёт до отправки и сами выберете, куда его отправить.</string>
+    <string name="durio_diag_title">Отчёт диагностики</string>
+    <string name="durio_diag_preview">Это всё, что есть в отчёте:</string>
+    <string name="durio_diag_share">Поделиться…</string>
+    <string name="durio_diag_failed">Не удалось собрать отчёт.</string>
+</resources>
