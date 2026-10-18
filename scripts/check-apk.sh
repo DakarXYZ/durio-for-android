@@ -9,9 +9,9 @@
 # zipalign comes from $BUILD_TOOLS, else the newest build-tools in $ANDROID_HOME.
 set -euo pipefail
 
-# arm64-v8a release APK of durio/stage-1 (no E2EE core) built with the same splits.
-# TODO(AN-41): not measured yet; 0 skips the size check. Budget: + 15 MiB.
-ARM64_STAGE1_BYTES=0
+# arm64-v8a release APK (unsigned) of durio/stage-1 (no E2EE core) built with the same splits
+# and excludes, measured 2026-10-18; stage 4 was 59 082 757 (+10.4 MiB). 0 skips the check.
+ARM64_STAGE1_BYTES=48149508
 ARM64_RELEASE_BUDGET=$((ARM64_STAGE1_BYTES + 15 * 1024 * 1024))
 SHIPPED_ABIS="arm64-v8a armeabi-v7a x86_64"
 
