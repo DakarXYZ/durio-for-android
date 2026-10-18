@@ -92,6 +92,7 @@ import chat.stoat.shared.resources.durio_e2ee_devices_status_off
 import chat.stoat.shared.resources.durio_e2ee_devices_status_ready
 import chat.stoat.shared.resources.durio_e2ee_devices_status_starting
 import chat.stoat.shared.resources.durio_e2ee_devices_status_unavailable
+import chat.stoat.shared.resources.durio_e2ee_devices_sync_problem
 import chat.stoat.shared.resources.durio_e2ee_devices_this
 import chat.stoat.shared.resources.durio_e2ee_devices_title
 import chat.stoat.shared.resources.durio_e2ee_devices_trust_blocked
@@ -173,6 +174,7 @@ class E2eeSettingsViewModel : ViewModel() {
 @Composable
 fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsViewModel = viewModel()) {
     val status by E2eeManager.status.collectAsState()
+    val syncProblem by E2eeManager.syncProblem.collectAsState()
     LaunchedEffect(status) { viewModel.load() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var logout by remember { mutableStateOf<DeviceRow?>(null) }
@@ -210,6 +212,7 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
     ) { pv ->
         LazyColumn(Modifier.padding(pv).fillMaxSize()) {
             item(key = "status") { StatusCard(status) { navController.navigate(E2eeRoutes.RESET) } }
+            if (syncProblem) item(key = "syncProblem") { Hint(stringResource(Res.string.durio_e2ee_devices_sync_problem), warning = true) }
 
             val current = viewModel.devices.firstOrNull { it.current }
             item(key = "this") { ListHeader { Text(stringResource(Res.string.durio_e2ee_devices_this)) } }

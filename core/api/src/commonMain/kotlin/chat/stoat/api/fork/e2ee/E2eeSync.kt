@@ -39,9 +39,11 @@ import kotlinx.coroutines.sync.withLock
  *
  * One actor per account: triggers are merged and handled by one coroutine, and a mutex
  * serializes cycles with [prepareSend] (the core does not want parallel claims/shares for a
- * channel). Each attempt of a request is marked in the core exactly once. Network errors, 5xx
- * and 429 back off (429 by its `retry_after`); other 4xx are marked failed and the core decides
- * when to retry (`wakeupInMs`). 401 stops everything: the account needs a new login.
+ * channel). Each attempt of a request is marked in the core exactly once, with the real status
+ * (0: no answer). Network errors, 5xx and 429 back off (429 by its `retry_after`); other 4xx are
+ * marked failed and the core decides when to retry (`wakeupInMs`) — its own requests refused for
+ * good are dropped after a few tries ([E2eeSyncEvent.SyncProblem], review O-2), so no pass loops
+ * forever. 401 stops everything: the account needs a new login.
  *
  * HTTP goes through the account's own [client] (AN-15), never the global one: push handling
  * runs this for accounts that are not active (AN-29).
@@ -223,7 +225,7 @@ class E2eeSync(
                 throw e
             } catch (e: Exception) {
                 Logger.w { "E2EE ${request.kind} failed: ${e::class.simpleName}" }
-                core.markRequestFailed(request, 0)
+                markFailed(request, 0)
                 throw E2eeRequestException(0)
             }
             if (response.isSuccess) {
@@ -231,7 +233,7 @@ class E2eeSync(
             } else {
                 Logger.w { "E2EE ${request.kind} failed: ${response.status}" }
                 // a 401 here is the missing MFA ticket: the core says so (ActionRequired)
-                core.markRequestFailed(request, response.status)
+                markFailed(request, response.status)
                 if (response.status == 401) unauthorized()
                 throw E2eeRequestException(response.status)
             }
@@ -401,7 +403,7 @@ class E2eeSync(
         try {
             val called = call { executeE2eeRequest(client, request) }
             if (called !is Called.Response) {
-                core.markRequestFailed(request, 0)
+                markFailed(request, 0)
                 return (called as Called.Failed).step
             }
             val response = called.response
@@ -411,7 +413,7 @@ class E2eeSync(
             }
             Logger.w { "E2EE ${request.kind} failed: ${response.status}" }
             try {
-                core.markRequestFailed(request, response.status)
+                markFailed(request, response.status)
             } catch (e: E2eeException.ActionRequired) {
                 _events.emit(E2eeSyncEvent.ActionRequired(e.action))
             }
@@ -423,6 +425,19 @@ class E2eeSync(
             }
         } finally {
             inFlight -= request.id
+        }
+    }
+
+    /**
+     * Marks a failed attempt. A request of the core refused for good is dropped by the core
+     * (`RequestRejected`, once): reported as [E2eeSyncEvent.SyncProblem], not retried here.
+     */
+    private suspend fun markFailed(request: E2eeRequest, status: Int) {
+        try {
+            core.markRequestFailed(request, status)
+        } catch (e: E2eeException.RequestRejected) {
+            Logger.w { "E2EE ${request.kind} dropped by the core after $status" }
+            _events.emit(E2eeSyncEvent.SyncProblem(request.kind))
         }
     }
 
@@ -462,6 +477,12 @@ sealed interface E2eeSyncEvent {
     data class RoomKeys(val keys: List<E2eeRoomKey>) : E2eeSyncEvent
     data class Verifications(val flowIds: List<String>) : E2eeSyncEvent
     data class ActionRequired(val action: E2eeAction) : E2eeSyncEvent
+
+    /**
+     * The core gave up on one of its own requests, refused for good by the server (review O-2):
+     * some keys or verification messages did not reach it. A notice for the user, nothing blocks.
+     */
+    data class SyncProblem(val kind: E2eeRequestKind) : E2eeSyncEvent
     data object Unauthorized : E2eeSyncEvent
 }
 

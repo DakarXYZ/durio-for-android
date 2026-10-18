@@ -20,6 +20,8 @@ import chat.stoat.api.fork.e2ee.E2eeDevice
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeFailureKind
 import chat.stoat.api.fork.e2ee.E2eeIncomingMessage
+import chat.stoat.api.fork.e2ee.E2eeKeyExport
+import chat.stoat.api.fork.e2ee.E2eeKeyImport
 import chat.stoat.api.fork.e2ee.E2eeLimits
 import chat.stoat.api.fork.e2ee.E2eeRequest
 import chat.stoat.api.fork.e2ee.E2eeRequestKind
@@ -54,7 +56,8 @@ import uniffi.stoat_crypto.recoveryKeyCheck as checkRecoveryKey
  *
  * Rules for this module (checked by scripts/check-crypto-hygiene.sh): no logging at all, and
  * generated data classes never reach a string — their `toString()` prints every field, keys and
- * plaintext included (`DecryptedMessage`, `StoreConfig`, `RecoverySetup`).
+ * plaintext included (`DecryptedMessage`, `DecryptResult`, `StoreConfig`, `RecoverySetup`,
+ * `EncryptedAttachment`, `KeyExport`).
  */
 internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
     override val userId: String = machine.userId()
@@ -247,6 +250,24 @@ internal class UniffiE2eeCore(private val machine: CryptoMachine) : E2eeCore {
         }
     }
 
+    // KeyExport (generated) prints the file in its toString(): mapped field by field
+    override suspend fun exportRoomKeys(passphrase: ByteArray, channelIds: List<String>): E2eeKeyExport = core {
+        val export = machine.exportRoomKeys(passphrase, channelIds)
+        E2eeKeyExport(export.data, export.sessions.toInt())
+    }
+
+    override suspend fun importRoomKeys(file: String, passphrase: ByteArray): E2eeKeyImport = core {
+        val result = machine.importRoomKeys(file, passphrase)
+        E2eeKeyImport(
+            total = result.total.toInt(),
+            imported = result.imported.toInt(),
+            skipped = result.skipped.toInt(),
+            roomKeys = result.roomKeys.map { E2eeRoomKey(it.channelId, it.sessionId) },
+        )
+    }
+
+    override suspend fun debugReport(): String = core { machine.debugReport() }
+
     override fun close() = machine.close()
 }
 
@@ -387,5 +408,9 @@ internal fun CryptoException.toE2ee(): E2eeException = when (this) {
     is CryptoException.BackupKeyMismatch, is CryptoException.InvalidRecoveryData ->
         E2eeException.BackupKeyMismatch(this)
     is CryptoException.NoBackup, is CryptoException.NoRecovery -> E2eeException.NoBackup(this)
+    is CryptoException.PassphraseRequired -> E2eeException.PassphraseRequired(this)
+    is CryptoException.InvalidKeyFile -> E2eeException.InvalidKeyFile(this)
+    is CryptoException.WrongPassphrase -> E2eeException.WrongPassphrase(this)
+    is CryptoException.RequestRejected -> E2eeException.RequestRejected(this)
     else -> E2eeException.Core(this::class.simpleName ?: "Unknown", this)
 }

@@ -34,6 +34,9 @@ class MiniE2eeServer {
     private val mailbox = mutableListOf<Mail>()
     private var seq = 0
     val log = mutableListOf<String>()
+
+    /** A status to answer instead of the route (e.g. 403 for secret uploads); null: serve it. */
+    var refuse: (method: String, path: String) -> Int? = { _, _ -> null }
     private val queried = mutableSetOf<Pair<String, String>>()
 
     fun client(user: String, device: String): ApiClient = object : ApiClient {
@@ -88,6 +91,7 @@ class MiniE2eeServer {
     @Synchronized
     fun handle(user: String, device: String, method: String, path: String, body: String?, ticket: String? = null): String {
         log += "$device $method ${path.substringBefore('?')}"
+        refuse(method, path)?.let { throw Status(it) }
         val json = body?.takeIf { it.isNotEmpty() }?.let { Json.parseToJsonElement(it).jsonObject }
         val me = matrixId(user)
         return when {

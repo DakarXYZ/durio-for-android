@@ -9,7 +9,8 @@ package chat.stoat.api.fork.e2ee
  * (host contract in `stoat-crypto/crates/stoat-crypto/src/lib.rs`). One instance per account and
  * process; [close] releases the store lock.
  *
- * Decrypt/encrypt (AN-25/26), devices and trust (AN-30), SAS (AN-31) and the key backup (AN-32).
+ * Decrypt/encrypt (AN-25/26), devices and trust (AN-30), SAS (AN-31), the key backup (AN-32), key
+ * files (CR-21) and the diagnostic report (CR-22).
  */
 interface E2eeCore : AutoCloseable {
     val userId: String
@@ -25,8 +26,11 @@ interface E2eeCore : AutoCloseable {
     suspend fun markRequestSent(request: E2eeRequest, body: String)
 
     /**
-     * Non-2xx, or no response at all ([status] 0).
+     * Non-2xx, or no response at all ([status] 0): the real status, the core tells permanent
+     * refusals (4xx other than 401, 408, 429) from the rest.
      * @throws E2eeException.ActionRequired when the UI has to act (MFA, backup replaced, key conflict)
+     * @throws E2eeException.RequestRejected once, when a request of the core itself was refused
+     *   for good and dropped (review O-2): a "sync problem" notice, not a retry
      */
     suspend fun markRequestFailed(request: E2eeRequest, status: Int)
 
@@ -120,6 +124,28 @@ interface E2eeCore : AutoCloseable {
 
     /** What the recovery field holds, as the user types; [input] is wiped by the caller. */
     fun recoveryKeyCheck(input: ByteArray): E2eeRecoveryKeyCheck
+
+    /**
+     * Room keys of [channelIds] (all if empty) → a key file encrypted with [passphrase] (UTF-8,
+     * not empty; wiped by the caller). About a second of PBKDF2 (CR-21).
+     * @throws E2eeException.PassphraseRequired empty passphrase
+     * @throws E2eeException.InvalidKeyFile the file would pass 64 MiB: export fewer channels
+     */
+    suspend fun exportRoomKeys(passphrase: ByteArray, channelIds: List<String> = emptyList()): E2eeKeyExport
+
+    /**
+     * Imports a key file ([file] = its text; another Matrix client's works too); nothing is
+     * imported on failure (CR-21). [passphrase] is wiped by the caller.
+     * @throws E2eeException.WrongPassphrase wrong passphrase, or the file was modified
+     * @throws E2eeException.InvalidKeyFile not a key file (or a cut-off or oversized one)
+     */
+    suspend fun importRoomKeys(file: String, passphrase: ByteArray): E2eeKeyImport
+
+    /**
+     * Diagnostic report (CR-22): JSON with counts, states and error codes only — no keys,
+     * session ids, others' ids, ciphertext or text. Recent failures live in memory.
+     */
+    suspend fun debugReport(): String
 }
 
 /** A device of a user as the core knows it. Keys are public. */
@@ -233,6 +259,18 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
 
     /** No backup (to restore, or set up on this device to rotate). */
     class NoBackup(cause: Throwable? = null) : E2eeException("No backup", cause)
+
+    /** A key export needs a passphrase (CR-21). */
+    class PassphraseRequired(cause: Throwable? = null) : E2eeException("Passphrase required", cause)
+
+    /** Not a key file, a cut-off or oversized one; on export: too many sessions for one file. */
+    class InvalidKeyFile(cause: Throwable? = null) : E2eeException("Invalid key file", cause)
+
+    /** The key file does not open with this passphrase, or it was modified (one MAC, CR-21). */
+    class WrongPassphrase(cause: Throwable? = null) : E2eeException("Wrong passphrase", cause)
+
+    /** A request of the core was refused for good and dropped (review O-2): a sync problem. */
+    class RequestRejected(cause: Throwable? = null) : E2eeException("Request rejected", cause)
 
     /** Everything else; [code] is the core's error code. */
     class Core(val code: String, cause: Throwable? = null) : E2eeException("Core error $code", cause)

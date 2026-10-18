@@ -239,6 +239,24 @@ class E2eeSyncTest {
     }
 
     @Test
+    fun requestDroppedByTheCoreIsASyncProblemNotALoop() = runTest {
+        val (core, server, sync) = setup()
+        core.outstanding += request("s1", E2eeRequestKind.SecretPut, "PUT", "/e2ee/secrets/m.megolm_backup.v1")
+        core.rejectFailed = true
+        server.handler = { respond("", HttpStatusCode.Forbidden) }
+        val events = mutableListOf<E2eeSyncEvent>()
+        collect(sync, events)
+
+        sync.start()
+        runCurrent()
+
+        // the real status goes to the core; the dropped request is reported once, nothing blocks
+        assertEquals(listOf("pass", "failed s1 403"), core.calls)
+        assertEquals(listOf<E2eeSyncEvent>(E2eeSyncEvent.SyncProblem(E2eeRequestKind.SecretPut)), events)
+        assertEquals(E2eeSync.State.Idle, sync.state.value)
+    }
+
+    @Test
     fun rejectedRequestIsLeftToTheCore() = runTest {
         val (core, server, sync) = setup()
         core.outstanding += request("r1")

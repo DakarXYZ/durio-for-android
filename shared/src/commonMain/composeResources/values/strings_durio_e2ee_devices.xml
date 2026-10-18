@@ -36,5 +36,6 @@
     <string name="durio_e2ee_devices_rotate">Replace the backup (keeps the recovery key)</string>
     <string name="durio_e2ee_devices_reset">Reset encryption</string>
     <string name="durio_e2ee_devices_reset_text">Logs this device out. After you log in again it is a new device: restore your history with the recovery key or verify it with another device.</string>
+    <string name="durio_e2ee_devices_sync_problem">The server refused some encryption data of this device (keys or verification messages). Chatting goes on; if messages stay unreadable for others, send a diagnostic report below.</string>
     <string name="durio_user_devices">Encryption devices</string>
 </resources>

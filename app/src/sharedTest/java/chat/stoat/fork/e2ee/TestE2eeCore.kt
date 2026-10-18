@@ -8,6 +8,8 @@ import chat.stoat.api.fork.e2ee.E2eeDecryptResult
 import chat.stoat.api.fork.e2ee.E2eeDevice
 import chat.stoat.api.fork.e2ee.E2eeIdentityKeys
 import chat.stoat.api.fork.e2ee.E2eeIncomingMessage
+import chat.stoat.api.fork.e2ee.E2eeKeyExport
+import chat.stoat.api.fork.e2ee.E2eeKeyImport
 import chat.stoat.api.fork.e2ee.E2eeLimits
 import chat.stoat.api.fork.e2ee.E2eeRecoveryKeyCheck
 import chat.stoat.api.fork.e2ee.E2eeRecoverySecrets
@@ -52,6 +54,9 @@ open class TestE2eeCore(
     override suspend fun backupStatus() = E2eeBackupStatus(null, false, false, false, 0, 0)
     override suspend fun disableBackup() = Unit
     override fun recoveryKeyCheck(input: ByteArray) = E2eeRecoveryKeyCheck.NotAKey
+    override suspend fun exportRoomKeys(passphrase: ByteArray, channelIds: List<String>): E2eeKeyExport = error("not scripted")
+    override suspend fun importRoomKeys(file: String, passphrase: ByteArray): E2eeKeyImport = error("not scripted")
+    override suspend fun debugReport() = """{"format":1}"""
     override fun close() {
         closed = true
     }

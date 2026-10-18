@@ -121,6 +121,14 @@ object E2eeManager : E2eeSocketListener {
 
     private val _events = MutableSharedFlow<E2eeSyncEvent>(extraBufferCapacity = 64)
 
+    private val _syncProblem = MutableStateFlow(false)
+
+    /**
+     * The core dropped one of its own requests that the server refused for good (review O-2):
+     * a notice on the devices screen (AN-30), nothing blocks. Cleared with the session.
+     */
+    val syncProblem: StateFlow<Boolean> = _syncProblem.asStateFlow()
+
     /** Room keys (re-decrypt, AN-25), verifications (AN-31), actions for the UI (AN-32, AN-42). */
     val events: SharedFlow<E2eeSyncEvent> = _events.asSharedFlow()
 
@@ -322,6 +330,7 @@ object E2eeManager : E2eeSocketListener {
                     // the server has other keys for this session: only a new login helps (AN-42, C22)
                     is E2eeSyncEvent.ActionRequired ->
                         if (event.action == E2eeAction.DeviceKeysConflict) _status.value = E2eeStatus.KeyLost
+                    is E2eeSyncEvent.SyncProblem -> _syncProblem.value = true
                     else -> Unit
                 }
             }
@@ -344,6 +353,7 @@ object E2eeManager : E2eeSocketListener {
     private suspend fun stopLocked() {
         val current = session ?: return
         session = null
+        _syncProblem.value = false
         // an open verification holds the core (and its store lock) until closed
         E2eeVerifications.controller.clear()
         E2eeMessages.install(null)

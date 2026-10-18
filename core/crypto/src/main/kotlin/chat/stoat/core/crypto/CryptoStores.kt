@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import uniffi.stoat_crypto.CryptoException
 import uniffi.stoat_crypto.CryptoMachine
 import uniffi.stoat_crypto.StoreConfig
+import uniffi.stoat_crypto.Timing
 import uniffi.stoat_crypto.destroyStore
 import java.io.File
 
@@ -36,9 +37,26 @@ object CryptoStores {
         }
     }
 
-    /** A machine without persistence, for tests. */
-    suspend fun openInMemory(userId: String, deviceId: String): E2eeCore =
-        UniffiE2eeCore(core { CryptoMachine.open(userId, deviceId, StoreConfig.Memory) })
+    /**
+     * A machine without persistence, for tests. [ownRetryMs] shortens the core's pause after a
+     * failed request of its own (review O-2); the app keeps the core's timing (1 s, doubled per
+     * failure, at most 15 min).
+     */
+    suspend fun openInMemory(userId: String, deviceId: String, ownRetryMs: Long? = null): E2eeCore {
+        val machine = core { CryptoMachine.open(userId, deviceId, StoreConfig.Memory) }
+        if (ownRetryMs != null) {
+            core { machine.setTiming(TEST_TIMING.copy(ownRetryMs = ownRetryMs.toULong())) }
+        }
+        return UniffiE2eeCore(machine)
+    }
+
+    // the core's defaults (stoat-crypto outbox.rs, Timing::default)
+    private val TEST_TIMING = Timing(
+        keyRequestDelayMs = 3_000u,
+        toDeviceRetryMs = 60_000u,
+        toDeviceRetryAttempts = 8u,
+        ownRetryMs = 1_000u,
+    )
 
     /**
      * Deletes the store of a signed-out account (logout, AN-11). Close its machine first: the

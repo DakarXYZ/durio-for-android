@@ -21,6 +21,9 @@ class FakeE2eeCore(
 
     var wakeup: Long? = null
     var failAction: E2eeAction? = null
+
+    /** `markRequestFailed` drops the request for good (review O-2). */
+    var rejectFailed = false
     var closed = false
     var refuseMembers = false
 
@@ -45,6 +48,10 @@ class FakeE2eeCore(
     override suspend fun markRequestFailed(request: E2eeRequest, status: Int) {
         calls += "failed ${request.id} $status"
         failAction?.let { throw E2eeException.ActionRequired(it) }
+        if (rejectFailed) {
+            outstanding.remove(request)
+            throw E2eeException.RequestRejected()
+        }
     }
 
     override suspend fun wakeupInMs(): Long? = wakeup
@@ -186,6 +193,28 @@ class FakeE2eeCore(
 
     override fun recoveryKeyCheck(input: ByteArray) =
         if (input.decodeToString() == recoveryKey) E2eeRecoveryKeyCheck.Valid else E2eeRecoveryKeyCheck.NotAKey
+
+    /** Key files (CR-21): "exported" as the passphrase and channels; imports check the passphrase. */
+    var exportFailure: E2eeException? = null
+    var importKeys = listOf<E2eeRoomKey>()
+
+    override suspend fun exportRoomKeys(passphrase: ByteArray, channelIds: List<String>): E2eeKeyExport {
+        calls += "export ${channelIds.joinToString(",")}"
+        exportFailure?.let { throw it }
+        if (passphrase.isEmpty()) throw E2eeException.PassphraseRequired()
+        return E2eeKeyExport("KEYS:" + passphrase.decodeToString(), 2)
+    }
+
+    override suspend fun importRoomKeys(file: String, passphrase: ByteArray): E2eeKeyImport {
+        calls += "import"
+        if (!file.startsWith("KEYS:")) throw E2eeException.InvalidKeyFile()
+        if (file.removePrefix("KEYS:") != passphrase.decodeToString()) throw E2eeException.WrongPassphrase()
+        return E2eeKeyImport(importKeys.size, importKeys.size, 0, importKeys)
+    }
+
+    var report = """{"format":1}"""
+
+    override suspend fun debugReport() = report
 
     override fun close() {
         closed = true
