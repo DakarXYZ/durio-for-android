@@ -7,6 +7,7 @@
     <string name="durio_e2ee_devices_status_starting">Encryption is starting…</string>
     <string name="durio_e2ee_devices_status_off">This server does not offer end-to-end encryption.</string>
     <string name="durio_e2ee_devices_status_unavailable">Encryption is not available right now. Check the connection or log in again.</string>
+    <string name="durio_e2ee_devices_status_update_app">The encryption data of this device was saved by a newer version of the app. Install the latest version to read encrypted chats again. Resetting encryption instead loses the keys that are not in your backup.</string>
     <string name="durio_e2ee_devices_status_key_lost">The encryption keys of this device are lost. Reset encryption to keep chatting in encrypted chats.</string>
     <string name="durio_e2ee_devices_this">This device</string>
     <string name="durio_e2ee_devices_fingerprint">Device key (compare it with the other screen when verifying; hold to copy)</string>

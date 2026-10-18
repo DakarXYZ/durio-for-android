@@ -92,6 +92,7 @@ import chat.stoat.shared.resources.durio_e2ee_devices_status_off
 import chat.stoat.shared.resources.durio_e2ee_devices_status_ready
 import chat.stoat.shared.resources.durio_e2ee_devices_status_starting
 import chat.stoat.shared.resources.durio_e2ee_devices_status_unavailable
+import chat.stoat.shared.resources.durio_e2ee_devices_status_update_app
 import chat.stoat.shared.resources.durio_e2ee_devices_sync_problem
 import chat.stoat.shared.resources.durio_e2ee_devices_this
 import chat.stoat.shared.resources.durio_e2ee_devices_title
@@ -315,6 +316,7 @@ private fun StatusCard(status: E2eeStatus, onReset: () -> Unit) {
         E2eeStatus.Ready -> Res.string.durio_e2ee_devices_status_ready to false
         E2eeStatus.Starting -> Res.string.durio_e2ee_devices_status_starting to false
         E2eeStatus.KeyLost -> Res.string.durio_e2ee_devices_status_key_lost to true
+        E2eeStatus.UpdateApp -> Res.string.durio_e2ee_devices_status_update_app to true
         E2eeStatus.Off -> Res.string.durio_e2ee_devices_status_off to false
         else -> Res.string.durio_e2ee_devices_status_unavailable to true
     }

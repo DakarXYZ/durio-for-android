@@ -27,17 +27,55 @@ object CryptoStores {
      * Opens the machine of [userId] (ULID) on [deviceId] (= session id). Wipes [key] before
      * returning, whatever happens; the core wipes its own copy.
      *
+     * CR-23: the store's directory remembers the newest core that opened it ([VERSION_FILE]); a
+     * store of a newer core is not opened by an older one (the app was downgraded) — the
+     * library's migrations only go forward.
+     *
      * @throws E2eeException.StoreLocked if this process already has it open
      * @throws E2eeException.StoreUnusable wrong key, damaged store, or another account's store
+     * @throws E2eeException.StoreTooNew written by a newer core: update the app
      */
     suspend fun open(userId: String, deviceId: String, directory: File, key: ByteArray): E2eeCore {
         try {
             require(key.size == KEY_BYTES) { "Store key must be 32 bytes" }
-            withContext(Dispatchers.IO) { directory.mkdirs() }
+            val current = coreVersion()
+            val marker = File(directory, VERSION_FILE)
+            withContext(Dispatchers.IO) {
+                directory.mkdirs()
+                val stored = if (marker.isFile) marker.readText().trim() else null
+                if (stored != null && isNewer(stored, current)) throw E2eeException.StoreTooNew()
+            }
             val machine = core { CryptoMachine.open(userId, deviceId, StoreConfig.Sqlite(directory.path, key)) }
+            withContext(Dispatchers.IO) { rememberVersion(marker, current) }
             return UniffiE2eeCore(machine)
         } finally {
             key.fill(0)
+        }
+    }
+
+    /** Name of the file in a store's directory with the newest core version that opened it. */
+    const val VERSION_FILE = "core-version"
+
+    /** Whether semver [a] is newer than [b]; an unreadable version never blocks. */
+    fun isNewer(a: String, b: String): Boolean {
+        val x = semver(a) ?: return false
+        val y = semver(b) ?: return false
+        for (i in 0 until 3) if (x[i] != y[i]) return x[i] > y[i]
+        return false
+    }
+
+    // "1.2.3" (pre-release or build suffix ignored) → [1, 2, 3]
+    private fun semver(version: String): List<Int>? {
+        val parts = version.substringBefore('-').substringBefore('+').split('.')
+        if (parts.size != 3) return null
+        return parts.map { it.toIntOrNull() ?: return null }
+    }
+
+    private fun rememberVersion(marker: File, version: String) {
+        val stored = if (marker.isFile) marker.readText().trim() else null
+        if (stored == null || isNewer(version, stored)) {
+            // best effort: without the marker the next open just tries the store
+            runCatching { marker.writeText(version) }
         }
     }
 
@@ -68,6 +106,7 @@ object CryptoStores {
      */
     suspend fun destroy(directory: File) = withContext(Dispatchers.IO) {
         try {
+            File(directory, VERSION_FILE).delete()
             // deleting does not use the key, but the type wants 32 bytes
             destroyStore(StoreConfig.Sqlite(directory.path, ByteArray(KEY_BYTES)))
         } catch (e: CryptoException) {

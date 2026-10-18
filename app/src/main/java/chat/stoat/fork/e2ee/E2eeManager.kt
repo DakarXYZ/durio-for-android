@@ -64,6 +64,12 @@ sealed interface E2eeStatus {
     /** The store key or the store is gone (AN-42): the device must be reset. */
     data object KeyLost : E2eeStatus
 
+    /**
+     * The store was written by a newer version of the app (CR-23, a downgrade): update the app.
+     * Not [KeyLost]: the keys are still there, a reset would throw them away.
+     */
+    data object UpdateApp : E2eeStatus
+
     /** The server rejected the token. */
     data object SessionExpired : E2eeStatus
 
@@ -171,6 +177,8 @@ object E2eeManager : E2eeSocketListener {
         } catch (e: E2eeKeyLostException) {
             throw E2eeUnavailableException(e)
         } catch (e: E2eeException.StoreUnusable) {
+            throw E2eeUnavailableException(e)
+        } catch (e: E2eeException.StoreTooNew) {
             throw E2eeUnavailableException(e)
         } finally {
             job.cancel()
@@ -311,6 +319,7 @@ object E2eeManager : E2eeSocketListener {
             if (e is CancellationException) throw e
             _status.value = when (e) {
                 is E2eeKeyLostException, is E2eeException.StoreUnusable -> E2eeStatus.KeyLost
+                is E2eeException.StoreTooNew -> E2eeStatus.UpdateApp
                 else -> E2eeStatus.Failed(e::class.simpleName ?: "Unknown")
             }
             logcat(LogPriority.ERROR) { "E2EE device not opened: ${e::class.simpleName}" }

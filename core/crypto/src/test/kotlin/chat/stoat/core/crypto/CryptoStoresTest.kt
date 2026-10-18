@@ -2,6 +2,7 @@ package chat.stoat.core.crypto
 
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeRequestKind
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -71,5 +72,48 @@ class CryptoStoresTest {
         } finally {
             dir.deleteRecursively()
         }
+    }
+
+    // CR-23: stores only move forward; a downgraded app does not open a newer core's store
+    @Test
+    fun storeOfANewerCoreIsLeftAlone() = runBlocking {
+        val dir = Files.createTempDirectory("durio-crypto").toFile().resolve("store")
+        val key = ByteArray(32) { 5 }
+        try {
+            CryptoStores.open(user, device, dir, key.copyOf()).close()
+            val marker = dir.resolve(CryptoStores.VERSION_FILE)
+            assertEquals(CryptoStores.coreVersion(), marker.readText())
+
+            // an older core's marker is moved forward
+            marker.writeText("0.0.1")
+            CryptoStores.open(user, device, dir, key.copyOf()).close()
+            assertEquals(CryptoStores.coreVersion(), marker.readText())
+
+            // a newer one: refused before the library touches the store; the key is still wiped
+            marker.writeText("99.0.0")
+            // the last close checkpoints SQLite in the background: let it finish first
+            delay(1_000)
+            val before = dir.listFiles()!!.associate { it.name to it.lastModified() }
+            val wiped = key.copyOf()
+            assertFailsWith<E2eeException.StoreTooNew> { CryptoStores.open(user, device, dir, wiped) }
+            assertContentEquals(ByteArray(32), wiped)
+            assertEquals(before, dir.listFiles()!!.associate { it.name to it.lastModified() })
+
+            CryptoStores.destroy(dir)
+            assertFalse(dir.exists())
+        } finally {
+            dir.parentFile.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun semverComparison() {
+        assertTrue(CryptoStores.isNewer("0.3.0", "0.2.0"))
+        assertTrue(CryptoStores.isNewer("1.0.0", "0.99.99"))
+        assertTrue(CryptoStores.isNewer("0.2.10", "0.2.9"))
+        assertFalse(CryptoStores.isNewer("0.2.0", "0.2.0"))
+        assertFalse(CryptoStores.isNewer("0.2.0-rc.1", "0.2.0"))
+        assertFalse(CryptoStores.isNewer("garbage", "0.2.0"))
+        assertFalse(CryptoStores.isNewer("0.1.0", "0.2.0"))
     }
 }

@@ -275,6 +275,13 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
     /** A request of the core was refused for good and dropped (review O-2): a sync problem. */
     class RequestRejected(cause: Throwable? = null) : E2eeException("Request rejected", cause)
 
+    /**
+     * The store was last opened by a newer core than this app has (CR-23: stores only move
+     * forward, a downgrade is not supported). Update the app; resetting the device would throw
+     * its keys away. The store is left untouched.
+     */
+    class StoreTooNew(cause: Throwable? = null) : E2eeException("Store of a newer core", cause)
+
     /** Everything else; [code] is the core's error code. */
     class Core(val code: String, cause: Throwable? = null) : E2eeException("Core error $code", cause)
 }

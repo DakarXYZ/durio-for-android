@@ -7,6 +7,7 @@
     <string name="durio_e2ee_devices_status_starting">Шифрование запускается…</string>
     <string name="durio_e2ee_devices_status_off">Этот сервер не поддерживает сквозное шифрование.</string>
     <string name="durio_e2ee_devices_status_unavailable">Шифрование сейчас недоступно. Проверьте соединение или войдите заново.</string>
+    <string name="durio_e2ee_devices_status_update_app">Данные шифрования этого устройства сохранены более новой версией приложения. Установите последнюю версию, чтобы снова читать зашифрованные чаты. Сброс шифрования вместо этого потеряет ключи, которых нет в бэкапе.</string>
     <string name="durio_e2ee_devices_status_key_lost">Ключи шифрования этого устройства утеряны. Сбросьте шифрование, чтобы продолжить общение в зашифрованных чатах.</string>
     <string name="durio_e2ee_devices_this">Это устройство</string>
     <string name="durio_e2ee_devices_fingerprint">Ключ устройства (сверяйте с другим экраном при проверке; удерживайте, чтобы скопировать)</string>
