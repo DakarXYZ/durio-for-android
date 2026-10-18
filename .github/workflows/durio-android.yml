@@ -81,6 +81,14 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
+      # R8 with JNA/UniFFI (AN-20, AN-34) and the release packaging (AN-41): unsigned here.
+      # The instrumented tests are compiled; running them needs a device (plan AN-34)
+      - name: Build release APKs and instrumented tests
+        run: ./gradlew --no-daemon :app:assembleRelease :app:assembleDebugAndroidTest
+
+      - name: APK alignment, ABIs and size (AN-41)
+        run: bash scripts/check-apk.sh --release app/build/outputs/apk/release/*.apk app/build/outputs/apk/debug/*.apk
+
       - name: Unit tests
         # `test` covers :app and :core:crypto; allTests runs the KMP modules (:core:api, :core:model)
         run: ./gradlew --no-daemon test allTests
@@ -100,4 +108,6 @@ jobs:
         with:
           name: debug-apk
           retention-days: 7
-          path: app/build/outputs/apk/debug/*.apk
+          path: |
+            app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+            app/build/outputs/apk/debug/app-universal-debug.apk

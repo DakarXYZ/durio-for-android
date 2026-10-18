@@ -60,6 +60,10 @@ fun buildproperty(propertyName: String, fallbackEnv: String? = null): String? {
 val durioVersionCodeBase = Integer.parseInt("001_008_001".replace("_", ""), 10)
 val durioAbiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
 
+// durio: instrumented tests against the minified (R8) release build, -Pdurio.minifiedTests
+// (plan AN-34): JNA and UniFFI must survive R8; `connectedReleaseAndroidTest` on a device.
+val durioMinifiedTests = providers.gradleProperty("durio.minifiedTests").isPresent
+
 // durio: App Links only for our own server's host, set per build; none by default (plan AN-13, O12)
 val durioLinkHost = buildproperty("durio.link_host", "DURIO_LINK_HOST").orEmpty().trim()
 
@@ -109,6 +113,8 @@ android {
         }
     }
 
+    if (durioMinifiedTests) testBuildType = "release"
+
     buildTypes {
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }
@@ -118,6 +124,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (durioMinifiedTests) {
+                // the tests call into our E2EE code directly; JNA/UniFFI keep only the AAR's rules
+                proguardFiles("proguard-minified-tests.pro")
+                // an installable APK without the release key; never published
+                if (signingConfig == null) signingConfig = signingConfigs.getByName("debug")
+            }
             buildConfigField(
                 "String",
                 "FLAVOUR_ID",
@@ -188,6 +200,13 @@ android {
     testOptions {
         // durio: Robolectric needs merged resources and the manifest (plan AN-16)
         unitTests.isIncludeAndroidResources = true
+    }
+    sourceSets {
+        // durio: UI tests run under Robolectric and on a device alike (plan AN-34); the
+        // device smoke test of the E2EE core uses the in-memory server of :core:crypto
+        getByName("test").kotlin.srcDir("src/sharedTest/java")
+        getByName("androidTest").kotlin.srcDir("src/sharedTest/java")
+        getByName("androidTest").kotlin.srcDir("../core/crypto/src/sharedTest/kotlin")
     }
     lint {
         abortOnError = false
@@ -324,6 +343,8 @@ dependencies {
     androidTestImplementation(libs.android.test.rules)
     androidTestImplementation(libs.android.test.espresso.core)
     androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.android.test.ext.junit)
+    androidTestImplementation(libs.ktor.client.mock)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -332,6 +353,9 @@ dependencies {
     testImplementation(libs.android.test.core.ktx)
     testImplementation(libs.sqldelight.sqlite.driver)
     testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.android.test.ext.junit)
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.compose.ui.test.manifest)
 }
 
 aboutLibraries {

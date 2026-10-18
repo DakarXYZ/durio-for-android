@@ -29,6 +29,11 @@ android {
             it.systemProperty("jna.library.path", hostLibDir.path)
         }
     }
+
+    // the in-memory /e2ee server, also used by the app's device smoke test (AN-34)
+    sourceSets {
+        getByName("test").kotlin.srcDir("src/sharedTest/kotlin")
+    }
 }
 
 kotlin {
