@@ -109,3 +109,12 @@
     public <fields>;
 }
 
+# durio: R8 full mode (AGP 9) keeps a class matched by a -keep without members, but not its
+# constructor. WorkManager creates its Room database, input mergers and workers by reflection;
+# the library rules only name the classes, so the release build crashed on start with
+# NoSuchMethodException: androidx.work.impl.WorkDatabase_Impl.<init>
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class * extends androidx.work.InputMerger { <init>(); }
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
