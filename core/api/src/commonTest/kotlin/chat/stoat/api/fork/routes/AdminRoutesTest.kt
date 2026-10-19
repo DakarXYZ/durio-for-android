@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,12 +20,14 @@ class AdminRoutesTest {
     private var status = HttpStatusCode.OK
     private var reply = ""
     private val log = mutableListOf<String>()
+    private val bodies = mutableListOf<String>()
 
     private val client = object : ApiClient {
         override val http = HttpClient(
             MockEngine { request ->
                 val ticket = request.headers["x-mfa-ticket"]?.let { " ticket=$it" }.orEmpty()
                 log += "${request.method.value} ${request.url.encodedPathAndQuery.removePrefix("/api")}$ticket"
+                (request.body as? TextContent)?.let { bodies += "${request.method.value} ${request.url.encodedPath.removePrefix("/api")} ${it.text}" }
                 respond(reply, status)
             }
         )
@@ -104,6 +107,41 @@ class AdminRoutesTest {
         assertFailsWith<AdminRequestException> {
             withAdminElevation({ error("not asked") }) { throw AdminRequestException(403, "NotPrivileged") }
         }
+    }
+
+    @Test
+    fun invites() = runTest {
+        reply = """{"_id":"K7x9Q2abcd","expires_at":"2026-10-19T12:00:00Z","created_at":"2026-10-19T11:00:00Z",
+            "multi_use":true,"uses":0,"created_by":"01A"}"""
+        val invite = createAdminInvite(1, multiUse = true, client)
+        assertEquals("K7x9Q2abcd", invite.code)
+        assertEquals(1_792_411_200_000L, invite.expiresAtMs)
+        assertTrue(invite.multiUse)
+        assertEquals("POST /admin/invites {\"ttl_hours\":1,\"multi_use\":true}", bodies.last())
+        assertEquals("https://duri0.duckdns.org/invite/K7x9Q2abcd", AdminInvite.link("duri0.duckdns.org", invite.code))
+
+        reply = """[{"_id":"B","expires_at":"2026-10-19T12:00:00Z","multi_use":false,"uses":0,"created_by":"01A"},
+            {"_id":"A","expires_at":"2026-10-19T11:30:00Z","multi_use":true,"uses":3,"created_by":"01A"}]"""
+        val invites = fetchAdminInvites(client)
+        assertEquals(listOf("B", "A"), invites.map { it.code })
+        assertEquals(3L, invites[1].uses)
+
+        status = HttpStatusCode.NoContent
+        reply = ""
+        revokeAdminInvite("A", client)
+        assertEquals("DELETE /admin/invites/A", log.last())
+
+        status = HttpStatusCode.NotFound
+        reply = """{"type":"NotFound","location":"x"}"""
+        assertEquals(404, assertFailsWith<AdminRequestException> { revokeAdminInvite("A", client) }.status)
+
+        status = HttpStatusCode.BadRequest
+        reply = """{"type":"InvalidOperation","location":"x"}"""
+        assertEquals("InvalidOperation", assertFailsWith<AdminRequestException> { createAdminInvite(2, false, client) }.type)
+
+        status = HttpStatusCode.Forbidden
+        reply = """{"type":"AdminElevationRequired","location":"x"}"""
+        assertTrue(assertFailsWith<AdminRequestException> { fetchAdminInvites(client) }.needsElevation)
     }
 
     @Test

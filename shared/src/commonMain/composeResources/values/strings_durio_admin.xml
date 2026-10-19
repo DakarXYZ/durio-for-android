@@ -26,4 +26,20 @@
     <string name="durio_admin_mode_needed">Admin mode is off: turn it on with your authenticator code.</string>
     <string name="durio_admin_totp_required">Admin mode needs an authenticator app. Turn it on in Settings → Account → Two-factor authentication first.</string>
     <string name="durio_admin_invalid_code">The code was wrong or expired. Turn admin mode on again with a new code.</string>
+    <string name="durio_admin_invites">Invites</string>
+    <string name="durio_admin_invites_text">Invite links let people sign up on this server. Send a link only to the person it is for.</string>
+    <string name="durio_admin_invites_none">No active invites.</string>
+    <string name="durio_admin_invite_hours">%1$d h</string>
+    <string name="durio_admin_invite_multi">Several people can use it</string>
+    <string name="durio_admin_invite_create">Create and copy link</string>
+    <string name="durio_admin_invite_copied">Invite link copied</string>
+    <string name="durio_admin_invite_copy">Copy</string>
+    <string name="durio_admin_invite_share">Share</string>
+    <string name="durio_admin_invite_revoke">Revoke</string>
+    <string name="durio_admin_invite_revoke_title">Revoke this invite?</string>
+    <string name="durio_admin_invite_revoke_text">The link stops working at once. Accounts already created with it stay.</string>
+    <string name="durio_admin_invite_revoked">Invite revoked</string>
+    <string name="durio_admin_invite_expires">Valid until %1$s</string>
+    <string name="durio_admin_invite_single">For one person</string>
+    <string name="durio_admin_invite_multi_uses">For several people · used: %1$d</string>
 </resources>

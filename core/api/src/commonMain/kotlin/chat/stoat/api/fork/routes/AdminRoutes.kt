@@ -7,6 +7,9 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.encodeURLParameter
@@ -57,6 +60,34 @@ data class AdminStatus(
 @Serializable
 private class AdminElevation(@SerialName("expires_at") val expiresAt: String)
 
+/** A sign-up invite made by an admin of the server (`/admin/invites`). */
+@Serializable
+data class AdminInvite(
+    @SerialName("_id") val code: String,
+    @SerialName("expires_at") val expiresAt: String,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("multi_use") val multiUse: Boolean = false,
+    val uses: Long = 0,
+    @SerialName("created_by") val createdBy: String? = null,
+) {
+    val expiresAtMs: Long?
+        get() = epochMs(expiresAt)
+
+    companion object {
+        /** Lifetimes the server accepts, in hours; anything else is 400 `InvalidOperation`. */
+        val LIFETIMES_HOURS = listOf(1, 4, 12, 24)
+
+        /** The link people open and paste into sign-up: `https://<host>/invite/<code>`. */
+        fun link(host: String, code: String) = "https://$host/invite/$code"
+    }
+}
+
+@Serializable
+private class CreateAdminInvite(
+    @SerialName("ttl_hours") val ttlHours: Int,
+    @SerialName("multi_use") val multiUse: Boolean,
+)
+
 /** A user as `GET /admin/users` finds them. */
 @Serializable
 data class AdminUser(
@@ -93,6 +124,25 @@ suspend fun elevateAdmin(mfaTicket: String, client: ApiClient = ApiClient.Active
     }
     val expires = StoatJson.decodeFromString(AdminElevation.serializer(), checked(response)).expiresAt
     return epochMs(expires) ?: throw AdminRequestException(response.status.value, null)
+}
+
+/** `POST /admin/invites`: a new invite for [ttlHours] (one of [AdminInvite.LIFETIMES_HOURS]). */
+suspend fun createAdminInvite(ttlHours: Int, multiUse: Boolean, client: ApiClient = ApiClient.Active): AdminInvite {
+    val response = client.http.post("/admin/invites".api(client)) {
+        setBody(TextContent(StoatJson.encodeToString(CreateAdminInvite.serializer(), CreateAdminInvite(ttlHours, multiUse)), ContentType.Application.Json))
+    }
+    return StoatJson.decodeFromString(AdminInvite.serializer(), checked(response))
+}
+
+/** `GET /admin/invites`: active invites made in the app, newest first. */
+suspend fun fetchAdminInvites(client: ApiClient = ApiClient.Active): List<AdminInvite> {
+    val response = client.http.get("/admin/invites".api(client))
+    return StoatJson.decodeFromString(ListSerializer(AdminInvite.serializer()), checked(response))
+}
+
+/** `DELETE /admin/invites/{code}`: the invite stops working; 404 when gone already. */
+suspend fun revokeAdminInvite(code: String, client: ApiClient = ApiClient.Active) {
+    checked(client.http.delete("/admin/invites/${code.encodeURLPathPart()}".api(client)))
 }
 
 /**
