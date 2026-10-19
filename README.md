@@ -1,52 +1,148 @@
-<div align="center">
-    <h1>Stoat for Android</h1>
-    <p>Official <a href="https://stoat.chat">Stoat</a> Android app.</p>
-    <br/><br/>
-    <div>
-        <a href="https://play.google.com/store/apps/details?id=chat.revolt"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" width="200"></a>
-        <br/>
-    </div>
-    <small>Google Play is a trademark of Google LLC.</small>
-    <br/><br/><br/>
-</div>
+# dur.io для Android
 
-## Description
+**English summary.** Android client of the **dur.io** messenger: accounts on several servers at once, end-to-end
+encryption (beta) for DMs and groups with emoji verification and key backup, admin tools for ending sessions, and
+an in-app update check. Install the APK from [GitHub Releases](https://github.com/DakarXYZ/durio-for-android/releases)
+and add a server by its address. Licensed under AGPL-3.0.
 
-The codebase includes the app itself, as well as an internal library for interacting with the Stoat
-API. The app is written in Kotlin, and wholly
-uses [Jetpack Compose](https://developer.android.com/jetpack/compose).
+Android-клиент мессенджера **dur.io** (Kotlin, Jetpack Compose). Автор и владелец форка — DakarX
+([GitHub DakarXYZ](https://github.com/DakarXYZ)).
 
-## Stack
+Основано на [stoatchat/for-android](https://github.com/stoatchat/for-android). dur.io — независимый форк и не
+связан с проектом Stoat; название и логотип Stoat — товарные знаки их владельцев.
 
-- [Kotlin](https://kotlinlang.org/)
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-    - For some Material components, the View-based
-      [Material Components Android](https://github.com/material-components/material-components-android)
-      (MDC-Android) library is used.
-- [Ktor](https://ktor.io/)
-- [Dagger](https://dagger.dev/) with [Hilt](https://dagger.dev/hilt/)
+## Чем отличается от оригинала
 
-## Resources
+- **Своё приложение**: `io.github.dakarxyz.durio`, своя подпись и свой Firebase-проект, без Sentry; ставится рядом
+  с оригиналом. APK — в GitHub Releases, проверка обновлений встроена.
+- **Свой сервер вместо зашитого**: адрес сервера вводится при входе, сервера по умолчанию нет; приложение находит
+  API по адресу (`/.well-known/stoat`).
+- **Несколько аккаунтов на разных серверах**: быстрое переключение, данные, токены, кэш и ключи шифрования —
+  отдельно для каждой пары «сервер + пользователь»; уведомления приходят в свой аккаунт.
+- **Сквозное шифрование (бета)** личных сообщений и групп: сообщения, правки, вложения с миниатюрами, ответы из
+  уведомлений; сверка устройств по эмодзи, бэкап ключей с ключом восстановления, файлы ключей, отчёт диагностики.
+- **Администрирование**: администратор сервера завершает сеансы пользователя (потерян телефон).
+- Лимит вложений берёт с сервера (на наших серверах — 100 МБ).
+- Без обращений к сервисам оригинала для аккаунтов на наших серверах.
 
-### Stoat for Android
+## Установка
 
-- [Roadmap](https://op.revolt.wtf/projects/revolt-for-android/work_packages)
-- [Stoat for Android Technical Documentation](https://revoltchat.github.io/android/)
-- [Android-specific Contribution Guide](https://revoltchat.github.io/android/contributing/guidelines/)
-  &mdash;**read carefully before contributing!**
+1. Откройте [Releases](https://github.com/DakarXYZ/durio-for-android/releases/latest) — первый релиз появится
+   после запуска нашего сервера.
+2. Выберите APK под процессор телефона:
 
-### Stoat
+   | Файл | Для чего |
+   | --- | --- |
+   | `durio-<версия>-arm64-v8a.apk` | почти все телефоны последних лет — **выбирайте его** |
+   | `durio-<версия>-armeabi-v7a.apk` | старые 32-битные телефоны |
+   | `durio-<версия>-x86_64.apk` | эмуляторы, некоторые планшеты и Chromebook |
+   | `durio-<версия>-universal.apk` | если не уверены: работает везде, но больше по размеру |
 
-- [Stoat Project Board](https://github.com/revoltchat/revolt/discussions) (Submit feature requests
-  here)
-- [Stoat Development Server](https://app.revolt.chat/invite/API)
-- [Stoat Server](https://app.revolt.chat/invite/Testers)
-- [General Stoat Contribution Guide](https://developers.revolt.chat/contrib.html)
+3. Проверьте контрольную сумму: строка для вашего файла в `SHA256SUMS` того же релиза должна совпасть с
 
-## Quick Start
+   ```powershell
+   Get-FileHash .\durio-<версия>-arm64-v8a.apk -Algorithm SHA256     # Windows
+   ```
+   ```bash
+   sha256sum -c --ignore-missing SHA256SUMS                          # Linux / macOS (shasum -a 256)
+   ```
 
-Open the project in Android Studio. You can then run the app on an emulator or a physical device by
-running the `app` module.
+4. Установите: Android попросит разрешить установку из этого источника (браузера или файлового менеджера).
+   Нужен Android 8.0 или новее.
+5. Обновления: «О приложении» → «Проверить обновления». Приложение скачивает APK для вашего процессора из
+   релизов на GitHub и проверяет его контрольную сумму; Android попросит подтвердить установку.
 
-In-depth setup instructions can be found
-at [Setting up your Development Environment](https://revoltchat.github.io/android/contributing/setup/)
+## Сервер и аккаунты
+
+- **Добавить сервер**: на экране входа в поле «Сервер» введите адрес, например `name.duckdns.org`, и нажмите
+  «Проверить». Приложение покажет версию сервера и есть ли на нём сквозное шифрование. Адреса по умолчанию нет.
+- **Регистрация** на наших серверах — по приглашению. В приложении поля для кода приглашения пока нет: учётную
+  запись создаёт администратор сервера, или зарегистрируйтесь в Windows-клиенте и войдите здесь.
+- **Несколько аккаунтов**: «Аккаунты» → «Добавить аккаунт» — на том же или другом сервере. Активен один аккаунт,
+  переключение — в пару касаний (текущий звонок при этом завершится). Данные разных аккаунтов не смешиваются.
+- **Уведомления** приходят только с наших серверов: push работает через ключ нашего Firebase-проекта, который
+  есть только на них. Другие серверы (в том числе на базе Stoat) разрешены, но без фоновых уведомлений —
+  приложение предупредит об этом при вводе адреса; новые сообщения появятся, когда вы его откроете.
+- Смена адреса сервера администратором = аккаунт нужно добавить заново.
+
+## Сквозное шифрование (бета)
+
+Шифрование работает в личных сообщениях и группах, если его включил сервер. Внешнего аудита не было — отсюда
+пометка «бета». Памятка сервера: `https://<адрес сервера>/e2ee.html`.
+
+- **Включение в чате**: в сведениях о чате — «Включить сквозное шифрование». Выключить нельзя. В зашифрованном
+  чате нет поиска, ботов и вебхуков; звонки сквозным шифрованием не защищены. Сервер видит, кто с кем и когда
+  переписывается, но не текст и не файлы.
+- **Устройство = вход в аккаунт.** Каждый вход (и переустановка приложения) — новое устройство. Список своих
+  устройств: «Настройки» → «Устройства и шифрование (бета)».
+- **Сверка по эмодзи**: «Сверить» у своего другого устройства или в «Устройствах шифрования» в профиле собеседника
+  — оба экрана показывают одинаковые эмодзи, если никто не подменил ключ. Только сверенное своё устройство может
+  передать новому ключи прежних сообщений. Незнакомое устройство можно «Заблокировать» — оно не получит ключи
+  новых сообщений.
+- **Бэкап ключей**: «Восстановление и бэкап ключей» → «Новый ключ восстановления». Ключ показывается один раз —
+  запишите его или сохраните в файл. Сервер хранит бэкап только в зашифрованном виде и восстановить ключ не может.
+  На новом телефоне — «Восстановить историю» и ввести ключ.
+- **Файлы ключей**: экспорт ключей чатов в файл под парольной фразой и импорт (подходит и файл из других
+  Matrix-приложений) — на случай переустановки без бэкапа.
+- **Потеряли телефон**: на другом своём устройстве в «Устройствах и шифровании» нажмите «Выйти» у потерянного
+  (или «Заблокировать»). Другого устройства нет — попросите администратора сервера завершить ваши сеансы: он
+  делает это в «Настройки» → «Администрирование». Затем войдите на новом телефоне и восстановите историю ключом
+  восстановления. Без ключа восстановления, файла ключей или другого сверенного устройства прежние зашифрованные
+  сообщения прочитать нельзя — это цена шифрования.
+- **«Ожидание ключа…»** — ключ к сообщению ещё не пришёл; обычно проходит сам. Сообщение «Зашифровано более новой
+  версией приложения» — обновите приложение.
+- Большие файлы в зашифрованных чатах шифруются в памяти телефона, поэтому их предел может быть ниже серверного —
+  приложение скажет об этом при отправке.
+
+## Если что-то не работает
+
+Опишите проблему в [issues](https://github.com/DakarXYZ/durio-for-android/issues): версия приложения, модель
+телефона и Android, что делали и что увидели. Для проблем с шифрованием приложите отчёт: «Устройства и
+шифрование» → «Отправить отчёт диагностики» — в нём нет сообщений, ключей, адреса сервера и чужих ID, и вы видите
+его целиком до отправки. Не публикуйте ключ восстановления и файлы ключей.
+
+## Разработка
+
+Kotlin 2.3, Jetpack Compose, Ktor, SQLDelight, Koin; пакет кода `chat.stoat` (`namespace`), наш код — в
+`chat.stoat.fork.*`. Крипто-ядро E2EE — AAR из [durio-crypt](https://github.com/DakarXYZ/durio-crypt)
+(`io.github.dakarxyz.durio:stoat-crypto`, SHA-256 закреплён в `gradle/verification-metadata.xml`).
+
+Нужны JDK 21 и Android SDK 37 (Android Studio или командная строка). Перед сборкой:
+
+- `app/google-services.json` (release) и `app/src/debug/google-services.json` (debug) — файлы Firebase-проекта, в
+  git не попадают. Для сборки без push — заглушка: `scripts/ci-google-services.sh app/google-services.json`.
+- Release-подпись — `keystore.properties` по образцу `keystore.properties.example` (в git не попадает).
+- Сборочные настройки — `stoatbuild.properties` по образцу `stoatbuild.properties.example`
+  (`durio.default_server` — предзаполненный адрес сервера, по умолчанию пусто).
+- AAR ядра качается из релиза `durio-crypt`. До релиза или для своей сборки ядра —
+  `scripts/durio-crypto-local.sh ../stoat-crypto` (после `scripts/build-aar.sh all` в репозитории ядра).
+
+```bash
+./gradlew assembleDebug                      # debug APK
+./gradlew assembleRelease                    # APK по ABI + universal
+./gradlew test allTests                      # unit-тесты (test — :app, allTests — :core:api, :core:crypto, :core:model)
+./gradlew :app:connectedAndroidTest          # инструментальные, нужен эмулятор или телефон
+```
+
+Без SDK на хосте — то же в Docker-образе с JDK 21 и Android SDK (Git Bash, из корня репозитория):
+
+```bash
+MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd -W):/work" -v durio-gradle-cache:/root/.gradle \
+    -v durio-android-sdk:/opt/android-sdk -w /work <образ с JDK 21 и Android SDK> ./gradlew --no-daemon assembleDebug
+```
+
+Проверки, которые гоняет CI (`.github/workflows/durio-android.yml`): `scripts/check-upstream-hosts.sh` (нет зашитых
+адресов оригинала), `check-crypto-hygiene.sh` и `check-e2ee-entry-points.sh` (правила E2EE-кода),
+`check-apk.sh --release` (выравнивание 16 КБ, набор ABI, размер). Стиль — по `.editorconfig`.
+
+Выпуск: тег `v<versionName>` → `.github/workflows/durio-release.yml` собирает подписанные APK по ABI,
+`SHA256SUMS` и `update.json` (для проверки обновлений) и публикует релиз. Секреты Actions:
+`DURIO_KEYSTORE_BASE64`, `DURIO_KEYSTORE_PASSWORD`, `DURIO_KEY_ALIAS`, `DURIO_KEY_PASSWORD`,
+`DURIO_GOOGLE_SERVICES_JSON_BASE64`; переменные `DURIO_LINK_HOST`, `DURIO_DEFAULT_SERVER`.
+
+Сервер для разработки и боевой сервер — [durio-self-hosted](https://github.com/DakarXYZ/durio-self-hosted).
+
+## Лицензия
+
+[GNU Affero General Public License v3.0](LICENCE), как у оригинала; исходный код каждой сборки — по тегу её релиза.
+Часть шрифтов в `app/src/main/res/font` — по [OFL](OFL.txt). Copyright © DakarX для изменений dur.io; исходный код оригинала — его авторов.
