@@ -41,6 +41,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # the default list still has "tools", gone from cmdline-tools 16; the Gradle plugin
+          # installs the platform and build tools it needs
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
 
       - name: Signing key and Firebase config
         env:

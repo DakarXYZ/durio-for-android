@@ -70,6 +70,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # the default list still has "tools", gone from cmdline-tools 16; the Gradle plugin
+          # installs the platform and build tools it needs
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
 
       # The google-services plugin needs a config for the build; unit tests never talk to
       # Firebase, so a placeholder for our package names is enough. Real files never go to git.
