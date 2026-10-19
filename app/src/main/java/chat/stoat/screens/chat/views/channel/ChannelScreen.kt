@@ -147,6 +147,9 @@ import chat.stoat.fork.e2ee.ui.IncognitoKeyboard
 import chat.stoat.fork.e2ee.ui.EncryptedChannelBadge
 import chat.stoat.fork.e2ee.ui.EncryptionBanner
 import chat.stoat.fork.e2ee.ui.showCallNotEncryptedNotice
+import chat.stoat.fork.e2ee.OutgoingMessages
+import chat.stoat.fork.upload.AttachmentLimits
+import chat.stoat.fork.upload.rejectTooLargeAttachment
 import chat.stoat.api.fork.e2ee.E2eeChannels
 import chat.stoat.composables.LocalSnackbarHostState
 import chat.stoat.composables.chat.DateDivider
@@ -387,6 +390,7 @@ fun ChannelScreen(
     }
     // </editor-fold>
     // <editor-fold desc="Attachment handling">
+    LaunchedEffect(Unit) { AttachmentLimits.load() } // durio: the server's attachment limit
     val processFileUri: (Uri, String?) -> Unit = remember {
         { uri, pickerIdentifier ->
             DocumentFile.fromSingleUri(context, uri)?.let { file ->
@@ -396,6 +400,8 @@ fun ChannelScreen(
                     @Suppress("Recycle")
                     context.contentResolver.openInputStream(uri)?.copyTo(output)
                 }
+                // durio: over the server's limit (or, encrypted, the memory ceiling): not attached
+                if (rejectTooLargeAttachment(context, mFile, OutgoingMessages.isEncrypted(viewModel.channel?.id))) return@let
 
                 // If the file is already pending and was picked from the inbuilt picker, remove it.
                 // This is so you can "toggle" the file in the picker.

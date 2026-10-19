@@ -24,6 +24,7 @@ import chat.stoat.fork.e2ee.media.EncryptedMedia
 import chat.stoat.fork.account.Account
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.keystore.KeyWrapper
+import chat.stoat.fork.upload.AttachmentLimits
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -286,7 +287,8 @@ object E2eeManager : E2eeSocketListener {
         }
 
         val feature = try {
-            fetchServerRoot(http).features?.e2ee
+            // the attachment limit comes with the same answer
+            fetchServerRoot(http).also { AttachmentLimits.remember(account.endpoints.api, it) }.features?.e2ee
         } catch (e: Exception) {
             http.close()
             if (e is CancellationException) throw e

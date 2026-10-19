@@ -25,6 +25,19 @@ data class ServerRootInfo(
         val january: Service? = null,
         val livekit: Toggle? = null,
         val e2ee: E2ee? = null,
+        val limits: Limits? = null,
+    )
+
+    // durio: upload limits of `[features.limits]` (the fork's server allows 100 MB attachments)
+    @Serializable
+    data class Limits(
+        @SerialName("new_user") val newUser: UserLimits? = null,
+        val default: UserLimits? = null,
+    )
+
+    @Serializable
+    data class UserLimits(
+        @SerialName("file_upload_size_limits") val fileUploadSizeLimits: Map<String, Long>? = null,
     )
 
     @Serializable
@@ -60,6 +73,14 @@ data class ServerRootInfo(
 
     val e2eeEnabled: Boolean
         get() = features?.e2ee?.enabled == true
+
+    /**
+     * Largest attachment the server takes, in bytes (`file_upload_size_limits.attachments` of
+     * the default limits); null if it does not say. Accounts younger than the server's
+     * `new_user_hours` have the `new_user` limits, which the server checks itself.
+     */
+    val attachmentLimitBytes: Long?
+        get() = features?.limits?.default?.fileUploadSizeLimits?.get("attachments")?.takeIf { it > 0 }
 }
 
 /** `/.well-known/stoat` served by Caddy in self-hosted (SH-05). */

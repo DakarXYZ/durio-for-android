@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: лимиты размера вложений (лимит сервера, память для зашифрованных файлов) -->
+<resources>
+    <string name="durio_attachment_too_large">Файл слишком большой: сервер принимает файлы до %1$s.</string>
+    <string name="durio_attachment_too_large_encrypted">Файл слишком большой для зашифрованного чата на этом телефоне: до %1$s (он шифруется в памяти).</string>
+</resources>

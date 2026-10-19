@@ -10,6 +10,8 @@ import chat.stoat.api.fork.e2ee.E2eePayloadThumbnail
 import chat.stoat.api.fork.routes.uploadEncryptedAttachment
 import chat.stoat.api.routes.microservices.autumn.FileArgs
 import chat.stoat.fork.e2ee.E2eeUnavailableException
+import chat.stoat.fork.upload.AttachmentLimits
+import chat.stoat.fork.upload.AttachmentTooLargeException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -34,9 +36,14 @@ object OutgoingAttachments {
     const val THUMBNAIL_PX = 320
     private const val THUMBNAIL_QUALITY = 70
 
-    /** Encrypts and uploads [file]; [onProgress] gets bytes sent / total of the main blob. */
+    /**
+     * Encrypts and uploads [file]; [onProgress] gets bytes sent / total of the main blob.
+     * @throws AttachmentTooLargeException over [AttachmentLimits.maxBytes], before it is read
+     */
     suspend fun prepare(file: FileArgs, onProgress: (Long, Long) -> Unit = { _, _ -> }): E2eePayloadAttachment {
         val crypto = E2eeAttachments.crypto ?: throw E2eeUnavailableException()
+        val max = AttachmentLimits.maxBytes(encrypted = true)
+        if (file.file.length() > max) throw AttachmentTooLargeException(max)
         val (bytes, metadata, thumbnail) = withContext(Dispatchers.IO) {
             val source = withoutLocation(file)
             try {

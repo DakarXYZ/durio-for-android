@@ -33,14 +33,18 @@ object EncryptedShare {
     /** Decrypts the attachment into a shareable copy; null without its keys. */
     suspend fun prepare(context: Context, attachmentId: String): Pair<Uri, String>? {
         val keys = EncryptedMedia.keys(attachmentId) ?: return null
-        val plain = EncryptedMedia.bytes(attachmentId, keys.fileJson)
         val file = withContext(Dispatchers.IO) {
             val root = File(context.cacheDir, DIR)
             sweep(root, System.currentTimeMillis())
             val dir = File(root, UUID.randomUUID().toString()).apply { mkdirs() }
-            File(dir, safeName(keys.name)).apply { writeBytes(plain) }
+            File(dir, safeName(keys.name))
         }
-        plain.fill(0)
+        try {
+            withContext(Dispatchers.IO) { file.outputStream() }.use { EncryptedMedia.decryptTo(context, attachmentId, keys.fileJson, it) }
+        } catch (e: Exception) {
+            file.parentFile?.deleteRecursively()
+            throw e
+        }
         scheduleCleanup(context, file.parentFile!!.name)
         val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
         return uri to keys.contentType.ifBlank { "application/octet-stream" }

@@ -1,5 +1,7 @@
 package chat.stoat.activities
 
+import chat.stoat.fork.upload.AttachmentLimits
+import chat.stoat.fork.upload.rejectTooLargeAttachment
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -305,6 +307,7 @@ fun ShareTargetScreen(
     }
 
     LaunchedEffect(Unit) {
+        AttachmentLimits.load() // durio: the server's attachment limit
         media?.forEach { uri ->
             DocumentFile.fromSingleUri(context, uri)?.let { file ->
                 val mFile = File(context.cacheDir, file.name ?: "attachment")
@@ -313,6 +316,8 @@ fun ShareTargetScreen(
                     @Suppress("Recycle")
                     context.contentResolver.openInputStream(uri)?.copyTo(output)
                 }
+                // durio: the chat is not chosen yet: the plain limit here, encrypted at send
+                if (rejectTooLargeAttachment(context, mFile, encrypted = false)) return@let
 
                 viewModel.attachments.add(
                     FileArgs(

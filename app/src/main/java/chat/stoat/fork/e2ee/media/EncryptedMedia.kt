@@ -7,8 +7,13 @@ import android.graphics.Bitmap
 import android.os.Environment
 import android.util.LruCache
 import android.provider.MediaStore
+import androidx.annotation.OptIn
+import androidx.media3.common.C
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSpec
 import chat.stoat.api.fork.e2ee.E2eeAttachmentKeys
 import chat.stoat.api.fork.e2ee.E2eeAttachments
+import chat.stoat.api.fork.e2ee.E2eeFileKey
 import chat.stoat.api.fork.e2ee.E2eeState
 import chat.stoat.api.fork.routes.downloadEncryptedAttachment
 import chat.stoat.fork.e2ee.E2eeUnavailableException
@@ -17,6 +22,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.OutputStream
 
 /**
  * Reading encrypted attachments (plan AN-28). Keys come from [E2eeState.attachmentKeys] by
@@ -25,7 +31,8 @@ import java.io.File
  *
  * Images and thumbnails are decrypted in memory (the hash is checked over the whole blob
  * first). Video and audio are downloaded to `cacheDir/e2ee/<id>.bin` (ciphertext, not
- * secret), checked once per process, and played through [EncryptedFileDataSource]. Glide is
+ * secret), checked once per process, and played through [EncryptedFileDataSource]; "save" and
+ * "share" decrypt from that file too, a chunk at a time (attachments go up to 100 MB). Glide is
  * not used for these images: its disk cache would hold the plaintext.
  */
 object EncryptedMedia {
@@ -49,7 +56,7 @@ object EncryptedMedia {
         withContext(Dispatchers.IO) {
             if (!file.isFile) {
                 val partial = File(file.parentFile, "$attachmentId.part")
-                partial.writeBytes(downloadEncryptedAttachment(attachmentId))
+                downloadEncryptedAttachment(attachmentId, partial)
                 partial.renameTo(file)
             }
             try {
@@ -79,7 +86,7 @@ object EncryptedMedia {
      */
     suspend fun saveToDevice(context: Context, attachmentId: String): Uri? {
         val keys = keys(attachmentId) ?: return null
-        val plain = bytes(attachmentId, keys.fileJson)
+        val file = verifiedCiphertext(context, attachmentId, keys.fileJson)
         return withContext(Dispatchers.IO) {
             val type = keys.contentType
             val (collection, dir) = when {
@@ -98,9 +105,36 @@ object EncryptedMedia {
                     put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
             ) ?: return@withContext null
-            resolver.openOutputStream(uri)?.use { it.write(plain) }
+            resolver.openOutputStream(uri)?.use { decrypt(file, keys.fileJson, it) }
             resolver.update(uri, ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }, null, null)
             uri
+        }
+    }
+
+    /**
+     * Decrypts an attachment into [out] (its plaintext, for "share"), from its checked
+     * ciphertext on disk.
+     */
+    suspend fun decryptTo(context: Context, attachmentId: String, fileJson: String, out: OutputStream) {
+        val file = verifiedCiphertext(context, attachmentId, fileJson)
+        withContext(Dispatchers.IO) { decrypt(file, fileJson, out) }
+    }
+
+    /** AES-CTR over a **verified** ciphertext file, a chunk at a time. */
+    @OptIn(UnstableApi::class)
+    private fun decrypt(file: File, fileJson: String, out: OutputStream) {
+        val source = EncryptedFileDataSource(file, E2eeFileKey.parse(fileJson))
+        try {
+            source.open(DataSpec(Uri.fromFile(file)))
+            val buffer = ByteArray(CHUNK)
+            while (true) {
+                val n = source.read(buffer, 0, buffer.size)
+                if (n == C.RESULT_END_OF_INPUT) break
+                out.write(buffer, 0, n)
+            }
+            buffer.fill(0)
+        } finally {
+            source.close()
         }
     }
 

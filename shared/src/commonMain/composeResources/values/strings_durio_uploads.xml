@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: attachment size limits (the server's limit, memory for encrypted files) -->
+<resources>
+    <string name="durio_attachment_too_large">This file is too large: the server takes files up to %1$s.</string>
+    <string name="durio_attachment_too_large_encrypted">This file is too large for an encrypted chat on this phone: up to %1$s (it is encrypted in memory).</string>
+</resources>
