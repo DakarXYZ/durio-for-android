@@ -19,7 +19,7 @@
    <components>
       <component group="io.github.dakarxyz.durio" name="stoat-crypto" version="0.2.1">
          <artifact name="stoat-crypto-0.2.1.aar">
-            <sha256 value="e56f65447a231c97c32e21f0c7a065659ad49558d87516bb6399775d8e541c2f" origin="durio-crypt 2f0a8f4, build of v0.2.1 (build/dist/stoat-crypto-0.2.1.aar.sha256)"/>
+            <sha256 value="e56f65447a231c97c32e21f0c7a065659ad49558d87516bb6399775d8e541c2f" origin="durio-crypt bdf3145, build of v0.2.1 (build/dist/stoat-crypto-0.2.1.aar.sha256)"/>
          </artifact>
       </component>
    </components>
