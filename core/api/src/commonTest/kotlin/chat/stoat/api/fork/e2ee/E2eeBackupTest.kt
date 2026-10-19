@@ -148,4 +148,86 @@ class E2eeBackupTest {
         server.handler = { respond("", HttpStatusCode.BadGateway) }
         assertEquals(502, assertFailsWith<E2eeRequestException> { backup.exists() }.status)
     }
+
+    @Test
+    fun turningOffDeletesTheServersVersionWithMfaThenStopsHere() = runTest {
+        val (core, server, backup) = setup()
+        core.backupVersion = "v7"
+        server.handler = { req ->
+            when {
+                req.method.value == "GET" -> respond("""{"version":"v7"}""", HttpStatusCode.OK)
+                req.headers["x-mfa-ticket"] == "T1" -> respond("", HttpStatusCode.NoContent)
+                else -> respond("""{"type":"InvalidToken"}""", HttpStatusCode.Unauthorized)
+            }
+        }
+
+        // without a ticket nothing changes on this device, and no delete is sent (its 401
+        // would look like an expired session)
+        val e = assertFailsWith<E2eeException.ActionRequired> { backup.turnOff() }
+        assertEquals(E2eeAction.MfaRequired, e.action)
+        assertEquals("v7", core.backupVersion)
+        assertEquals(listOf("GET /e2ee/backup/version"), server.log)
+
+        // a stale ticket: the server's 401
+        val stale = assertFailsWith<E2eeException.ActionRequired> { backup.turnOff("old") }
+        assertEquals(E2eeAction.MfaRequired, stale.action)
+        assertEquals("v7", core.backupVersion)
+
+        backup.turnOff(mfaTicket = "T1")
+        assertEquals(null, core.backupVersion)
+        assertEquals("DELETE /e2ee/backup/version/v7 ticket=T1", server.log.last())
+    }
+
+    @Test
+    fun turningOffWithoutABackupOnTheServerOnlyStopsHere() = runTest {
+        val (core, server, backup) = setup()
+        core.backupVersion = "v7"
+        server.handler = { respond("", HttpStatusCode.NotFound) }
+        backup.turnOff()
+        assertEquals(null, core.backupVersion)
+        assertEquals(listOf("GET /e2ee/backup/version"), server.log)
+
+        // deleted by another device between the two calls: done as well
+        core.backupVersion = "v7"
+        server.handler = { req -> if (req.method.value == "GET") respond("""{"version":"v7"}""", HttpStatusCode.OK) else respond("", HttpStatusCode.NotFound) }
+        backup.turnOff("T1")
+        assertEquals(null, core.backupVersion)
+    }
+
+    @Test
+    fun aRefusedDeleteKeepsTheBackupOn() = runTest {
+        val (core, server, backup) = setup()
+        core.backupVersion = "v7"
+        server.handler = { req -> if (req.method.value == "GET") respond("""{"version":"v7"}""", HttpStatusCode.OK) else respond("", HttpStatusCode.InternalServerError) }
+        assertEquals(500, assertFailsWith<E2eeRequestException> { backup.turnOff("T1") }.status)
+        assertEquals("v7", core.backupVersion)
+    }
+
+    @Test
+    fun turnedOffElsewhereIsNotTakenForReplaced() = runTest {
+        val (core, server, backup) = setup()
+        assertEquals(E2eeBackupState.Off, backup.state())
+        assertTrue(server.log.isEmpty(), "no backup here: the server is not asked")
+
+        core.backupVersion = "v7"
+        server.handler = { respond("""{"version":"v7"}""", HttpStatusCode.OK) }
+        assertEquals(E2eeBackupState.On, backup.state())
+        server.handler = { respond("""{"version":"v8"}""", HttpStatusCode.OK) }
+        assertEquals(E2eeBackupState.Replaced, backup.state())
+        server.handler = { respond("", HttpStatusCode.NotFound) }
+        assertEquals(E2eeBackupState.TurnedOffElsewhere, backup.state())
+        // no answer: what this device knows
+        server.handler = { respond("", HttpStatusCode.BadGateway) }
+        assertEquals(E2eeBackupState.On, backup.state())
+    }
+
+    @Test
+    fun backupStateOfAnOutdatedDevice() {
+        fun status(version: String?, enabled: Boolean, outdated: Boolean) = E2eeBackupStatus(version, enabled, true, outdated, 1, 1)
+        val outdated = status("v1", enabled = false, outdated = true)
+        assertEquals(E2eeBackupState.TurnedOffElsewhere, E2eeBackupState.of(outdated, ServerVersion.Known(null)))
+        assertEquals(E2eeBackupState.Replaced, E2eeBackupState.of(outdated, ServerVersion.Known("v2")))
+        assertEquals(E2eeBackupState.Replaced, E2eeBackupState.of(outdated, ServerVersion.Unknown))
+        assertEquals(E2eeBackupState.Off, E2eeBackupState.of(status(null, enabled = false, outdated = false), ServerVersion.Known("v2")))
+    }
 }

@@ -95,6 +95,7 @@ fun EncryptionSheetItem(channelId: String, permissions: Long) {
     if (!E2eeChannels.isEncryptable(channel)) return
     val status by E2eeManager.status.collectAsState()
     var confirm by remember { mutableStateOf(false) }
+    var devices by remember { mutableStateOf(false) }
 
     if (E2eeChannels.isEncrypted(channel)) {
         InfoRow(
@@ -102,7 +103,10 @@ fun EncryptionSheetItem(channelId: String, permissions: Long) {
                 if (E2eeChannels.isDowngraded(channelId)) Res.string.durio_e2ee_downgraded else Res.string.durio_e2ee_enabled_info
             ),
             warning = E2eeChannels.isDowngraded(channelId),
+            // who can read it, device by device: verify or block
+            onClick = if (status == E2eeStatus.Ready) ({ devices = true }) else null,
         )
+        if (devices) ChannelDevicesDialog(channelId) { devices = false }
         return
     }
     if (status != E2eeStatus.Ready || !(permissions has PermissionBit.ManageChannel)) return

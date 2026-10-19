@@ -3,6 +3,7 @@ package chat.stoat.core.crypto
 import chat.stoat.api.fork.e2ee.DecryptionStatus
 import chat.stoat.api.fork.e2ee.E2eeAction
 import chat.stoat.api.fork.e2ee.E2eeBackup
+import chat.stoat.api.fork.e2ee.E2eeBackupState
 import chat.stoat.api.fork.e2ee.E2eeCore
 import chat.stoat.api.fork.e2ee.E2eeException
 import chat.stoat.api.fork.e2ee.E2eeRecoveryKeyCheck
@@ -154,6 +155,63 @@ class BackupRealCoreTest {
             a1.close()
             a2?.close()
             b.close()
+            E2eeState.clear()
+        }
+    }
+
+    @Test
+    fun turnedOffOnOneDeviceIsNotTakenForReplacedOnTheOther() = runBlocking {
+        E2eeState.clear()
+        val server = MiniE2eeServer()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val a1 = CryptoStores.openInMemory(userA, deviceA1)
+        val a2 = CryptoStores.openInMemory(userA, deviceA2)
+        try {
+            val clientA1 = server.client(userA, deviceA1)
+            val clientA2 = server.client(userA, deviceA2)
+            val syncA1 = E2eeSync(a1, clientA1, scope)
+            val syncA2 = E2eeSync(a2, clientA2, scope)
+            syncA1.start()
+            syncA2.start()
+            awaitUntil("keys uploaded") { server.hasKeysOf(deviceA1) && server.hasKeysOf(deviceA2) }
+
+            val backupA1 = E2eeBackup(a1, syncA1, clientA1)
+            val setup = backupA1.create()
+            val recoveryKey = assertNotNull(setup.recoveryKey)
+            backupA1.activate(setup)
+            val backupA2 = E2eeBackup(a2, syncA2, clientA2)
+            // the secret storage leaves A1 with its next pass
+            awaitUntil("A2 unlocks the backup", { syncA1.requestPass() }) {
+                try {
+                    backupA2.unlock(recoveryKey.encodeToByteArray())
+                    true
+                } catch (e: E2eeException.NoBackup) {
+                    false
+                }
+            }
+            assertEquals(E2eeBackupState.On, backupA2.state())
+
+            // turned off on A1: needs MFA, then the server's backup is gone and A1 stops
+            val mfa = assertFailsWith<E2eeException.ActionRequired> { backupA1.turnOff() }
+            assertEquals(E2eeAction.MfaRequired, mfa.action)
+            assertTrue(a1.backupStatus().enabled, "nothing changed without the ticket")
+            backupA1.turnOff(mfaTicket = "ticket")
+            assertFalse(backupA1.exists())
+            assertFalse(a1.backupStatus().enabled)
+            assertEquals(E2eeBackupState.Off, backupA1.state())
+
+            // A2 learns it at its next upload, and says "turned off", not "replaced"
+            val stopped = scope.async(start = CoroutineStart.UNDISPATCHED) {
+                syncA2.events.filterIsInstance<E2eeSyncEvent.ActionRequired>().first()
+            }
+            E2eeSender(a2, syncA2).encrypt(channel, listOf(userA), E2eeSender.message("after", ULID.makeNext(), ts = 3))
+            syncA2.requestPass()
+            assertEquals(E2eeAction.BackupVersionChanged, withTimeout(30_000) { stopped.await() }.action)
+            assertEquals(E2eeBackupState.TurnedOffElsewhere, backupA2.state())
+        } finally {
+            scope.cancel()
+            a1.close()
+            a2.close()
             E2eeState.clear()
         }
     }

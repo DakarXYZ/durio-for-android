@@ -4,6 +4,7 @@ import chat.stoat.api.StoatJson
 import chat.stoat.api.fork.http.ApiClient
 import chat.stoat.api.fork.routes.e2ee.E2eeResponse
 import chat.stoat.api.fork.routes.e2ee.E2eeRoutes
+import chat.stoat.api.fork.routes.e2ee.deleteBackupVersion
 import chat.stoat.api.fork.routes.e2ee.fetchBackupKeys
 import chat.stoat.api.fork.routes.e2ee.fetchBackupVersion
 import chat.stoat.api.fork.routes.e2ee.fetchE2eeSecret
@@ -49,6 +50,69 @@ class E2eeBackup(
             response.status == 404 -> false
             else -> throw E2eeRequestException(response.status)
         }
+    }
+
+    /**
+     * The version of the server's active backup; null when it has none (turned off, or never
+     * set up).
+     * @throws E2eeRequestException the server refused or did not answer
+     */
+    suspend fun serverVersion(): String? {
+        val response = request { fetchBackupVersion(client) }
+        return when {
+            response.isSuccess -> versionOf(response.body)
+            response.status == 404 -> null
+            else -> throw E2eeRequestException(response.status)
+        }
+    }
+
+    /**
+     * How the backup stands for this device: its own state checked against the server's, so a
+     * backup turned off elsewhere is not taken for a replaced one (both stop the uploads alike).
+     * Without an answer from the server, the device's own state.
+     */
+    suspend fun state(): E2eeBackupState {
+        val status = core.backupStatus()
+        if (!status.enabled && !status.outdated) return E2eeBackupState.Off
+        val server = try {
+            ServerVersion.Known(serverVersion())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ServerVersion.Unknown
+        }
+        return E2eeBackupState.of(status, server)
+    }
+
+    /**
+     * Turns the backup off for the account: the server deletes the backup and its keys, then
+     * this device stops uploading. The other devices stop at their next upload and see
+     * [E2eeBackupState.TurnedOffElsewhere]. The secret storage stays: it unlocks nothing
+     * without a backup, and a new recovery key replaces it.
+     *
+     * The server deletes only with [mfaTicket]. Without one the delete is not even sent (its
+     * 401 would end the account's session as an expired one): call without, get a ticket on
+     * [E2eeAction.MfaRequired] and call again. Without a backup on the server this device just
+     * stops, no ticket needed.
+     *
+     * @throws E2eeException.ActionRequired [E2eeAction.MfaRequired]: a backup is on the server
+     *   and there is no ticket (or a stale one); nothing changed on this device
+     * @throws E2eeRequestException the server refused or did not answer; nothing changed either
+     */
+    suspend fun turnOff(mfaTicket: String? = null) {
+        val version = serverVersion()
+        if (version != null) {
+            if (mfaTicket == null) throw E2eeException.ActionRequired(E2eeAction.MfaRequired)
+            val response = request { deleteBackupVersion(client, version, mfaTicket) }
+            when {
+                response.isSuccess -> Unit
+                response.status == 401 -> throw E2eeException.ActionRequired(E2eeAction.MfaRequired)
+                // deleted meanwhile, by another device
+                response.status == 404 -> Unit
+                else -> throw E2eeRequestException(response.status)
+            }
+        }
+        core.disableBackup()
     }
 
     /**
@@ -101,14 +165,22 @@ class E2eeBackup(
         }
     }
 
+    private suspend fun request(call: suspend () -> E2eeResponse): E2eeResponse = try {
+        call()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        throw E2eeRequestException(0)
+    }
+
+    private fun versionOf(body: String): String = try {
+        StoatJson.parseToJsonElement(body).jsonObject["version"]?.jsonPrimitive?.content
+    } catch (e: Exception) {
+        null
+    } ?: throw E2eeRequestException(200) // a malformed answer: as good as none
+
     private suspend fun get(call: suspend () -> E2eeResponse): String {
-        val response = try {
-            call()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            throw E2eeRequestException(0)
-        }
+        val response = request(call)
         return when {
             response.isSuccess -> response.body
             response.status == 404 -> throw E2eeException.NoBackup()

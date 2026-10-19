@@ -177,6 +177,12 @@ class MiniE2eeServer {
                     put("count", backup.rooms.values.sumOf { it.size })
                 }.toString()
             }
+            path.startsWith("/e2ee/backup/version/") && method == "DELETE" -> {
+                if (ticket == null) throw Status(401)
+                backups[me]?.takeIf { it.version == path.removePrefix("/e2ee/backup/version/") } ?: throw Status(404)
+                backups.remove(me)
+                ""
+            }
             path.startsWith("/e2ee/backup/keys?version=") -> {
                 val backup = backups[me]?.takeIf { it.version == path.substringAfter("version=") } ?: throw Status(404)
                 if (method == "PUT") {

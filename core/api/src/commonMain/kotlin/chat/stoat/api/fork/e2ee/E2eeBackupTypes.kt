@@ -58,3 +58,39 @@ enum class E2eeRecoveryKeyCheck {
     /** Not a recovery key: a passphrase. */
     NotAKey,
 }
+
+/** What the server answered for its active backup version. */
+sealed interface ServerVersion {
+    /** [version] null: the server has no backup. */
+    data class Known(val version: String?) : ServerVersion
+
+    /** No answer. */
+    data object Unknown : ServerVersion
+}
+
+/** The backup as the settings screen explains it. */
+enum class E2eeBackupState {
+    /** This device does not back up (set up or restore). */
+    Off,
+
+    /** Uploading to the server's active backup. */
+    On,
+
+    /** Another backup replaced this device's one: unlock it with the recovery key. */
+    Replaced,
+
+    /** The backup was deleted on another device: set up a new recovery key to back up again. */
+    TurnedOffElsewhere,
+    ;
+
+    companion object {
+        /** [status] of this device against [server]: what the user has to do, if anything. */
+        fun of(status: E2eeBackupStatus, server: ServerVersion): E2eeBackupState = when {
+            !status.enabled && !status.outdated -> Off
+            server !is ServerVersion.Known -> if (status.outdated) Replaced else On
+            server.version == null -> TurnedOffElsewhere
+            status.outdated || server.version != status.version -> Replaced
+            else -> On
+        }
+    }
+}

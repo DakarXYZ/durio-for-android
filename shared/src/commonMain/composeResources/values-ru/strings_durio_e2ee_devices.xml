@@ -39,4 +39,23 @@
     <string name="durio_e2ee_devices_reset_text">Это устройство выйдет из аккаунта. После нового входа оно станет новым устройством: восстановите историю ключом восстановления или сверьте его с другим устройством.</string>
     <string name="durio_e2ee_devices_sync_problem">Сервер отклонил часть данных шифрования этого устройства (ключи или сообщения сверки). Переписка продолжается; если у собеседников сообщения не расшифровываются, отправьте отчёт диагностики ниже.</string>
     <string name="durio_user_devices">Устройства шифрования</string>
+    <!-- блокировка устройства и выключение бэкапа -->
+    <string name="durio_e2ee_devices_block">Заблокировать</string>
+    <string name="durio_e2ee_devices_unblock">Разблокировать</string>
+    <string name="durio_e2ee_devices_block_title">Заблокировать устройство?</string>
+    <string name="durio_e2ee_devices_block_text">С этого момента устройство не получает ключи новых сообщений в зашифрованных чатах и не сможет прочитать то, что там пишут. Блокируйте устройство, которое вы не узнаёте или потеряли. Блокировка действует только на этом устройстве, её можно снять.</string>
+    <string name="durio_e2ee_devices_unblock_title">Разблокировать устройство?</string>
+    <string name="durio_e2ee_devices_unblock_text">Устройство снова будет получать ключи новых сообщений. Оно останется непроверенным: сверьте его по эмодзи, чтобы проверить.</string>
+    <string name="durio_e2ee_devices_trust_failed">Не удалось изменить устройство. Попробуйте ещё раз.</string>
+    <string name="durio_e2ee_chat_devices">Устройства в этом чате</string>
+    <string name="durio_e2ee_chat_devices_text">Все, кто может читать этот чат, по устройствам. Заблокируйте устройство, которому не доверяете: оно не получит ключи новых сообщений.</string>
+    <string name="durio_e2ee_chat_devices_none">Устройства пока неизвестны.</string>
+    <string name="durio_e2ee_chat_devices_you">Вы</string>
+    <string name="durio_e2ee_devices_backup_off">Выключить бэкап</string>
+    <string name="durio_e2ee_devices_backup_off_title">Выключить бэкап ключей?</string>
+    <string name="durio_e2ee_devices_backup_off_text">Бэкап ваших ключей шифрования будет удалён с сервера. Это устройство перестанет сохранять ключи в бэкап, остальные ваши устройства тоже. Понадобится пароль.</string>
+    <string name="durio_e2ee_devices_backup_off_warning">Без бэкапа новое устройство прочитает прежние зашифрованные сообщения, только если сверить его с другим устройством или загрузить файл ключей. Ключ восстановления перестанет работать.</string>
+    <string name="durio_e2ee_devices_backup_off_done">Бэкап выключен. Сервер больше не хранит ваши ключи. Новый ключ восстановления включит его снова.</string>
+    <string name="durio_e2ee_devices_backup_off_failed">Не удалось выключить бэкап. Проверьте соединение и попробуйте ещё раз.</string>
+    <string name="durio_e2ee_devices_backup_off_elsewhere">Бэкап ключей выключен на другом устройстве: это устройство больше не сохраняет ключи в бэкап. Создайте новый ключ восстановления, чтобы включить его снова.</string>
 </resources>

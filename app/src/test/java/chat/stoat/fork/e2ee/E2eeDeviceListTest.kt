@@ -66,4 +66,23 @@ class E2eeDeviceListTest {
         assertNull(DeviceSession("a", "n", JsonPrimitive("yesterday")).lastSeenMs)
         assertNull(DeviceSession("a", "n").lastSeenMs)
     }
+
+    @Test
+    fun blockAndUnblockByTrust() {
+        val rows = E2eeDeviceList.own(
+            currentSessionId = me,
+            sessions = listOf(DeviceSession(me, "This phone"), DeviceSession(old, "Pixel"), DeviceSession(web, "Firefox")),
+            devices = listOf(device(me), device(old, verified = true), E2eeDevice("01USER", revoked, "ed", false, blocked = true, deleted = false)),
+        ).associateBy { it.deviceId }
+        // never this device, nor a session without E2EE keys
+        assertNull(E2eeDeviceList.trustAction(rows.getValue(me)))
+        assertNull(E2eeDeviceList.trustAction(rows.getValue(web)))
+        // a verified device can be blocked too (a lost phone)
+        assertEquals(TrustAction.Block, E2eeDeviceList.trustAction(rows.getValue(old)))
+        // blocked, without a session any more: still unblockable
+        val blocked = E2eeDeviceList.of(listOf(E2eeDevice("01OTHER", revoked, "ed", false, blocked = true, deleted = false))).single()
+        assertEquals(DeviceTrust.Blocked, blocked.trust)
+        assertEquals(TrustAction.Unblock, E2eeDeviceList.trustAction(blocked))
+        assertEquals(TrustAction.Block, E2eeDeviceList.trustAction(E2eeDeviceList.of(listOf(device(old))).single()))
+    }
 }

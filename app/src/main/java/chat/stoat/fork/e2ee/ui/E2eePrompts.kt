@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -193,9 +194,15 @@ private fun UserDevices(userId: String) {
     val status by E2eeManager.status.collectAsState()
     if (status != E2eeStatus.Ready) return
     var rows by remember(userId) { mutableStateOf<List<DeviceRow>?>(null) }
+    var reload by remember(userId) { mutableIntStateOf(0) }
+    var trust by remember(userId) { mutableStateOf<DeviceTrustRequest?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    LaunchedEffect(userId) {
+    DeviceTrustDialog(trust) { changed ->
+        trust = null
+        if (changed) reload++
+    }
+    LaunchedEffect(userId, reload) {
         rows = try {
             E2eeManager.active?.core?.let { E2eeDeviceList.of(it.devices(userId), it.undeliveredDevices()) }
         } catch (e: Exception) {
@@ -223,6 +230,7 @@ private fun UserDevices(userId: String) {
                     }
                 } else null,
                 onLogout = null,
+                onTrust = E2eeDeviceList.trustAction(row)?.let { action -> { trust = DeviceTrustRequest(userId, row, action) } },
             )
         }
     }

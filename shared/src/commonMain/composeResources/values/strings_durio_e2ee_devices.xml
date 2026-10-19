@@ -39,4 +39,23 @@
     <string name="durio_e2ee_devices_reset_text">Logs this device out. After you log in again it is a new device: restore your history with the recovery key or verify it with another device.</string>
     <string name="durio_e2ee_devices_sync_problem">The server refused some encryption data of this device (keys or verification messages). Chatting goes on; if messages stay unreadable for others, send a diagnostic report below.</string>
     <string name="durio_user_devices">Encryption devices</string>
+    <!-- blocking a device and turning the backup off -->
+    <string name="durio_e2ee_devices_block">Block</string>
+    <string name="durio_e2ee_devices_unblock">Unblock</string>
+    <string name="durio_e2ee_devices_block_title">Block this device?</string>
+    <string name="durio_e2ee_devices_block_text">From now on this device gets no keys of new messages in encrypted chats: it cannot read what is sent there. Block a device you do not recognise or have lost. Blocking stays on this device only; you can unblock it later.</string>
+    <string name="durio_e2ee_devices_unblock_title">Unblock this device?</string>
+    <string name="durio_e2ee_devices_unblock_text">It gets the keys of new messages again. It stays not verified: compare it with emoji to verify it.</string>
+    <string name="durio_e2ee_devices_trust_failed">The device could not be changed. Try again.</string>
+    <string name="durio_e2ee_chat_devices">Devices in this chat</string>
+    <string name="durio_e2ee_chat_devices_text">Everyone who can read this chat, device by device. Block a device you do not trust: it gets no keys of new messages.</string>
+    <string name="durio_e2ee_chat_devices_none">No devices known yet.</string>
+    <string name="durio_e2ee_chat_devices_you">You</string>
+    <string name="durio_e2ee_devices_backup_off">Turn off backup</string>
+    <string name="durio_e2ee_devices_backup_off_title">Turn off key backup?</string>
+    <string name="durio_e2ee_devices_backup_off_text">Deletes the backup of your encryption keys from the server. This device stops backing up its keys, and so do your other devices. Needs your password.</string>
+    <string name="durio_e2ee_devices_backup_off_warning">Without a backup, a new device can read your earlier encrypted messages only if you verify it with another device or load a key file. Your recovery key stops working.</string>
+    <string name="durio_e2ee_devices_backup_off_done">Backup is off. The server no longer keeps your keys. A new recovery key turns it on again.</string>
+    <string name="durio_e2ee_devices_backup_off_failed">The backup could not be turned off. Check the connection and try again.</string>
+    <string name="durio_e2ee_devices_backup_off_elsewhere">Key backup was turned off on another device: this device no longer backs up its keys. Set up a new recovery key to turn it on again.</string>
 </resources>

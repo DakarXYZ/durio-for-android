@@ -76,6 +76,13 @@ suspend fun fetchE2eeSecret(client: ApiClient, type: String): E2eeResponse =
 suspend fun fetchBackupVersion(client: ApiClient): E2eeResponse =
     e2eeCall(client, HttpMethod.Get, E2eeRoutes.BACKUP_VERSION_PATH)
 
+/**
+ * `DELETE /e2ee/backup/version/<v>`: the backup and its keys are gone (turning the backup off).
+ * Needs [mfaTicket]; 404 when that version is not the active one any more.
+ */
+suspend fun deleteBackupVersion(client: ApiClient, version: String, mfaTicket: String?): E2eeResponse =
+    e2eeCall(client, HttpMethod.Delete, "${E2eeRoutes.BACKUP_VERSION_PATH}/${version.encodeURLPathPart()}", mfaTicket = mfaTicket)
+
 /** `GET /e2ee/backup/keys?version=<v>`: every key of the backup (encrypted to its public key). */
 suspend fun fetchBackupKeys(client: ApiClient, version: String): E2eeResponse =
     e2eeCall(client, HttpMethod.Get, "${E2eeRoutes.BACKUP_KEYS_PATH}?version=${version.encodeURLParameter()}")

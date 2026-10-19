@@ -52,6 +52,22 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import chat.stoat.R
 import chat.stoat.api.fork.e2ee.E2eeBackupStatus
+import androidx.compose.material3.CircularProgressIndicator
+import chat.stoat.api.fork.e2ee.E2eeAction
+import chat.stoat.api.fork.e2ee.E2eeBackup
+import chat.stoat.api.fork.e2ee.E2eeBackupState
+import chat.stoat.api.fork.e2ee.E2eeException
+import chat.stoat.composables.mfa.MfaPromptSheet
+import chat.stoat.composables.mfa.MfaPromptState
+import chat.stoat.fork.e2ee.E2eeRecovery
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_done
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_elsewhere
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_failed
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_text
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_title
+import chat.stoat.shared.resources.durio_e2ee_devices_backup_off_warning
+import chat.stoat.shared.resources.durio_verify_close
 import chat.stoat.api.fork.e2ee.E2eeIdentityKeys
 import chat.stoat.api.fork.routes.fetchDeviceSessions
 import chat.stoat.api.routes.auth.logoutSessionById
@@ -72,6 +88,8 @@ import chat.stoat.shared.resources.durio_e2ee_devices_backup_keys
 import chat.stoat.shared.resources.durio_e2ee_devices_backup_none
 import chat.stoat.shared.resources.durio_e2ee_devices_backup_on
 import chat.stoat.shared.resources.durio_e2ee_devices_backup_outdated
+import chat.stoat.shared.resources.durio_e2ee_devices_block
+import chat.stoat.shared.resources.durio_e2ee_devices_unblock
 import chat.stoat.shared.resources.durio_e2ee_devices_created
 import chat.stoat.shared.resources.durio_e2ee_devices_fingerprint
 import chat.stoat.shared.resources.durio_e2ee_devices_last_seen
@@ -120,11 +138,20 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 class E2eeSettingsViewModel : ViewModel() {
+    enum class BackupOff { Confirm, Working, Done }
+
     var loading by mutableStateOf(true)
     var failed by mutableStateOf(false)
     var identity by mutableStateOf<E2eeIdentityKeys?>(null)
     var devices by mutableStateOf<List<DeviceRow>>(emptyList())
     var backup by mutableStateOf<E2eeBackupStatus?>(null)
+
+    /** The backup checked against the server: replaced vs turned off elsewhere. */
+    var backupState by mutableStateOf<E2eeBackupState?>(null)
+
+    val mfa = MfaPromptState()
+    var backupOff by mutableStateOf<BackupOff?>(null)
+    var backupOffFailed by mutableStateOf(false)
 
     fun load() {
         viewModelScope.launch {
@@ -136,10 +163,12 @@ class E2eeSettingsViewModel : ViewModel() {
                 if (active == null) {
                     identity = null
                     backup = null
+                    backupState = null
                     devices = emptyList()
                 } else {
                     identity = active.core.identityKeys()
                     backup = active.core.backupStatus()
+                    backupState = E2eeBackup(active.core, active.sync, active.http).state()
                     devices = E2eeDeviceList.own(
                         currentSessionId = active.account.sessionId,
                         sessions = sessions,
@@ -154,6 +183,38 @@ class E2eeSettingsViewModel : ViewModel() {
                 failed = true
             }
             loading = false
+        }
+    }
+
+    /**
+     * Turns the key backup off for the account: the server's backup is deleted (MFA ticket,
+     * asked for only when there is one), then this device stops.
+     */
+    fun turnOffBackup() {
+        val backup = E2eeRecovery.backup() ?: return
+        backupOff = BackupOff.Working
+        backupOffFailed = false
+        viewModelScope.launch {
+            try {
+                try {
+                    backup.turnOff()
+                } catch (e: E2eeException.ActionRequired) {
+                    if (e.action != E2eeAction.MfaRequired) throw e
+                    val ticket = mfa.request()?.token ?: run {
+                        backupOff = BackupOff.Confirm
+                        return@launch
+                    }
+                    backup.turnOff(ticket)
+                }
+                backupOff = BackupOff.Done
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN) { "Backup not turned off: ${e::class.simpleName}" }
+                backupOffFailed = true
+                backupOff = BackupOff.Confirm
+            }
+            load()
         }
     }
 
@@ -187,8 +248,16 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
     LaunchedEffect(status) { viewModel.load() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var logout by remember { mutableStateOf<DeviceRow?>(null) }
+    var trust by remember { mutableStateOf<DeviceTrustRequest?>(null) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    DeviceTrustDialog(trust) { changed ->
+        trust = null
+        if (changed) viewModel.load()
+    }
+    MfaPromptSheet(viewModel.mfa)
+    viewModel.backupOff?.let { BackupOffDialog(viewModel, it) }
 
     logout?.let { row ->
         AlertDialog(
@@ -246,9 +315,14 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
                 item(key = "backup") {
                     BackupCard(
                         status = viewModel.backup,
+                        state = viewModel.backupState,
                         onSetUp = { navController.navigate(E2eeRoutes.SETUP) },
                         onRestore = { navController.navigate(E2eeRoutes.RESTORE) },
                         onRotate = { navController.navigate(E2eeRoutes.ROTATE) },
+                        onTurnOff = {
+                            viewModel.backupOffFailed = false
+                            viewModel.backupOff = E2eeSettingsViewModel.BackupOff.Confirm
+                        },
                     )
                 }
                 // CR-21: keys to and from a passphrase-protected file
@@ -283,6 +357,11 @@ fun E2eeSettingsScreen(navController: NavController, viewModel: E2eeSettingsView
                         }
                     } else null,
                     onLogout = if (row.trust != DeviceTrust.Removed) ({ logout = row }) else null,
+                    onTrust = if (status == E2eeStatus.Ready) {
+                        E2eeDeviceList.trustAction(row)?.let { action ->
+                            { E2eeManager.active?.account?.userId?.let { trust = DeviceTrustRequest(it, row, action) } }
+                        }
+                    } else null,
                 )
             }
             item(key = "reinstallHint") { Hint(stringResource(Res.string.durio_e2ee_devices_reinstall_hint), warning = false) }
@@ -362,11 +441,22 @@ private fun ThisDevice(name: String?, identity: E2eeIdentityKeys?, onCopy: () ->
 }
 
 @Composable
-private fun BackupCard(status: E2eeBackupStatus?, onSetUp: () -> Unit, onRestore: () -> Unit, onRotate: () -> Unit) {
+private fun BackupCard(
+    status: E2eeBackupStatus?,
+    state: E2eeBackupState?,
+    onSetUp: () -> Unit,
+    onRestore: () -> Unit,
+    onRotate: () -> Unit,
+    onTurnOff: () -> Unit,
+) {
+    // deleted on another device: nothing to restore, only a new recovery key helps
+    val offElsewhere = state == E2eeBackupState.TurnedOffElsewhere
+    val replaced = !offElsewhere && (status?.outdated == true || state == E2eeBackupState.Replaced)
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when {
             status == null -> Unit
-            status.outdated -> Hint(stringResource(Res.string.durio_e2ee_devices_backup_outdated), warning = true, padded = false)
+            offElsewhere -> Hint(stringResource(Res.string.durio_e2ee_devices_backup_off_elsewhere), warning = true, padded = false)
+            replaced -> Hint(stringResource(Res.string.durio_e2ee_devices_backup_outdated), warning = true, padded = false)
             status.enabled -> {
                 Text(stringResource(Res.string.durio_e2ee_devices_backup_on))
                 Text(
@@ -377,20 +467,67 @@ private fun BackupCard(status: E2eeBackupStatus?, onSetUp: () -> Unit, onRestore
             else -> Text(stringResource(Res.string.durio_e2ee_devices_backup_none))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (status?.enabled != true || status.outdated) FilledTonalButton(onClick = onRestore) { Text(stringResource(Res.string.durio_e2ee_devices_restore)) }
+            if (!offElsewhere && (status?.enabled != true || replaced)) FilledTonalButton(onClick = onRestore) { Text(stringResource(Res.string.durio_e2ee_devices_restore)) }
             FilledTonalButton(onClick = onSetUp) { Text(stringResource(Res.string.durio_e2ee_devices_set_up)) }
         }
-        if (status?.recoverySetUp == true && !status.outdated) {
+        val on = status?.enabled == true && !replaced && !offElsewhere
+        if (on && status?.recoverySetUp == true) {
             TextButton(onClick = onRotate) { Text(stringResource(Res.string.durio_e2ee_devices_rotate)) }
         }
+        if (on) TextButton(onClick = onTurnOff) { Text(stringResource(Res.string.durio_e2ee_devices_backup_off)) }
     }
 }
 
+/** "Turn off key backup": what it means, then working (MFA in between), then done. */
 @Composable
-fun DeviceItem(row: DeviceRow, onVerify: (() -> Unit)?, onLogout: (() -> Unit)?) {
+private fun BackupOffDialog(viewModel: E2eeSettingsViewModel, step: E2eeSettingsViewModel.BackupOff) {
+    val close = { viewModel.backupOff = null }
+    AlertDialog(
+        onDismissRequest = { if (step != E2eeSettingsViewModel.BackupOff.Working) close() },
+        icon = { Icon(painterResource(R.drawable.ic_key_24dp), contentDescription = null) },
+        title = { BetaTitle(stringResource(Res.string.durio_e2ee_devices_backup_off_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                when (step) {
+                    E2eeSettingsViewModel.BackupOff.Confirm -> {
+                        Text(stringResource(Res.string.durio_e2ee_devices_backup_off_text))
+                        Hint(stringResource(Res.string.durio_e2ee_devices_backup_off_warning), warning = true, padded = false)
+                    }
+                    E2eeSettingsViewModel.BackupOff.Working -> CircularProgressIndicator()
+                    E2eeSettingsViewModel.BackupOff.Done -> Text(stringResource(Res.string.durio_e2ee_devices_backup_off_done))
+                }
+                if (viewModel.backupOffFailed) Hint(stringResource(Res.string.durio_e2ee_devices_backup_off_failed), warning = true, padded = false)
+            }
+        },
+        confirmButton = {
+            when (step) {
+                E2eeSettingsViewModel.BackupOff.Confirm -> Button(onClick = { viewModel.turnOffBackup() }) {
+                    Text(stringResource(Res.string.durio_e2ee_devices_backup_off))
+                }
+                E2eeSettingsViewModel.BackupOff.Working -> Unit
+                E2eeSettingsViewModel.BackupOff.Done -> Button(onClick = close) { Text(stringResource(Res.string.durio_verify_close)) }
+            }
+        },
+        dismissButton = {
+            if (step == E2eeSettingsViewModel.BackupOff.Confirm) {
+                TextButton(onClick = close) { Text(stringResource(Res.string.durio_e2ee_cancel)) }
+            }
+        },
+    )
+}
+
+@Composable
+fun DeviceItem(
+    row: DeviceRow,
+    onVerify: (() -> Unit)?,
+    onLogout: (() -> Unit)?,
+    // block or unblock, by the row's trust (E2eeDeviceList.trustAction)
+    onTrust: (() -> Unit)? = null,
+    padded: Boolean = true,
+) {
     Column(
         Modifier
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = if (padded) 16.dp else 0.dp, vertical = 4.dp)
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -415,9 +552,16 @@ fun DeviceItem(row: DeviceRow, onVerify: (() -> Unit)?, onLogout: (() -> Unit)?)
             Text(E2eeIdentityKeys.fingerprint(it), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
         }
         if (row.missesKeys) Text(stringResource(Res.string.durio_e2ee_devices_misses_keys), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        if (onVerify != null) {
+        if (onVerify != null || onTrust != null) {
             Spacer(Modifier.height(4.dp))
-            FilledTonalButton(onClick = onVerify) { Text(stringResource(Res.string.durio_e2ee_devices_verify)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (onVerify != null) FilledTonalButton(onClick = onVerify) { Text(stringResource(Res.string.durio_e2ee_devices_verify)) }
+                if (onTrust != null) {
+                    TextButton(onClick = onTrust) {
+                        Text(stringResource(if (row.trust == DeviceTrust.Blocked) Res.string.durio_e2ee_devices_unblock else Res.string.durio_e2ee_devices_block))
+                    }
+                }
+            }
         }
     }
 }

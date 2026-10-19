@@ -31,6 +31,9 @@ data class DeviceRow(
     val missesKeys: Boolean,
 )
 
+/** Blocking by hand (local trust): a blocked device gets no room keys from this one. */
+enum class TrustAction { Block, Unblock }
+
 object E2eeDeviceList {
     /**
      * Own devices: every session (newest activity first, this one on top) with its E2EE state,
@@ -76,6 +79,17 @@ object E2eeDeviceList {
     fun needsVerification(rows: List<DeviceRow>): Boolean {
         val others = rows.filter { !it.current && it.trust != DeviceTrust.NoEncryption && it.trust != DeviceTrust.Removed }
         return others.isNotEmpty() && others.none { it.trust == DeviceTrust.Verified }
+    }
+
+    /**
+     * What a row offers by hand: a device with E2EE keys can be blocked (verified ones too), a
+     * blocked one unblocked; never this device, nor one without keys or already removed.
+     */
+    fun trustAction(row: DeviceRow): TrustAction? = when {
+        row.current -> null
+        row.trust == DeviceTrust.Blocked -> TrustAction.Unblock
+        row.trust == DeviceTrust.Verified || row.trust == DeviceTrust.Unverified -> TrustAction.Block
+        else -> null
     }
 
     private fun trust(device: E2eeDevice?): DeviceTrust = when {
