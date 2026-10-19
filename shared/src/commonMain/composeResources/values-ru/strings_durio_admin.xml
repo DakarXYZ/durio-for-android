@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: администрирование сервера (только для его админов) -->
+<resources>
+    <string name="durio_admin_title">Администрирование</string>
+    <string name="durio_admin_hint">Найдите пользователя, чтобы завершить его сеансы, например после потери телефона. Сервер записывает каждое действие с вашим ID.</string>
+    <string name="durio_admin_search_label">ID пользователя или имя#1234</string>
+    <string name="durio_admin_search">Найти</string>
+    <string name="durio_admin_not_found">Пользователь не найден.</string>
+    <string name="durio_admin_bot">Это бот: у ботов нет сеансов.</string>
+    <string name="durio_admin_sessions">Сеансы</string>
+    <string name="durio_admin_sessions_none">Сеансов нет: пользователь вышел на всех устройствах.</string>
+    <string name="durio_admin_end">Завершить сеанс</string>
+    <string name="durio_admin_end_all">Завершить все сеансы</string>
+    <string name="durio_admin_end_title">Завершить этот сеанс?</string>
+    <string name="durio_admin_end_all_title">Завершить все сеансы %1$s?</string>
+    <string name="durio_admin_end_text">Устройство сразу выйдет из аккаунта. Его устройство шифрования тоже удаляется: оно больше не прочитает зашифрованные чаты, а сообщения, ключи которых были только у него, останутся нечитаемыми, если у пользователя нет бэкапа ключей или другого проверенного устройства.</string>
+    <string name="durio_admin_end_self">Сюда входит и это устройство: вы выйдете из аккаунта.</string>
+    <string name="durio_admin_ended">Сеанс завершён</string>
+    <string name="durio_admin_ended_all">Все сеансы завершены</string>
+    <string name="durio_admin_forbidden">Вы не являетесь администратором этого сервера.</string>
+    <string name="durio_admin_failed">Сервер не ответил. Попробуйте ещё раз.</string>
+</resources>

@@ -128,6 +128,7 @@ import chat.stoat.screens.settings.LanguagePickerSettingsScreen
 import chat.stoat.screens.settings.MfaSettingsScreen
 import chat.stoat.fork.e2ee.ui.E2eePrompts
 import chat.stoat.fork.e2ee.ui.e2eeScreens
+import chat.stoat.fork.admin.adminScreens
 import chat.stoat.screens.settings.NotificationsSettingsScreen
 import chat.stoat.screens.settings.ProfileSettingsScreen
 import chat.stoat.screens.settings.SessionSettingsScreen
@@ -785,6 +786,7 @@ fun AppEntrypoint(
                     composable("settings/profile") { ProfileSettingsScreen(navController) }
                     composable("settings/sessions") { SessionSettingsScreen(navController) }
                     e2eeScreens(navController) // durio: devices and encryption (plan AN-30..32, AN-42)
+                    adminScreens(navController) // durio: server administration (admins only)
                     composable("settings/appearance") { AppearanceSettingsScreen(navController) }
                     composable("settings/chat") { ChatSettingsScreen(navController) }
                     composable("settings/notifications") { NotificationsSettingsScreen(navController) }

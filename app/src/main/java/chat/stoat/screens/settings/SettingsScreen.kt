@@ -2,6 +2,7 @@ package chat.stoat.screens.settings
 
 import android.content.Intent
 import chat.stoat.fork.e2ee.ui.E2eeSettingsEntry
+import chat.stoat.fork.admin.AdminSettingsEntry
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -179,6 +180,7 @@ fun SettingsScreen(
                             .clickable { navController.navigate("settings/sessions") }
                     )
                     E2eeSettingsEntry(navController) // durio: devices and encryption (plan AN-30)
+                    AdminSettingsEntry(navController) // durio: server administration (admins only)
 
                     ListHeader {
                         Text(stringResource(Res.string.settings_category_general))

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: administration of the server (its admins only) -->
+<resources>
+    <string name="durio_admin_title">Administration</string>
+    <string name="durio_admin_hint">Find a user to end their sessions, for example after a lost phone. The server logs every action with your ID.</string>
+    <string name="durio_admin_search_label">User ID or username#1234</string>
+    <string name="durio_admin_search">Find</string>
+    <string name="durio_admin_not_found">No such user.</string>
+    <string name="durio_admin_bot">This is a bot: bots have no sessions.</string>
+    <string name="durio_admin_sessions">Sessions</string>
+    <string name="durio_admin_sessions_none">No sessions: the user is signed out everywhere.</string>
+    <string name="durio_admin_end">End session</string>
+    <string name="durio_admin_end_all">End all sessions</string>
+    <string name="durio_admin_end_title">End this session?</string>
+    <string name="durio_admin_end_all_title">End all sessions of %1$s?</string>
+    <string name="durio_admin_end_text">The device is signed out at once. Its encryption device is removed as well: it can no longer read encrypted chats, and messages only it had keys for stay unreadable unless the user has a key backup or another verified device.</string>
+    <string name="durio_admin_end_self">This includes this device: you will be signed out.</string>
+    <string name="durio_admin_ended">Session ended</string>
+    <string name="durio_admin_ended_all">All sessions ended</string>
+    <string name="durio_admin_forbidden">You are not an administrator of this server.</string>
+    <string name="durio_admin_failed">The server did not answer. Try again.</string>
+</resources>
