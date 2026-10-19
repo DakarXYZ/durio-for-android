@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: код приглашения при регистрации (серверы только по приглашениям) -->
+<resources>
+    <string name="durio_register_invite">Код приглашения</string>
+    <string name="durio_register_invite_hint_required">На этом сервере регистрация только по приглашениям: введите код, полученный от администратора.</string>
+    <string name="durio_register_invite_hint_optional">Только если сервер выдал вам код: без него на сервер с регистрацией по приглашениям не зарегистрироваться.</string>
+    <string name="durio_register_invite_missing">На этом сервере регистрация только по приглашениям: введите код приглашения.</string>
+    <string name="durio_register_invite_invalid">Код приглашения недействителен или уже использован.</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: invite code of a sign-up (invite-only servers) -->
+<resources>
+    <string name="durio_register_invite">Invite code</string>
+    <string name="durio_register_invite_hint_required">This server is invite-only: enter the code you got from its admin.</string>
+    <string name="durio_register_invite_hint_optional">Only if the server gave you one: invite-only servers need it to sign up.</string>
+    <string name="durio_register_invite_missing">This server is invite-only: enter an invite code.</string>
+    <string name="durio_register_invite_invalid">This invite code is not valid or was already used.</string>
+</resources>

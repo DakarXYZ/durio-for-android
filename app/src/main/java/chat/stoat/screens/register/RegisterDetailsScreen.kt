@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -36,10 +37,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import chat.stoat.api.routes.account.RegistrationBody
 import chat.stoat.api.routes.account.register
 import chat.stoat.api.routes.misc.getRootRoute
 import chat.stoat.composables.generic.FormTextField
+import chat.stoat.fork.register.InviteCodeField
+import chat.stoat.fork.register.RegistrationInvite
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.back
 import chat.stoat.shared.resources.register_data
@@ -62,6 +64,15 @@ class RegisterDetailsScreenViewModel : ViewModel() {
     var email by mutableStateOf("")
     var password by mutableStateOf("")
     var error by mutableStateOf<String?>(null)
+
+    // durio: the invite code of an invite-only server (null: not known whether it is one)
+    var invite by mutableStateOf("")
+    var inviteOnly by mutableStateOf<Boolean?>(null)
+
+    fun loadInviteOnly() {
+        viewModelScope.launch { inviteOnly = RegistrationInvite.inviteOnly() }
+    }
+
     private var captchaToken by mutableStateOf<String?>(null)
 
     fun initCaptcha(context: Context, onSuccess: () -> Unit) {
@@ -103,11 +114,7 @@ class RegisterDetailsScreenViewModel : ViewModel() {
     }
 
     fun doRegistration(navController: NavController) {
-        val body = RegistrationBody(
-            email = email,
-            password = password,
-            captcha = captchaToken ?: ""
-        )
+        val body = RegistrationInvite.body(email, password, captchaToken, invite) // durio: with the invite code
 
         viewModelScope.launch {
             val result = register(body)
@@ -115,7 +122,8 @@ class RegisterDetailsScreenViewModel : ViewModel() {
             if (result.ok) {
                 navController.navigate("register/verify/$email")
             } else {
-                error = result.unwrapError().type
+                val type = result.unwrapError().type
+                error = RegistrationInvite.errorText(type)?.let { getString(it) } ?: type
             }
         }
     }
@@ -127,6 +135,7 @@ fun RegisterDetailsScreen(
     viewModel: RegisterDetailsScreenViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    LaunchedEffect(Unit) { viewModel.loadInviteOnly() } // durio: invite-only servers
 
     Column(
         modifier = Modifier
@@ -215,6 +224,9 @@ fun RegisterDetailsScreen(
                     modifier = Modifier.padding(horizontal = 40.dp, vertical = 10.dp)
                 )
 
+                // durio: invite code (required on invite-only servers)
+                InviteCodeField(viewModel.inviteOnly, viewModel.invite) { viewModel.invite = it }
+
                 if (!viewModel.error.isNullOrBlank()) {
                     Text(
                         text = viewModel.error!!,
@@ -241,7 +253,8 @@ fun RegisterDetailsScreen(
                         viewModel.doRegistration(navController)
                     }
                 },
-                enabled = viewModel.email.isNotBlank() && viewModel.password.isNotBlank()
+                enabled = viewModel.email.isNotBlank() && viewModel.password.isNotBlank() &&
+                    RegistrationInvite.complete(viewModel.inviteOnly, viewModel.invite)
             ) {
                 Text(text = stringResource(Res.string.signup))
             }
