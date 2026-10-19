@@ -27,17 +27,22 @@ dependencyResolutionManagement {
         // durio: the E2EE core AAR (plan AN-20, Q36). A local build copied in by
         // scripts/durio-crypto-local.sh wins; otherwise the GitHub Release of durio-crypt.
         // Either way the AAR must match the SHA-256 in gradle/verification-metadata.xml.
-        maven {
-            name = "durio-crypto-local"
-            url = uri(".durio-crypto/maven")
-            content { includeModule("io.github.dakarxyz.durio", "stoat-crypto") }
-        }
-        ivy {
-            name = "durio-crypt"
-            url = uri("https://github.com/DakarXYZ/durio-crypt/releases/download")
-            patternLayout { artifact("v[revision]/[module]-[revision].[ext]") }
-            metadataSources { artifact() }
-            content { includeModule("io.github.dakarxyz.durio", "stoat-crypto") }
+        // Exclusive: the repositories above are never asked for it (jitpack answers 401
+        // for an unknown module, and Gradle fails on that instead of trying the next one).
+        exclusiveContent {
+            forRepositories(
+                maven {
+                    name = "durio-crypto-local"
+                    url = uri(".durio-crypto/maven")
+                },
+                ivy {
+                    name = "durio-crypt"
+                    url = uri("https://github.com/DakarXYZ/durio-crypt/releases/download")
+                    patternLayout { artifact("v[revision]/[module]-[revision].[ext]") }
+                    metadataSources { artifact() }
+                },
+            )
+            filter { includeModule("io.github.dakarxyz.durio", "stoat-crypto") }
         }
     }
 }
