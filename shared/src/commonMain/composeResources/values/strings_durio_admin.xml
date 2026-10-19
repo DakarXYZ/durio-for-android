@@ -19,4 +19,11 @@
     <string name="durio_admin_ended_all">All sessions ended</string>
     <string name="durio_admin_forbidden">You are not an administrator of this server.</string>
     <string name="durio_admin_failed">The server did not answer. Try again.</string>
+    <string name="durio_admin_mode_until">Admin mode until %1$s</string>
+    <string name="durio_admin_mode_off">Admin mode is off. Admin actions need two-factor authentication, valid for an hour on this device.</string>
+    <string name="durio_admin_mode_on">Turn on</string>
+    <string name="durio_admin_mode_end">End admin mode</string>
+    <string name="durio_admin_mode_needed">Admin mode is off: turn it on with your authenticator code.</string>
+    <string name="durio_admin_totp_required">Admin mode needs an authenticator app. Turn it on in Settings → Account → Two-factor authentication first.</string>
+    <string name="durio_admin_invalid_code">The code was wrong or expired. Turn admin mode on again with a new code.</string>
 </resources>

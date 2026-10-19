@@ -1,5 +1,6 @@
 package chat.stoat.fork.admin
 
+import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -55,11 +56,16 @@ import chat.stoat.R
 import chat.stoat.api.fork.routes.AdminRequestException
 import chat.stoat.api.fork.routes.AdminUser
 import chat.stoat.api.fork.routes.DeviceSession
+import chat.stoat.api.fork.routes.elevateAdmin
+import chat.stoat.api.fork.routes.endAdminElevation
 import chat.stoat.api.fork.routes.endAllUserSessions
 import chat.stoat.api.fork.routes.endUserSession
 import chat.stoat.api.fork.routes.fetchAdminStatus
 import chat.stoat.api.fork.routes.fetchUserSessions
 import chat.stoat.api.fork.routes.findAdminUser
+import chat.stoat.api.fork.routes.withAdminElevation
+import chat.stoat.composables.mfa.MfaPromptSheet
+import chat.stoat.composables.mfa.MfaPromptState
 import chat.stoat.api.internals.ULID
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.screens.settings.SettingsIcon
@@ -78,6 +84,13 @@ import chat.stoat.shared.resources.durio_admin_ended_all
 import chat.stoat.shared.resources.durio_admin_failed
 import chat.stoat.shared.resources.durio_admin_forbidden
 import chat.stoat.shared.resources.durio_admin_hint
+import chat.stoat.shared.resources.durio_admin_invalid_code
+import chat.stoat.shared.resources.durio_admin_mode_end
+import chat.stoat.shared.resources.durio_admin_mode_needed
+import chat.stoat.shared.resources.durio_admin_mode_off
+import chat.stoat.shared.resources.durio_admin_mode_on
+import chat.stoat.shared.resources.durio_admin_mode_until
+import chat.stoat.shared.resources.durio_admin_totp_required
 import chat.stoat.shared.resources.durio_admin_not_found
 import chat.stoat.shared.resources.durio_admin_search
 import chat.stoat.shared.resources.durio_admin_search_label
@@ -95,6 +108,7 @@ import logcat.logcat
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import java.util.Date
 
 const val ADMIN_ROUTE = "settings/admin"
 
@@ -114,7 +128,7 @@ object AdminAccess {
     suspend fun check(): Boolean {
         val key = AccountManager.active?.key ?: return false
         val admin = try {
-            fetchAdminStatus()
+            fetchAdminStatus().admin
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -138,6 +152,33 @@ class AdminViewModel : ViewModel() {
     var sessions by mutableStateOf<List<DeviceSession>?>(null)
     var problem by mutableStateOf<StringResource?>(null)
     var confirm by mutableStateOf<Confirm?>(null)
+
+    /** Admin mode (2FA, about an hour, this session only): its end in epoch ms, null when off. */
+    var elevatedUntilMs by mutableStateOf<Long?>(null)
+    val mfa = MfaPromptState()
+
+    /** Opening the screen: admin mode is asked for at once when it is off. */
+    fun enter() {
+        request {
+            val status = fetchAdminStatus()
+            elevatedUntilMs = status.elevatedUntilMs?.takeIf { status.elevated(System.currentTimeMillis()) }
+            if (elevatedUntilMs == null) elevate()
+        }
+    }
+
+    fun turnOn() = request { elevate() }
+
+    fun endAdminMode() = request {
+        endAdminElevation()
+        elevatedUntilMs = null
+    }
+
+    /** The MFA sheet (an authenticator code first), then `POST /admin/elevate`; false when cancelled. */
+    private suspend fun elevate(): Boolean {
+        val ticket = mfa.request()?.token ?: return false
+        elevatedUntilMs = elevateAdmin(ticket)
+        return true
+    }
 
     /** Our own session: ending it signs this device out. */
     val currentSessionId: String?
@@ -185,12 +226,19 @@ class AdminViewModel : ViewModel() {
         problem = null
         viewModelScope.launch {
             try {
-                block()
+                withAdminElevation(::elevate) { block() }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: AdminRequestException) {
-                logcat(LogPriority.WARN) { "Admin request refused: ${e.status}" }
-                problem = if (e.status == 403) Res.string.durio_admin_forbidden else Res.string.durio_admin_failed
+                logcat(LogPriority.WARN) { "Admin request refused: ${e.status} ${e.type}" }
+                if (e.needsElevation) elevatedUntilMs = null
+                problem = when {
+                    e.invalidTicket -> Res.string.durio_admin_invalid_code
+                    e.needsTotp -> Res.string.durio_admin_totp_required
+                    e.needsElevation -> Res.string.durio_admin_mode_needed
+                    e.status == 403 -> Res.string.durio_admin_forbidden
+                    else -> Res.string.durio_admin_failed
+                }
             } catch (e: Exception) {
                 logcat(LogPriority.WARN) { "Admin request failed: ${e::class.simpleName}" }
                 problem = Res.string.durio_admin_failed
@@ -242,6 +290,8 @@ fun AdminSettingsEntry(navController: NavController) {
 fun AdminScreen(navController: NavController, viewModel: AdminViewModel = viewModel()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) { viewModel.enter() }
+    MfaPromptSheet(viewModel.mfa)
 
     viewModel.confirm?.let { target ->
         val user = viewModel.user
@@ -301,6 +351,9 @@ fun AdminScreen(navController: NavController, viewModel: AdminViewModel = viewMo
                 .padding(horizontal = 16.dp)
         ) {
             item(key = "hint") { Text(stringResource(Res.string.durio_admin_hint), style = MaterialTheme.typography.bodySmall) }
+            item(key = "mode") {
+                AdminModeRow(viewModel.elevatedUntilMs, enabled = !viewModel.busy, onTurnOn = viewModel::turnOn, onEnd = viewModel::endAdminMode)
+            }
             item(key = "search") {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -350,6 +403,35 @@ fun AdminScreen(navController: NavController, viewModel: AdminViewModel = viewMo
                     )
                 }
             }
+        }
+    }
+}
+
+/** "Admin mode until 14:05" and "End admin mode", or "off" and "Turn on" (2FA). */
+@Composable
+private fun AdminModeRow(untilMs: Long?, enabled: Boolean, onTurnOn: () -> Unit, onEnd: () -> Unit) {
+    val context = LocalContext.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(if (untilMs != null) MaterialTheme.colorScheme.tertiaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Text(
+            if (untilMs != null) {
+                stringResource(Res.string.durio_admin_mode_until, DateFormat.getTimeFormat(context).format(Date(untilMs)))
+            } else {
+                stringResource(Res.string.durio_admin_mode_off)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+        if (untilMs != null) {
+            TextButton(enabled = enabled, onClick = onEnd) { Text(stringResource(Res.string.durio_admin_mode_end)) }
+        } else {
+            TextButton(enabled = enabled, onClick = onTurnOn) { Text(stringResource(Res.string.durio_admin_mode_on)) }
         }
     }
 }

@@ -23,7 +23,8 @@ class AdminRoutesTest {
     private val client = object : ApiClient {
         override val http = HttpClient(
             MockEngine { request ->
-                log += "${request.method.value} ${request.url.encodedPathAndQuery.removePrefix("/api")}"
+                val ticket = request.headers["x-mfa-ticket"]?.let { " ticket=$it" }.orEmpty()
+                log += "${request.method.value} ${request.url.encodedPathAndQuery.removePrefix("/api")}$ticket"
                 respond(reply, status)
             }
         )
@@ -34,18 +35,104 @@ class AdminRoutesTest {
     @Test
     fun adminStatus() = runTest {
         reply = """{"admin":true}"""
-        assertTrue(fetchAdminStatus(client))
+        val status = fetchAdminStatus(client)
+        assertTrue(status.admin)
+        assertNull(status.elevatedUntilMs)
+        assertFalse(status.elevated(0))
         assertEquals(listOf("GET /admin/@me"), log)
 
         reply = """{"admin":false}"""
-        assertFalse(fetchAdminStatus(client))
+        assertFalse(fetchAdminStatus(client).admin)
+
+        // admin mode on for this session until 12:00 UTC
+        reply = """{"admin":true,"elevated_until":"2026-10-19T12:00:00.000Z"}"""
+        val elevated = fetchAdminStatus(client)
+        assertEquals(1_792_411_200_000L, elevated.elevatedUntilMs)
+        assertTrue(elevated.elevated(1_792_411_199_999L))
+        assertFalse(elevated.elevated(1_792_411_200_000L))
+    }
+
+    @Test
+    fun elevationSendsTheTicketAndReturnsItsEnd() = runTest {
+        reply = """{"expires_at":"2026-10-19T12:00:00Z"}"""
+        assertEquals(1_792_411_200_000L, elevateAdmin("T1", client))
+        assertEquals(listOf("POST /admin/elevate ticket=T1"), log)
+
+        status = HttpStatusCode.NoContent
+        reply = ""
+        endAdminElevation(client)
+        assertEquals("DELETE /admin/elevate", log.last())
+    }
+
+    @Test
+    fun anExpiredAdminModeAsksFor2faAndRetriesOnce() = runTest {
+        var elevated = false
+        val client = object : ApiClient {
+            override val http = HttpClient(
+                MockEngine { request ->
+                    log += "${request.method.value} ${request.url.encodedPath.removePrefix("/api")}"
+                    when {
+                        request.url.encodedPath.endsWith("/admin/elevate") -> {
+                            elevated = request.headers["x-mfa-ticket"] == "T1"
+                            respond("""{"expires_at":"2026-10-19T12:00:00Z"}""", HttpStatusCode.OK)
+                        }
+                        elevated -> respond("[]", HttpStatusCode.OK)
+                        else -> respond("""{"type":"AdminElevationRequired"}""", HttpStatusCode.Forbidden)
+                    }
+                }
+            )
+
+            override fun api(path: String) = "https://a.example/api$path"
+        }
+
+        var asked = 0
+        val sessions = withAdminElevation({
+            asked++
+            elevateAdmin("T1", client) > 0
+        }) { fetchUserSessions("01U", client) }
+        assertEquals(emptyList(), sessions)
+        assertEquals(1, asked)
+        assertEquals(listOf("GET /admin/users/01U/sessions", "POST /admin/elevate", "GET /admin/users/01U/sessions"), log)
+
+        // cancelled 2FA: nothing more is sent
+        elevated = false
+        log.clear()
+        assertNull(withAdminElevation({ false }) { fetchUserSessions("01U", client) })
+        assertEquals(listOf("GET /admin/users/01U/sessions"), log)
+
+        // other refusals are not retried
+        assertFailsWith<AdminRequestException> {
+            withAdminElevation({ error("not asked") }) { throw AdminRequestException(403, "NotPrivileged") }
+        }
+    }
+
+    @Test
+    fun elevationAndTotpRefusals() = runTest {
+        status = HttpStatusCode.Forbidden
+        reply = """{"type":"TotpRequired"}"""
+        val totp = assertFailsWith<AdminRequestException> { elevateAdmin("T1", client) }
+        assertTrue(totp.needsTotp)
+        assertFalse(totp.needsElevation)
+
+        // a used or expired MFA ticket: a new code, not a logout
+        status = HttpStatusCode.Unauthorized
+        reply = """{"type":"InvalidToken","location":"crates/core/database/src/models/mfa_tickets"}"""
+        val ticket = assertFailsWith<AdminRequestException> { elevateAdmin("old", client) }
+        assertTrue(ticket.invalidTicket)
+        assertEquals("InvalidToken", ticket.type)
+
+        status = HttpStatusCode.Forbidden
+        reply = """{"type":"AdminElevationRequired","location":"crates/delta/src/routes/admin/mod.rs"}"""
+        val elevation = assertFailsWith<AdminRequestException> { findAdminUser("alice#0420", client) }
+        assertTrue(elevation.needsElevation)
+        assertTrue(assertFailsWith<AdminRequestException> { endAllUserSessions("01U", client) }.needsElevation)
     }
 
     @Test
     fun aServerWithoutAdminRoutesHasNoAdmins() = runTest {
         status = HttpStatusCode.NotFound
         reply = ""
-        assertFalse(fetchAdminStatus(client))
+        assertFalse(fetchAdminStatus(client).admin)
     }
 
     @Test
