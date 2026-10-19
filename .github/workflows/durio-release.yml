@@ -19,6 +19,8 @@ jobs:
   release:
     name: Signed APK to GitHub Releases
     if: github.repository_owner != 'stoatchat'
+    # the signing secrets and DURIO_* variables live in the "Main" environment
+    environment: Main
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
