@@ -37,11 +37,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import chat.stoat.fork.ui.ScrollingScreen
 import chat.stoat.api.routes.account.register
 import chat.stoat.api.routes.misc.getRootRoute
 import chat.stoat.composables.generic.FormTextField
 import chat.stoat.fork.register.InviteCodeField
 import chat.stoat.fork.register.RegistrationInvite
+import chat.stoat.fork.register.SignInAfterRegistration
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.back
 import chat.stoat.shared.resources.register_data
@@ -69,8 +71,12 @@ class RegisterDetailsScreenViewModel : ViewModel() {
     var invite by mutableStateOf("")
     var inviteOnly by mutableStateOf<Boolean?>(null)
 
+    // durio: whether the server sends a verification mail (null: not known, upstream's flow)
+    var emailVerification by mutableStateOf<Boolean?>(null)
+
     fun loadInviteOnly() {
         viewModelScope.launch { inviteOnly = RegistrationInvite.inviteOnly() }
+        viewModelScope.launch { emailVerification = SignInAfterRegistration.emailVerification() }
     }
 
     private var captchaToken by mutableStateOf<String?>(null)
@@ -119,7 +125,13 @@ class RegisterDetailsScreenViewModel : ViewModel() {
         viewModelScope.launch {
             val result = register(body)
 
-            if (result.ok) {
+            if (result.ok && emailVerification == false) {
+                // durio: no mail is sent, the account is verified: sign in instead of "check your mail"
+                val route = SignInAfterRegistration.signIn(email, password) ?: "login/login"
+                navController.navigate(route) {
+                    if (route != "login/login") popUpTo("login/greeting") { inclusive = true }
+                }
+            } else if (result.ok) {
                 navController.navigate("register/verify/$email")
             } else {
                 val type = result.unwrapError().type
@@ -137,18 +149,11 @@ fun RegisterDetailsScreen(
     val context = LocalContext.current
     LaunchedEffect(Unit) { viewModel.loadInviteOnly() } // durio: invite-only servers
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .imePadding()
-            .safeDrawingPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // durio: scrolls with the keyboard open instead of squeezing the form (fork/ui/ScrollingScreen)
+    ScrollingScreen(modifier = Modifier.padding(20.dp)) {
+        Spacer(modifier = Modifier.weight(1f))
         Column(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -196,14 +201,17 @@ fun RegisterDetailsScreen(
                     action = ImeAction.Next,
                     modifier = Modifier.semantics { contentType = ContentType.EmailAddress }
                 )
-                Text(
-                    text = stringResource(Res.string.register_email_verification_hint),
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.5f
-                    ),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(horizontal = 40.dp, vertical = 10.dp)
-                )
+                // durio: no promise of a mail when the server sends none
+                if (viewModel.emailVerification != false) {
+                    Text(
+                        text = stringResource(Res.string.register_email_verification_hint),
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.5f
+                        ),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 40.dp, vertical = 10.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -237,6 +245,8 @@ fun RegisterDetailsScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Row {
             TextButton(onClick = {

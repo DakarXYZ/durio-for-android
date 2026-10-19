@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import chat.stoat.fork.ui.ScrollingScreen
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.api.routes.onboard.OnboardingCompletionBody
 import chat.stoat.api.routes.onboard.completeOnboarding
@@ -69,17 +70,11 @@ fun OnboardingScreen(navController: NavController, onOnboardingComplete: () -> U
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .safeDrawingPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // durio: scrolls with the keyboard open instead of squeezing the form (fork/ui/ScrollingScreen)
+    ScrollingScreen(modifier = Modifier.padding(20.dp)) {
+        Spacer(modifier = Modifier.weight(1f))
         Column(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -167,6 +162,8 @@ fun OnboardingScreen(navController: NavController, onOnboardingComplete: () -> U
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = {

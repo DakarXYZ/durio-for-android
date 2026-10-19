@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import chat.stoat.fork.ui.ScrollingScreen
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
@@ -199,18 +200,11 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = koinVi
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp)
-            .imePadding()
-            .safeDrawingPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // durio: scrolls with the keyboard open instead of squeezing the form (fork/ui/ScrollingScreen)
+    ScrollingScreen(modifier = Modifier.padding(20.dp)) {
+        Spacer(modifier = Modifier.weight(1f))
         Column(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -301,6 +295,8 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = koinVi
                 }
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Column(
             modifier = Modifier

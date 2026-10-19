@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import chat.stoat.fork.ui.ScrollingScreen
 import chat.stoat.BuildConfig
 import chat.stoat.R
 import chat.stoat.composables.generic.AnyLink
@@ -74,24 +75,17 @@ fun LoginGreetingScreen(
     var catTaps by remember { mutableIntStateOf(0) }
     var showBoringButton by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 20.dp, horizontal = 0.dp)
-            .safeDrawingPadding(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // durio: scrolls with the keyboard open instead of squeezing the form (fork/ui/ScrollingScreen)
+    ScrollingScreen(modifier = Modifier.padding(vertical = 20.dp, horizontal = 0.dp)) {
+        Spacer(modifier = Modifier.weight(1f))
         Column(
-            modifier = Modifier
-                .weight(1f),
+            modifier = Modifier,
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.stoat_logo_white),
-                colorFilter = ColorFilter.tint(LocalContentColor.current),
-                contentDescription = "Stoat",
+                painter = painterResource(id = R.drawable.durio_logo), // durio: the durian, in colour
+                contentDescription = "dur.io",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .height(100.dp)
@@ -154,6 +148,8 @@ fun LoginGreetingScreen(
                     .fillMaxWidth()
             )
         }
+
+        Spacer(modifier = Modifier.weight(1f))
 
         Column(
             modifier = Modifier
