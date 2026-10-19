@@ -118,7 +118,7 @@ class AdminRoutesTest {
         assertEquals(1_792_411_200_000L, invite.expiresAtMs)
         assertTrue(invite.multiUse)
         assertEquals("POST /admin/invites {\"ttl_hours\":1,\"multi_use\":true}", bodies.last())
-        assertEquals("https://duri0.duckdns.org/invite/K7x9Q2abcd", AdminInvite.link("duri0.duckdns.org", invite.code))
+        assertEquals("https://duri0.duckdns.org/join/K7x9Q2abcd", AdminInvite.link("duri0.duckdns.org", invite.code))
 
         reply = """[{"_id":"B","expires_at":"2026-10-19T12:00:00Z","multi_use":false,"uses":0,"created_by":"01A"},
             {"_id":"A","expires_at":"2026-10-19T11:30:00Z","multi_use":true,"uses":3,"created_by":"01A"}]"""

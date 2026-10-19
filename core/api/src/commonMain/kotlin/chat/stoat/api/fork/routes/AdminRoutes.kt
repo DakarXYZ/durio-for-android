@@ -77,8 +77,11 @@ data class AdminInvite(
         /** Lifetimes the server accepts, in hours; anything else is 400 `InvalidOperation`. */
         val LIFETIMES_HOURS = listOf(1, 4, 12, 24)
 
-        /** The link people open and paste into sign-up: `https://<host>/invite/<code>`. */
-        fun link(host: String, code: String) = "https://$host/invite/$code"
+        /**
+         * The link people paste into sign-up: `https://<host>/join/<code>` (`/invite/` is a
+         * server invite).
+         */
+        fun link(host: String, code: String) = "https://$host/join/$code"
     }
 }
 

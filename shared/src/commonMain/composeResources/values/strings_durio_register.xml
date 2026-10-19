@@ -7,4 +7,5 @@
     <string name="durio_register_invite_invalid">This invite code is not valid or was already used.</string>
     <string name="durio_register_invite_hint_required">This server is invite-only: enter the code or paste the invite link you got from its admin.</string>
     <string name="durio_register_invite_other_server">This link is for %1$s, not for the server you are signing up on. Choose that server first.</string>
+    <string name="durio_register_invite_server_invite">This is an invite to join a server (a community), not to sign up. Ask the admin for a sign-up link: it has /join/ in it.</string>
 </resources>

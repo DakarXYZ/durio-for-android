@@ -22,6 +22,7 @@ import chat.stoat.shared.resources.durio_register_invite_hint_required
 import chat.stoat.shared.resources.durio_register_invite_invalid
 import chat.stoat.shared.resources.durio_register_invite_missing
 import chat.stoat.shared.resources.durio_register_invite_other_server
+import chat.stoat.shared.resources.durio_register_invite_server_invite
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -40,17 +41,22 @@ object RegistrationInvite {
         null
     }
 
-    /** What was pasted: a bare code, or a link `https://<host>/invite/<code>` ([host] then). */
-    data class Parsed(val code: String, val host: String?)
+    /**
+     * What was pasted: a bare code, or a sign-up link `https://<host>/join/<code>` ([host]
+     * then). [serverInvite]: a link `/invite/<code>` — an invite to a server (guild), not to
+     * sign up; it has no [code] here.
+     */
+    data class Parsed(val code: String, val host: String?, val serverInvite: Boolean = false)
 
-    private val LINK = Regex("""^(?:[a-z][a-z0-9+.-]*://)?([^/?#\s]*)/(?:[^?#\s]*/)?invite/([^/?#\s]+)""", RegexOption.IGNORE_CASE)
+    private val LINK = Regex("""^(?:[a-z][a-z0-9+.-]*://)?([^/?#\s]*)/(?:[^?#\s]*/)?(join|invite)/([^/?#\s]+)""", RegexOption.IGNORE_CASE)
 
-    /** The code of a pasted invite link (admins share links), or the text itself. */
+    /** The code of a pasted sign-up link (admins share `/join/` links), or the text itself. */
     fun parse(input: String): Parsed {
         val text = input.trim()
         val match = LINK.find(text) ?: return Parsed(text, null)
         val host = match.groupValues[1].substringAfterLast('@').substringBefore(':').lowercase().takeIf { it.isNotEmpty() }
-        return Parsed(match.groupValues[2], host)
+        if (match.groupValues[2].equals("invite", ignoreCase = true)) return Parsed("", host, serverInvite = true)
+        return Parsed(match.groupValues[3], host)
     }
 
     /**
@@ -100,7 +106,14 @@ fun InviteCodeField(inviteOnly: Boolean?, value: String, onChange: (String) -> U
         type = KeyboardType.Ascii,
         action = ImeAction.Done,
     )
-    if (RegistrationInvite.otherServer(value, ActiveServer.currentOrNull)) {
+    if (RegistrationInvite.parse(value).serverInvite) {
+        Text(
+            text = stringResource(Res.string.durio_register_invite_server_invite),
+            color = MaterialTheme.colorScheme.error,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(horizontal = 40.dp, vertical = 4.dp),
+        )
+    } else if (RegistrationInvite.otherServer(value, ActiveServer.currentOrNull)) {
         Text(
             text = stringResource(Res.string.durio_register_invite_other_server, RegistrationInvite.parse(value).host.orEmpty()),
             color = MaterialTheme.colorScheme.error,
