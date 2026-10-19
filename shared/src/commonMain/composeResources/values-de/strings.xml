@@ -36,9 +36,9 @@
     <string name="report_message_bridge_notice">Hinweis: Diese Nachricht könnte von einer anderen Plattform stammen. Es wird empfohlen, die Nachricht auch auf der Plattform zu melden, von der sie stammt.</string>
     <string name="cancel">Abbrechen</string>
     <string name="terms_of_service">Nutzungsbedingungen</string>
-    <string name="login_onboarding_body">Stoat ist eine der besten Möglichkeiten, überall und jederzeit mit deinen Freund:innen und deiner Community in Verbindung zu bleiben.</string>
+    <string name="login_onboarding_body">dur.io ist eine der besten Möglichkeiten, überall und jederzeit mit deinen Freund:innen und deiner Community in Verbindung zu bleiben.</string>
     <string name="send_email">E-Mail senden</string>
-    <string name="register_image_alt">Nutze Stoat, um dich mit anderen auszutauschen.</string>
+    <string name="register_image_alt">Nutze dur.io, um dich mit anderen auszutauschen.</string>
     <string name="register_email_verification_hint">Wir senden dir eine Verifizierungs-E-Mail, um deinen Account zu bestätigen.</string>
     <string name="onboarding_welcome">Willkommen!</string>
     <string name="onboarding_others">Andere werden dich mit diesem Namen finden, erkennen und erwähnen.</string>
@@ -52,7 +52,7 @@
     <string name="lets_go">Los geht's</string>
     <string name="privacy_policy">Datenschutzbedingungen</string>
     <string name="signup">Registrieren</string>
-    <string name="register_heading">Willkommen bei Stoat</string>
+    <string name="register_heading">Willkommen bei dur.io</string>
     <string name="register_form_heading">Lass uns alles einrichten.</string>
     <string name="register_data">Deine Daten sind bei uns sicher. Wir verkaufen sie nicht und verwenden sie auch nicht, um dir Werbung anzuzeigen.</string>
     <string name="register_password">Passwort</string>
@@ -224,8 +224,7 @@
     <string name="emoji_picker_skin_tone_fitzpatrick_4">Mittlere Hautfarbe</string>
     <string name="notice_platform_mod_dm_description">Du hat einen wichtigen Hinweis zu deinem Account von unserem Moderationsteam bekommen. Bitte lese ihn sorgfältig durch.</string>
     <string name="settings_sessions_log_out_other_description">Dieses Gerät wird angemeldet bleiben.</string>
-    <string name="about_full_name">Stoat für Android</string>
-    <string name="about_brought_to_you_by">Mit ❤️ vom Stoat-Team gemacht.</string>
+    <string name="about_full_name">dur.io für Android</string>
     <string name="oss_attribution_tap_to_view_license">Tippe, um die Lizenz anzuschauen</string>
     <string name="pick_emoji_alt">Emoji auswählen</string>
     <string name="emoji_category_smileys">Smileys und Emotionen</string>

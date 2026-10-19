@@ -222,7 +222,6 @@
     <string name="server_context_sheet_actions_leave">Opuść</string>
     <string name="server_context_sheet_actions_leave_confirm_eyebrow">Dopóki nie zostaniesz ponownie zaproszony, nie będziesz mógł ponownie dołączyć.</string>
     <string name="user_info_sheet_bio_not_found">Nie można pobrać biografii tego użytkownika. Sprawdź, czy dzielicie serwer lub jesteście znajomymi.</string>
-    <string name="about_brought_to_you_by">Dostarczone z ❤️ przez zespół Revolt.</string>
     <string name="oss_attribution_tap_to_view_license">Dotknij, aby wyświetlić licencję</string>
     <string name="pick_emoji_alt">Wybierz emotke</string>
     <string name="emoji_category_smileys">Uśmieszki i Emocje</string>

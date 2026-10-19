@@ -783,7 +783,7 @@ private fun InviteLink(link: String, copyableLink: String) {
                 coroutineScope.launch {
                     clip.setClipEntry(
                         ClipData.newPlainText(
-                            "Stoat invite link",
+                            "dur.io invite link",
                             copyableLink
                         ).toClipEntry()
                     )

@@ -206,7 +206,6 @@
     <string name="invite_message">Has sigut invitat a unir-te a aquest servidor. T'agradaria unir-te?</string>
     <string name="invite_error_unknown">S'ha produït un error desconegut.</string>
     <string name="settings_appearance_theme_m3dynamic_unsupported">Material You (sense suport)</string>
-    <string name="about_brought_to_you_by">Creat amb ❤️ per l'equip de Revolt.</string>
     <string name="oss_attribution_tap_to_view_license">Toqueu per veure la llicència</string>
     <string name="about_full_name">Revolt per a Android</string>
     <string name="pick_emoji_alt">Tria emoji</string>

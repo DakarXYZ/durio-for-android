@@ -60,7 +60,7 @@
     <string name="resend">Reenviar</string>
     <string name="resend_verification">Reenviar e-mail de verificação</string>
     <string name="typing_many">%1$s estão digitando…</string>
-    <string name="register_heading">Bem-vindo(a) ao Stoat</string>
+    <string name="register_heading">Bem-vindo(a) ao dur.io</string>
     <string name="password_forgot_heading">Esqueceu sua senha?</string>
     <string name="onboarding_welcome">Bem-vindo(a)!</string>
     <string name="onboarding_username">Nome de usuário</string>
@@ -92,11 +92,11 @@
     <string name="lets_go">Vamos lá</string>
     <string name="loading">Reunindo algumas informações, aguenta aí…</string>
     <string name="login_onboarding_heading">Encontre sua comunidade, conecte-se com o mundo.</string>
-    <string name="login_onboarding_body">O Stoat é uma das melhores maneiras de se manter conectado com seus amigos e comunidade, em qualquer lugar, a qualquer momento.</string>
+    <string name="login_onboarding_body">O dur.io é uma das melhores maneiras de se manter conectado com seus amigos e comunidade, em qualquer lugar, a qualquer momento.</string>
     <string name="login_heading">Vamos logar você</string>
     <string name="password_manager_hint">Usando um gerenciador de senhas?</string>
     <string name="password_forgot_instructions">Insira seu email e nós enviaremos instruções para redefinir sua senha.</string>
-    <string name="register_image_alt">Use o Stoat para conversar sobre tudo.</string>
+    <string name="register_image_alt">Use o dur.io para conversar sobre tudo.</string>
     <string name="register_instructions">É como um lugar para curtir, se reunir e falar sobre qualquer coisa. E a melhor parte: é na internet.</string>
     <string name="register_form_heading">Vamos preparar as coisas para você.</string>
     <string name="register_data">Seus dados estão seguros com a gente. Não vendemos e nem os utilizamos para te mostrar anúncios.</string>
@@ -198,7 +198,7 @@
     <string name="report_user_preview">Usuário selecionado:</string>
     <string name="report_reason_content_promotes_harm">Incentivo à violência</string>
     <string name="report_reason_user_underage">Não possui a idade mínima para usar a plataforma</string>
-    <string name="report_submit_thanks">Obrigado por nos ajudar a manter o Stoat seguro. Vamos analisar sua denúncia assim que possível.</string>
+    <string name="report_submit_thanks">Obrigado por nos ajudar a manter o dur.io seguro. Vamos analisar sua denúncia assim que possível.</string>
     <string name="report_block_question">Deseja bloquear este usuário?</string>
     <string name="invite_error_no_invite">Nenhum código de convite fornecido.</string>
     <string name="invite_error_invalid_invite">Não encontramos nenhum convite com o código fornecido.</string>
@@ -209,8 +209,7 @@
     <string name="oss_attribution_tap_to_view_license">Toque para ver a licença</string>
     <string name="system_message_channel_renamed_alt">O canal foi renomeado</string>
     <string name="system_message_ownership_changed_alt">A posse foi alterada</string>
-    <string name="about_full_name">Stoat para Android</string>
-    <string name="about_brought_to_you_by">Trazido até você com ❤️ pelo time do Stoat.</string>
+    <string name="about_full_name">dur.io para Android</string>
     <string name="pick_emoji_alt">Escolher emoji</string>
     <string name="emoji_category_people">Pessoas &amp; Corpo</string>
     <string name="emoji_category_animals">Animais &amp; Natureza</string>
@@ -220,7 +219,7 @@
     <string name="emoji_category_objects">Objetos</string>
     <string name="emoji_category_symbols">Símbolos</string>
     <string name="emoji_category_flags">Bandeiras</string>
-    <string name="badge_team_member_alt">Membro do time do Stoat</string>
+    <string name="badge_team_member_alt">Membro do time do dur.io</string>
     <string name="home_join_jenvolt">Junte-se ao Jenvolt</string>
     <string name="friends">Amigos</string>
     <string name="friends_incoming_requests">Solicitações Recebidas</string>
@@ -246,7 +245,7 @@
     <string name="channel_link_invalid_description">Este canal pode ter sido deletado ou você pode não ter permissão para vê-lo.</string>
     <string name="channel_info_sheet_options_add">Adicionar membros</string>
     <string name="user_info_sheet_bio_not_found">A bio deste usuário não pode ser alcançada. Por favor tenha a certeza de que compartilham um servidor ou de que são amigos.</string>
-    <string name="discover">Descobrir o Stoat</string>
+    <string name="discover">Descobrir o dur.io</string>
     <string name="report_message_heading">Diga-nos o que há de errado com esta mensagem</string>
     <string name="report_reason_content_illegal_hacking">Hacking ou cracking ilegais</string>
     <string name="notice_platform_mod_dm_title">Comunicado importante sobre a sua conta</string>
@@ -292,7 +291,7 @@
     <string name="status_dnd_explainer">Você não vai receber qualquer notificação, incluindo mensagens e @menções.</string>
     <string name="status_offline">Offline</string>
     <string name="status_invisible">Invisível</string>
-    <string name="status_invisible_explainer">Você vai poder usar o Stoat normalmente, mas não vai aparecer como online para os outros.</string>
+    <string name="status_invisible_explainer">Você vai poder usar o dur.io normalmente, mas não vai aparecer como online para os outros.</string>
     <string name="server_flag_official">Servidor Oficial</string>
     <string name="server_flag_verified">Servidor Verificado</string>
     <string name="channel_link_invalid">Você não pode ver este canal</string>
@@ -385,10 +384,10 @@
     <string name="invite_dialog_description">Envie este link para convidar pessoas para este canal.</string>
     <string name="invite_dialog_copy">Copiar</string>
     <string name="invite_dialog_close">Fechar</string>
-    <string name="share_target_heading">Compartilhar para o Stoat</string>
-    <string name="share_target_login_first">Por favor, faça login antes de compartilhar para o Stoat.</string>
+    <string name="share_target_heading">Compartilhar para o dur.io</string>
+    <string name="share_target_login_first">Por favor, faça login antes de compartilhar para o dur.io.</string>
     <string name="share_target_invalid_intent">Esta não é uma tentativa de compartilhamento válida.</string>
-    <string name="share_target_attachment_too_large">Este anexo é grande demais para o Stoat (tamanho máximo: $1$s).</string>
+    <string name="share_target_attachment_too_large">Este anexo é grande demais para o dur.io (tamanho máximo: $1$s).</string>
     <string name="share_target_search_channels">Buscar canais</string>
     <string name="share_target_select_channel">Selecione um canal para compartilhar.</string>
     <string name="emote_info_from_unicode">Um emoji padrão que você pode usar em qualquer lugar</string>
@@ -418,7 +417,7 @@
     <string name="settings_chat_quick_reply_swipe_from_end">Deslize para responder</string>
     <string name="settings_chat_quick_reply">Resposta rápida</string>
     <string name="settings_chat_quick_reply_double_tap">Toque duas vezes para responder</string>
-    <string name="settings_feedback_description">Participe do servidor Stoat para dar feedback ou sugestões e relatar bugs.</string>
+    <string name="settings_feedback_description">Participe do servidor dur.io para dar feedback ou sugestões e relatar bugs.</string>
     <string name="channel_settings">Configurações do canal</string>
     <string name="channel_settings_header">#%1$s</string>
     <string name="channel_settings_overview">Visão geral</string>
@@ -541,7 +540,7 @@
     <string name="user_card_error_sharing">Ocorreu um erro ao compartilhar seu cartão de usuário.</string>
     <string name="user_card_data_point_display_name">%1$d.Nome</string>
     <string name="user_card_data_point_username">%1$d.Nome de Usuário</string>
-    <string name="user_card_data_point_join_date">%1$d.No Stoat Desde</string>
+    <string name="user_card_data_point_join_date">%1$d.No dur.io Desde</string>
     <string name="user_card_data_point_qrcode">%1$d.Código QR</string>
     <string name="user_card_data_point_photo">%1$d.Foto</string>
     <string name="could_not_log_in_heading">Ocorreu um erro ao fazer o seu login</string>
@@ -551,7 +550,7 @@
     <string name="could_not_log_in_cta_try_again">Tentar novamente</string>
     <string name="could_not_log_in_cta_logout">Encerrar Sessão</string>
     <string name="programming_language_snippet_default">[Bloco de código]</string>
-    <string name="spark_keyboard_shortcuts_description">O Stoat tem atalhos de teclado! Pressione %1$s para vê-los.</string>
+    <string name="spark_keyboard_shortcuts_description">O dur.io tem atalhos de teclado! Pressione %1$s para vê-los.</string>
     <string name="spark_keyboard_shortcuts_cta">Abrir atalhos</string>
     <string name="spark_keyboard_shortcuts_dismiss">Tudo bem</string>
     <string name="keyboard_shortcut_messaging">Mensagens</string>
@@ -559,7 +558,7 @@
     <string name="keyboard_shortcut_messaging_send_message">Enviar Mensagem</string>
     <string name="spark_early_access">Bem-vindo(a) ao Acesso Antecipado! 🚀</string>
     <string name="spark_early_access_description_1">Você é um dos primeiros a testar nosso novo app Android. Estamos entusiasmados em ter você aqui!</string>
-    <string name="spark_early_access_description_2">Como este é um acesso antecipado, as coisas podem não estar perfeitas ainda. Você pode se deparar com algum bug, crash ou comportamento estranho ocasionalmente. Seu feedback nos ajuda a ajustar os detalhes e tornar o Stoat ainda melhor.</string>
+    <string name="spark_early_access_description_2">Como este é um acesso antecipado, as coisas podem não estar perfeitas ainda. Você pode se deparar com algum bug, crash ou comportamento estranho ocasionalmente. Seu feedback nos ajuda a ajustar os detalhes e tornar o dur.io ainda melhor.</string>
     <string name="spark_early_access_description_3">Estamos emocionados por ter você a bordo. Vamos fazer algo grande juntos!</string>
     <string name="spark_early_access_cta">Entendido</string>
     <string name="hint_provide_feedback">Amamos feedback!</string>
@@ -568,12 +567,12 @@
     <string name="hint_provide_feedback_dismiss">Feito</string>
     <string name="settings_chat_hint_poorly_formed_settings_keys_key_notifications">Notificações</string>
     <string name="settings_chat_hint_poorly_formed_settings_keys_key_ordering">Ordem dos Servidores</string>
-    <string name="settings_chat_hint_poorly_formed_settings_keys_key_android">Stoat para Android</string>
+    <string name="settings_chat_hint_poorly_formed_settings_keys_key_android">dur.io para Android</string>
     <string name="settings_chat_hint_poorly_formed_settings_keys_reset">Redefinir configurações de %1$s</string>
     <string name="settings_chat_hint_poorly_formed_settings_keys">Dica</string>
     <string name="settings_chat_hint_poorly_formed_settings_keys_key_unknown">%1$s (desconhecido)</string>
-    <string name="hint_provide_feedback_description">Caso tenha qualquer feedback, sugestão ou deseja reportar um bug, fale conosco. Estamos sempre buscando melhorar o Stoat.</string>
-    <string name="settings_chat_hint_poorly_formed_settings_keys_description">Algumas das suas configurações do Stoat estão corrompidas. Isso pode ser devido ao uso de clientes de terceiros. As configurações afetadas são:</string>
+    <string name="hint_provide_feedback_description">Caso tenha qualquer feedback, sugestão ou deseja reportar um bug, fale conosco. Estamos sempre buscando melhorar o dur.io.</string>
+    <string name="settings_chat_hint_poorly_formed_settings_keys_description">Algumas das suas configurações do dur.io estão corrompidas. Isso pode ser devido ao uso de clientes de terceiros. As configurações afetadas são:</string>
     <string name="main_tab_communities">Comunidades</string>
     <string name="main_tab_conversations">Bate-papo</string>
     <string name="main_tab_overview">Você</string>
@@ -607,7 +606,7 @@
     <string name="add_server_sheet_step_1c_name_error_range">O nome do servidor pode ter até %1$d caracteres.</string>
     <string name="settings_chat_quick_reply_none_description">Você pode responder a partir do menu de qualquer mensagem.</string>
     <string name="add_server_sheet_step_1c_error">Ocorreu um erro ao criar o seu servidor. Por favor, tente novamente mais tarde.</string>
-    <string name="friends_scan_qr_result_sheet_invalid_description">Esse QR Code não é válido para o Stoat.</string>
+    <string name="friends_scan_qr_result_sheet_invalid_description">Esse QR Code não é válido para o dur.io.</string>
     <string name="friends_scan_qr_result_sheet_missing_permission_title">Falta permissão para acessar a câmera</string>
     <string name="friends_scan_qr_result_sheet_success_title">Adicionar amigo?</string>
     <string name="friends_add_by_tag">Adicionar usando nome de usuário e tag</string>
@@ -635,8 +634,8 @@
     <string name="about_section_oss_licenses">Licenças de Código Aberto</string>
     <string name="oss_attribution_open_library_website">Abrir o site da biblioteca</string>
     <string name="slowmode_immune">Imune</string>
-    <string name="overview_screen_join_lounge">Entre no servidor do Stoat</string>
-    <string name="overview_screen_join_lounge_description">Interaja com outros usuários do Stoat, dê feedback e veja o que está acontecendo com o Stoat</string>
+    <string name="overview_screen_join_lounge">Entre no servidor do dur.io</string>
+    <string name="overview_screen_join_lounge_description">Interaja com outros usuários do dur.io, dê feedback e veja o que está acontecendo com o dur.io</string>
     <string name="overview_screen_catch_up">Fique por dentro</string>
     <string name="overview_screen_catch_up_description">Veja o que você perdeu enquanto esteve fora</string>
     <string name="overview_screen_catch_up_none">Tudo em dia</string>
@@ -773,7 +772,7 @@
     <string name="settings_account_mfa_totp_upsell">Proteja sua conta utilizando um código de 6 dígitos de aplicativos como Google Authenticator ou Authy.</string>
     <string name="settings_account_password_edit_message_hint">Senhas seguras têm pelo menos 10 caracteres e incluem uma mistura de letras, números e símbolos.</string>
     <string name="settings_mfa_status_not_set_up_description">Você não tem nenhum método de 2FA configurado. Ative a autenticação de dois fatores para adicionar uma camada extra de segurança à sua conta.</string>
-    <string name="settings_appearance_theme_default">Stoat</string>
+    <string name="settings_appearance_theme_default">dur.io</string>
     <string name="voice_notification_ongoing_call">Conectado na chamada</string>
     <string name="voice_banner_tap_to_return">Precione para voltar a chamada</string>
     <string name="settings_mfa_disable_totp_description">Desativar seu aplicativo autenticador removerá a autenticação de dois fatores (2FA) como método de acesso à sua conta. Você não poderá mais usá-lo para fazer login.</string>
@@ -1097,7 +1096,7 @@
     <string name="server_settings_role_hoist_description">Exibe membros com o cargo separado na lista de membros.</string>
     <string name="server_settings_role_preview_light">Claro</string>
     <string name="server_settings_role_preview_dark">Escuro</string>
-    <string name="server_settings_role_preview_message">O Stoat é demais!</string>
+    <string name="server_settings_role_preview_message">O dur.io é demais!</string>
     <string name="server_settings_role_permissions">Permissões</string>
     <string name="server_settings_role_permissions_description">Escolha se o cargo permite, herda ou nega cada permissão.</string>
     <string name="server_settings_role_permissions_permission">Você precisa da permissão Gerenciar permissões para alterar estes valores.</string>

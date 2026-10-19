@@ -41,7 +41,6 @@
     <string name="mfa_recovery_code">Kód</string>
     <string name="mfa_password_header">Vložte svoje heslo</string>
     <string name="mfa_password_lead">Vložte svoje heslo aby ste pokračovali.</string>
-    <string name="about_brought_to_you_by">Prinesené k vám z láskou od tímu Revolt.</string>
     <string name="comingsoon_toast">Prepáčte, táto funkcia ešte není dostupná.</string>
     <string name="send_alt">Poslať</string>
     <string name="pick_emoji_alt">Vybrať emoji</string>

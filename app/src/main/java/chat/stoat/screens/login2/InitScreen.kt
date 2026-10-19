@@ -103,11 +103,8 @@ private fun LeadPart(windowSizeClass: WindowSizeClass) {
             Spacer(Modifier.height(64.dp))
         }
         Image(
-            painter = painterResource(R.drawable.stoat_logo_white),
+            painter = painterResource(R.drawable.durio_logo), // durio: the durian, in colour
             contentDescription = null,
-            colorFilter = ColorFilter.tint(
-                MaterialTheme.colorScheme.onBackground
-            ),
             modifier = if (windowSizeClass.widthSizeClass <= WindowWidthSizeClass.Compact)
                 Modifier.fillMaxWidth(0.5f) else Modifier.height(32.dp)
         )

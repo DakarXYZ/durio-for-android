@@ -216,7 +216,6 @@
     <string name="could_not_log_in_body">他のデバイスからログアウトしたか、インターネットが切断されている可能性があります。</string>
     <string name="could_not_log_in_cta_try_again">もう一度お試し下さい</string>
     <string name="could_not_log_in_cta_logout">ログアウト</string>
-    <string name="about_brought_to_you_by">Revoltチームが❤️を込めてお届けします。</string>
     <string name="emoji_category_symbols">シンボル</string>
     <string name="home_join_jenvolt_description">JenvoltはAndroidアプリなどあらゆるものを扱う開発者が運営するスペースです。サポートやフィードバックはこちらです。新しい機能を試すことができるかもしれません! 👀</string>
     <string name="about_full_name">Android版 Revolt</string>

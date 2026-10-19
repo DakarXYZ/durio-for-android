@@ -250,7 +250,6 @@
     <string name="could_not_log_in_heading">Kirjautumisessasi oli ongelma</string>
     <string name="could_not_log_in_body">Olet ehkä kirjautunut ulos jostain toisesta laitteesta, tai internet-yhteytesi saattaa olla poikki.</string>
     <string name="could_not_log_in_cta_try_again">Yritä uudelleen</string>
-    <string name="about_brought_to_you_by">Tuotu sinulle ❤️ Revoltin tiimin toimesta.</string>
     <string name="oss_attribution_tap_to_view_license">Napauta nähdäksesi lisenssin</string>
     <string name="attachment_preview_remove">Poista</string>
     <string name="attachment_preview_close">Sulje</string>

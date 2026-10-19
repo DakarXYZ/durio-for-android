@@ -11,7 +11,7 @@
     <string name="privacy_policy">سياسة الخصوصية</string>
     <string name="community_guidelines">ارشادات المجتمع</string>
     <string name="login_onboarding_heading">جِد مجتمعك، اتصل بالعالم.</string>
-    <string name="login_onboarding_body">يُعد Stoat من أفضل الطرق للبقاء على تواصل مع أصدقائك ومجتمعك، في أي مكان وزمان.</string>
+    <string name="login_onboarding_body">يُعد dur.io من أفضل الطرق للبقاء على تواصل مع أصدقائك ومجتمعك، في أي مكان وزمان.</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
     <string name="login">تسجيل الدخول</string>
@@ -20,8 +20,8 @@
     <string name="login_heading">هيا نسجل دخولك</string>
     <string name="password_forgot">نسيت كلمة المرور؟</string>
     <string name="password_forgot_heading">نسيت كلمة المرور؟</string>
-    <string name="register_heading">مرحبا بك في Stoat</string>
-    <string name="register_image_alt">استخدم Stoat للحديث عن الأشياء.</string>
+    <string name="register_heading">مرحبا بك في dur.io</string>
+    <string name="register_image_alt">استخدم dur.io للحديث عن الأشياء.</string>
     <string name="loading">نجلب بعض المعلومات، انتظرنا…</string>
     <string name="resend_verification">أعد إرسال بريد التحقق</string>
     <string name="password_manager_hint">تستخدم مساعد كلمات المرور؟</string>
@@ -48,8 +48,7 @@
     <string name="mfa_password_header">أدخل كلمة المرور الخاصة بك</string>
     <string name="mfa_password_lead">أدخل كلمة المرور الخاصة بك للاستمرار.</string>
     <string name="about">عن</string>
-    <string name="about_full_name">Stoat علي Android</string>
-    <string name="about_brought_to_you_by">مقدم إليك ب❤️ من قبل فريق Stoat.</string>
+    <string name="about_full_name">dur.io علي Android</string>
     <string name="oss_attribution">تراخيص البرمجيات مفتوحة المصدر</string>
     <string name="register_email">البريد الإلكتروني</string>
     <string name="register_email_verification_hint">سنرسل إليك بريد إلكتروني للتعريف لنعرّف حسابك.</string>
@@ -79,7 +78,7 @@
     <string name="emoji_category_symbols">الرموز</string>
     <string name="emoji_category_flags">الأعلام</string>
     <string name="badge_bot_alt">بوت</string>
-    <string name="badge_team_member_alt">عضو فريق Stoat</string>
+    <string name="badge_team_member_alt">عضو فريق dur.io</string>
     <string name="unknown">غير معلوم</string>
     <string name="menu">قائمة</string>
     <string name="logout">تسجيل الخروج</string>
@@ -263,7 +262,7 @@
     <string name="overview_screen_changelog">ما الجديد؟</string>
     <string name="user_card_data_point_display_name">%1$d اسم</string>
     <string name="user_card_data_point_username">%1$d اسم المستخدم</string>
-    <string name="user_card_data_point_join_date">عن "ستوت" (Stoat) منذ...%1$d</string>
+    <string name="user_card_data_point_join_date">عن "ستوت" (dur.io) منذ...%1$d</string>
     <string name="badge_webhook_alt">ويب هوك</string>
     <string name="user_card_data_point_qrcode">%1$dQR Code</string>
     <string name="user_card_data_point_photo">%1$d.صورة</string>
@@ -315,7 +314,7 @@
     <string name="report_submit">إرسال</string>
     <string name="report_submitting">الإبلاغ.…</string>
     <string name="report_submit_success">تم الابلاغ</string>
-    <string name="report_submit_thanks">شكراً لمساعدتك في الحفاظ على سلامة "ستوت" (Stoat). سنراجع بلاغك في أقرب وقت ممكن.</string>
+    <string name="report_submit_thanks">شكراً لمساعدتك في الحفاظ على سلامة "ستوت" (dur.io). سنراجع بلاغك في أقرب وقت ممكن.</string>
     <string name="report_submit_error_header">خطأ</string>
     <string name="report_submit_error">حدث خطأ أثناء تقديم التقرير الخاص بك. يرجى المحاولة مرة أخرى في وقت لاحق.</string>
     <string name="report_submit_close">أغلق</string>
@@ -524,14 +523,14 @@
     <string name="colour_picker_hue">فارق في الألوان</string>
     <string name="corner_radius_picker_choose_radius">اختر نصف القطر</string>
     <string name="spark_notifications_rationale">كن على علم</string>
-    <string name="spark_keyboard_shortcuts_description">يحتوي Stoat على اختصارات لوحة المفاتيح! اضغط على %1$s لعرضها.</string>
+    <string name="spark_keyboard_shortcuts_description">يحتوي dur.io على اختصارات لوحة المفاتيح! اضغط على %1$s لعرضها.</string>
     <string name="settings_sessions_log_out_other">تسجيل الخروج من الحصص الأخرى</string>
     <string name="user_badge_responsible_disclosure">افشاء مسؤول</string>
     <string name="spark_early_access">مرحبًا بكم في مرحلة الوصول المبكر! 🚀</string>
-    <string name="spark_early_access_description_2">بما أن هذه النسخة في مرحلة "الوصول المبكر"، فقد لا تكون الأمور مثالية تماماً بعد؛ إذ قد تواجه بعض الأخطاء التقنية العرضية، أو حالات توقف مفاجئ للبرنامج، أو سلوكيات غير معتادة. وتساعدنا ملاحظاتك وآراؤك في معالجة هذه الجوانب وتحسين Stoat وجعله أفضل.</string>
+    <string name="spark_early_access_description_2">بما أن هذه النسخة في مرحلة "الوصول المبكر"، فقد لا تكون الأمور مثالية تماماً بعد؛ إذ قد تواجه بعض الأخطاء التقنية العرضية، أو حالات توقف مفاجئ للبرنامج، أو سلوكيات غير معتادة. وتساعدنا ملاحظاتك وآراؤك في معالجة هذه الجوانب وتحسين dur.io وجعله أفضل.</string>
     <string name="spark_early_access_description_3">يسعدنا جداً انضمامك إلينا. دعنا نصنع شيئاً رائعاً معاً!</string>
     <string name="hint_provide_feedback">نُحب تلقّي آرائكم وملاحظاتكم!</string>
-    <string name="hint_provide_feedback_description">إذا كانت لديك أي ملاحظات أو اقتراحات أو بلاغات عن أخطاء برمجية، فيرجى إعلامنا بذلك؛ فنحن نسعى دائمًا لتحسين Stoat.</string>
+    <string name="hint_provide_feedback_description">إذا كانت لديك أي ملاحظات أو اقتراحات أو بلاغات عن أخطاء برمجية، فيرجى إعلامنا بذلك؛ فنحن نسعى دائمًا لتحسين dur.io.</string>
     <string name="hint_provide_feedback_join_server">انضم إلى خادم المختبرين</string>
     <string name="settings_sessions_this_device_unavailable">حصة هذا الجهاز غير متاحة. يُرجى **تسجيل الدخول مجددًا** لعرض الحصة الحالية.</string>
     <string name="settings_appearance_theme_m3dynamic">المواد لك</string>
@@ -628,8 +627,8 @@
     <string name="about_section_oss_licenses">تراخيص المصدر المفتوح</string>
     <string name="oss_attribution_open_library_website">افتح موقع المكتبة الإلكتروني</string>
     <string name="slowmode_immune">منيع</string>
-    <string name="overview_screen_join_lounge">انضم إلى خادم Stoat</string>
-    <string name="overview_screen_join_lounge_description">تواصل مع مستخدمي Stoat الآخرين، وشاركنا آراءك وملاحظاتك، وتابع آخر المستجدات المتعلقة بـ Stoat.</string>
+    <string name="overview_screen_join_lounge">انضم إلى خادم dur.io</string>
+    <string name="overview_screen_join_lounge_description">تواصل مع مستخدمي dur.io الآخرين، وشاركنا آراءك وملاحظاتك، وتابع آخر المستجدات المتعلقة بـ dur.io.</string>
     <string name="overview_screen_catch_up">التحق</string>
     <string name="overview_screen_catch_up_description">اطلع على ما فاتك أثناء غيابك</string>
     <string name="overview_screen_catch_up_none">تم الانتهاء من كل شيء</string>
@@ -637,7 +636,7 @@
     <string name="catch_up">التحق</string>
     <string name="overview_screen_catch_up_none_description">لقد اطلعت على جميع الرسائل الجديدة منذ زيارتك الأخيرة.</string>
     <string name="friends_scan_qr">امسح رمز الاستجابة السريعة</string>
-    <string name="friends_scan_qr_result_sheet_invalid_description">هذا ليس رمز استجابة سريعة (QR code) صالحاً لـ Stoat.</string>
+    <string name="friends_scan_qr_result_sheet_invalid_description">هذا ليس رمز استجابة سريعة (QR code) صالحاً لـ dur.io.</string>
     <string name="friends_scan_qr_result_sheet_invalid_title">رمز الاستجابة السريعة غير صالح</string>
     <string name="friends_scan_qr_result_sheet_success_title">إضافة صديق؟</string>
     <string name="friends_scan_qr_result_sheet_missing_permission_description">عليك منح الكاميرا الإذن لمسح رموز الاستجابة السريعة .</string>

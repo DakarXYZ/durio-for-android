@@ -33,7 +33,6 @@
     <string name="register_password">Contrasinal</string>
     <string name="verify_then_choose_username">Verifica o teu correo electrónico, despois elixiremos o nome de usuario.</string>
     <string name="token_invalid_toast">Pechouse a sesión. Inicia sesión de novo.</string>
-    <string name="about_brought_to_you_by">Traído con ❤️ polo equipo de Revolt.</string>
     <string name="mfa_type_otp">Usa un contrasinal de un só uso</string>
     <string name="mfa_recovery_lead">Escribe un dos teus códigos de recuperación.</string>
     <string name="mfa_password_header">Escribe o teu contrasinal</string>

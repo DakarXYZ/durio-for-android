@@ -62,7 +62,6 @@
     <string name="rate_limit_toast">നിങ്ങളുടെ കുതിരകളെ പിടിക്കുക! കുറഞ്ഞ സമയത്തിനുള്ളിൽ നിങ്ങൾ അത് പലപ്പോഴും ചെയ്യുന്നു.</string>
     <string name="could_not_log_in_body">നിങ്ങൾ മറ്റൊരു ഉപകരണത്തിൽ നിന്ന് ലോഗ് ഔട്ട് ചെയ്‌തിരിക്കാം, അല്ലെങ്കിൽ നിങ്ങളുടെ ഇൻ്റർനെറ്റ് കണക്ഷൻ തകരാറിലായിരിക്കാം.</string>
     <string name="verify_then_choose_username">നിങ്ങളുടെ ഇമെയിൽ പരിശോധിച്ചുറപ്പിക്കുക, തുടർന്ന് നിങ്ങളുടെ ഉപയോക്തൃനാമം തിരഞ്ഞെടുക്കുന്നതിൽ ഞങ്ങൾ തുടരും.</string>
-    <string name="about_brought_to_you_by">സ്‌റ്റോട്ട് ടീം ❤️ ഉപയോഗിച്ച് നിങ്ങൾക്കായി കൊണ്ടുവന്നു.</string>
     <string name="about">ഇതിനെക്കുറിച്ച്</string>
     <string name="mfa_prompt_load_error_description">നിങ്ങളുടെ സ്ഥിരീകരണ രീതികൾ ലോഡുചെയ്യാനായില്ല.</string>
     <string name="mfa_error_invalid_token">ആ കോഡ് സ്വീകരിച്ചില്ല. ഇത് തെറ്റായതോ കാലഹരണപ്പെട്ടതോ ആകാം. ദയവായി വീണ്ടും ശ്രമിക്കുക.</string>
@@ -141,7 +140,7 @@
     <string name="overview_screen_error_description">ദയവായി പിന്നീട് വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="overview_screen_settings">ക്രമീകരണങ്ങൾ തുറക്കുക</string>
     <string name="friends_scan_qr">QR കോഡ് സ്കാൻ ചെയ്യുക</string>
-    <string name="friends_scan_qr_result_sheet_invalid_description">ഇതൊരു സാധുവായ Stoat QR കോഡല്ല.</string>
+    <string name="friends_scan_qr_result_sheet_invalid_description">ഇതൊരു സാധുവായ dur.io QR കോഡല്ല.</string>
     <string name="friends_scan_qr_result_sheet_missing_permission_description">QR കോഡുകൾ സ്കാൻ ചെയ്യാൻ നിങ്ങൾ ക്യാമറയ്ക്ക് അനുമതി നൽകേണ്ടതുണ്ട്.</string>
     <string name="friends_add_by_tag_sheet_description">നിങ്ങൾക്ക് സുഹൃത്തുക്കളെ അവരുടെ %1$susername%3$s, %2$stag%3$s എന്നിവ ഉപയോഗിച്ച് ചേർക്കാം. ഉദാഹരണത്തിന്, അവരുടെ ഉപയോക്തൃനാമം %1$sToast%3$s ആണെങ്കിൽ അവരുടെ ടാഗ് %2$s1234%3$s ആണെങ്കിൽ, നിങ്ങൾക്ക് അവരെ %1$sToast%3$s#%2$s1234%3$s ഉപയോഗിച്ച് ചേർക്കാം.</string>
     <string name="voice_message_microphone_permission_denied">ഒരു വോയ്‌സ് സന്ദേശം റെക്കോർഡ് ചെയ്യാൻ മൈക്രോഫോൺ അനുമതി ആവശ്യമാണ്.</string>
@@ -149,8 +148,8 @@
     <string name="overview_screen_share_profile_description">നിങ്ങളുടെ ഉപയോക്തൃ കാർഡ് നോക്കുക, പങ്കിടാൻ ഒരു പ്രത്യേക ലിങ്ക് നേടുക</string>
     <string name="overview_screen_changelog">പുതിയതെന്താണ്?</string>
     <string name="overview_screen_changelog_description">ഞങ്ങൾ ഈയിടെ എന്താണ് ചെയ്യുന്നതെന്നും അടുത്തതായി എന്താണ് വരാൻ പോകുന്നതെന്നും കാണുക</string>
-    <string name="overview_screen_join_lounge">Stoat സെർവറിൽ ചേരുക</string>
-    <string name="overview_screen_join_lounge_description">മറ്റ് Stoat ഉപയോക്താക്കളുമായി ഹാംഗ് ഔട്ട് ചെയ്യുക, ഫീഡ്‌ബാക്ക് നൽകുക, Stoat-ൽ എന്താണ് സംഭവിക്കുന്നതെന്ന് കാണുക</string>
+    <string name="overview_screen_join_lounge">dur.io സെർവറിൽ ചേരുക</string>
+    <string name="overview_screen_join_lounge_description">മറ്റ് dur.io ഉപയോക്താക്കളുമായി ഹാംഗ് ഔട്ട് ചെയ്യുക, ഫീഡ്‌ബാക്ക് നൽകുക, dur.io-ൽ എന്താണ് സംഭവിക്കുന്നതെന്ന് കാണുക</string>
     <string name="overview_screen_catch_up">പിന്നീട് കാണുക</string>
     <string name="overview_screen_catch_up_description">നിങ്ങൾ ദൂരെയായിരുന്നപ്പോൾ എന്താണ് നഷ്ടമായതെന്ന് കാണുക</string>
     <string name="overview_screen_catch_up_none">എല്ലാം പിടികിട്ടി</string>

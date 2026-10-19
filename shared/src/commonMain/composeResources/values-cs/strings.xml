@@ -9,7 +9,7 @@
     <string name="loading">Načítání informací, vydržte…</string>
     <string name="privacy_policy">Ochrana údajů</string>
     <string name="community_guidelines">Pravidla komunity</string>
-    <string name="login_onboarding_body">Stoat je jedním z nejlepších způsobů, jak můžete zůstat ve spojení se svými přáteli a komunitou, kdekoli, kdykoli.</string>
+    <string name="login_onboarding_body">dur.io je jedním z nejlepších způsobů, jak můžete zůstat ve spojení se svými přáteli a komunitou, kdekoli, kdykoli.</string>
     <string name="password">Heslo</string>
     <string name="login">Přihlásit se</string>
     <string name="signup">Registrace</string>
@@ -19,13 +19,13 @@
     <string name="password_manager_hint">Používáte správce hesel?</string>
     <string name="password_forgot_heading">Zapomněli jste heslo?</string>
     <string name="password_forgot_instructions">Zadejte svůj e-mail, my vám na něj pošleme návod, jak můžete resetovat své heslo.</string>
-    <string name="register_heading">Víteje ve Stoatu</string>
+    <string name="register_heading">Vítejte v dur.io</string>
     <string name="terms_of_service">Podmínky služby</string>
     <string name="email">E-mail</string>
     <string name="login_heading">Pojďme se přihlásit</string>
     <string name="login_onboarding_heading">Najděte svou komunitu, spojte se se světem.</string>
     <string name="resend_verification">Znovu poslat ověřovací e-mail</string>
-    <string name="register_image_alt">Používejte Stoat k chatování o čemkoli.</string>
+    <string name="register_image_alt">Používejte dur.io k chatování o čemkoli.</string>
     <string name="register_instructions">Revolt je místo, kde se můžete scházet, setkávat a povídat si o čemkoli. A to nejlepší? Je to na internetu.</string>
     <string name="register_form_heading">Pojďme vás připravit.</string>
     <string name="register_data">Vaše údaje jsou u nás v bezpečí. Neprodáváme je a nepoužíváme je ani k zobrazování reklam.</string>
@@ -118,8 +118,7 @@
     <string name="unknown">Neznámé</string>
     <string name="menu">Nabídka</string>
     <string name="x_days_ago">před %1$d dny</string>
-    <string name="about_full_name">Stoat na Androidu</string>
-    <string name="about_brought_to_you_by">Vyvinut pro vás s ❤️ od týmu Stoat.</string>
+    <string name="about_full_name">dur.io na Androidu</string>
     <string name="oss_attribution_tap_to_view_license">Klepnutím na zobrazíte licenci</string>
     <string name="pick_emoji_alt">Vybrat emoji</string>
     <string name="add_attachment_alt">Přidat přílohu</string>
@@ -142,7 +141,7 @@
     <string name="badge_bot_alt">Bot</string>
     <string name="badge_masquerade_alt">Z odkazovaného kanálu</string>
     <string name="badge_platform_moderation_alt">Moderace platformy</string>
-    <string name="badge_team_member_alt">Člen týmu Stoat</string>
+    <string name="badge_team_member_alt">Člen týmu dur.io</string>
     <string name="logout">Odhlásit se</string>
     <string name="home_join_jenvolt">Připojit se do Jenvolt</string>
     <string name="friends">Přátelé</string>
@@ -468,9 +467,9 @@
     <string name="rate_limit_toast">Zadrž! Děláš to příliš často v krátkém časovém úseku.</string>
     <string name="service_health_alert">Momentálně probíhá</string>
     <string name="service_health_alert_body_default">V současné době zaznamenáváme problémy s našimi službami. Pro více informací prosím navštivte naši stránku se stavem služeb.</string>
-    <string name="user_card_data_point_join_date">%1$d.Na Stoatu od</string>
+    <string name="user_card_data_point_join_date">%1$d.Na dur.io od</string>
     <string name="friends_scan_qr">Skenovat QR kód</string>
-    <string name="friends_scan_qr_result_sheet_invalid_description">Tenhle není platný QR kód Stoatu.</string>
+    <string name="friends_scan_qr_result_sheet_invalid_description">Tenhle není platný QR kód dur.io.</string>
     <string name="friends_scan_qr_result_sheet_invalid_title">Neplatný QR kód</string>
     <string name="overview_screen_changelog">Co je nového?</string>
     <string name="user_card_data_point_display_name">%1$d.Jméno</string>

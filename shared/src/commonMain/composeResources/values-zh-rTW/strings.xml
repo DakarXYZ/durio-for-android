@@ -48,8 +48,7 @@
     <string name="mfa_password_header">輸入密碼</string>
     <string name="mfa_password_lead">輸入密碼以繼續。</string>
     <string name="about">關於</string>
-    <string name="about_full_name">Stoat Android版</string>
-    <string name="about_brought_to_you_by">由 Stoat 團隊用❤️為您獻上。</string>
+    <string name="about_full_name">dur.io Android版</string>
     <string name="oss_attribution_tap_to_view_license">點擊以查看條款</string>
     <string name="typing_many">%1$s 正在打字中…</string>
     <string name="remove_reply_alt">移除回覆</string>
@@ -74,7 +73,7 @@
     <string name="verify_then_choose_username">請先驗證您的電子郵件，然後我們將會繼續設定您的使用者名稱。</string>
     <string name="mfa_totp_lead">輸入驗證器應用程式中的六位數驗證碼。</string>
     <string name="comingsoon_toast">抱歉，這個功能尚未準備好。</string>
-    <string name="login_onboarding_body">Stoat 是隨時隨地與朋友和社群保持聯繫的最佳方式之一。</string>
+    <string name="login_onboarding_body">dur.io 是隨時隨地與朋友和社群保持聯繫的最佳方式之一。</string>
     <string name="register_instructions">它就像是個一起玩耍、聚會和談論事情的地方。最好的部分是，它在網路上。</string>
     <string name="password">密碼</string>
     <string name="login">登入</string>
@@ -99,7 +98,7 @@
     <string name="mfa_method_password">密碼</string>
     <string name="mfa_prompt_load_error_title">出了一些問題</string>
     <string name="mfa_prompt_confirm">確定</string>
-    <string name="badge_team_member_alt">Stoat 團隊成員</string>
+    <string name="badge_team_member_alt">dur.io 團隊成員</string>
     <string name="friends_outgoing_requests">發送好友申請</string>
     <string name="friends_blocked">封鎖</string>
     <string name="friends_deny_all_incoming">清除所有收到的好友申請</string>
@@ -155,7 +154,7 @@
     <string name="user_card_data_point_qrcode">%1$d.QR Code</string>
     <string name="user_card_data_point_photo">%1$d.照片</string>
     <string name="friends">好友</string>
-    <string name="friends_scan_qr_result_sheet_invalid_description">這不是一個有效的Stoat QR code.</string>
+    <string name="friends_scan_qr_result_sheet_invalid_description">這不是一個有效的dur.io QR code.</string>
     <string name="create_group_search">尋找朋友</string>
     <string name="channel_age_gate_description">您必須年滿 18 歲才能查看此頻道。</string>
     <string name="channel_age_gate_dob_section">出生日期</string>
@@ -234,7 +233,7 @@
     <string name="create_group_description">在群組聊天中召集你的小夥伴。最多可以加入 %1$d 人。</string>
     <string name="system_message_message_pinned_alt">訊息已釘選</string>
     <string name="channel_age_gate_dob_invalid_unlikely">你不可能在 %1$d 之前出生。</string>
-    <string name="user_card_data_point_join_date">%1$d.加入 Stoat 時間</string>
+    <string name="user_card_data_point_join_date">%1$d.加入 dur.io 時間</string>
     <string name="create_group">建立新群組</string>
     <string name="message_not_supported_with_context">無法顯示訊息 (%1$s)。</string>
     <string name="swipe_to_reply_keep_swiping">回覆</string>
@@ -267,7 +266,7 @@
     <string name="status_dnd_explainer">您將不會收到任何通知，包括訊息和 @提及。</string>
     <string name="status_offline">離線</string>
     <string name="status_invisible">隱形</string>
-    <string name="status_invisible_explainer">您仍然可以像往常一樣使用 Stoat，但其他人不會看到您在線上。</string>
+    <string name="status_invisible_explainer">您仍然可以像往常一樣使用 dur.io，但其他人不會看到您在線上。</string>
     <string name="tap_to_retry">點擊重試</string>
     <string name="settings">設定</string>
     <string name="copy">複製</string>

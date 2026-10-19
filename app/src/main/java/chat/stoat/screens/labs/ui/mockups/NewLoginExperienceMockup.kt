@@ -109,7 +109,7 @@ fun NewLoginExperienceMockup(navController: NavController) {
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Stoat is the chat app that’s truly built with you in mind.",
+                            "dur.io is the chat app that’s truly built with you in mind.",
                             style = MaterialTheme.typography.bodyLargeEmphasized,
                             fontSize = 18.sp,
                             textAlign = TextAlign.Center

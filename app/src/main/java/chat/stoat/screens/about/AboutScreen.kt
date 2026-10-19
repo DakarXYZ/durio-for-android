@@ -130,11 +130,11 @@ fun AboutScreen(navController: NavController, viewModel: AboutViewModel = viewMo
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(R.drawable.stoat_logo_white),
+                    // durio: the dur.io durian, in colour (not tinted like upstream's white logo)
+                    painter = painterResource(R.drawable.durio_logo),
                     contentDescription = stringResource(Res.string.about_full_name),
-                    colorFilter = ColorFilter.tint(LocalContentColor.current),
                     modifier = Modifier
-                        .width(250.dp)
+                        .width(160.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -243,7 +243,7 @@ fun AboutScreen(navController: NavController, viewModel: AboutViewModel = viewMo
                                     scope.launch {
                                         clipboard.setClipEntry(
                                             ClipData.newPlainText(
-                                                "Stoat Debug Information",
+                                                "dur.io Debug Information",
                                                 StoatJson.encodeToString(viewModel.debugInfo)
                                             ).toClipEntry()
                                         )
