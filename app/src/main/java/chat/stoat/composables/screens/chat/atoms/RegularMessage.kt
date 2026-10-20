@@ -174,6 +174,9 @@ fun RegularMessage(
 
                         offsetX += deltaX
                         setDrawerGestureEnabled(false)
+                        // durio: the swipe owns the gesture; an image or link under the finger
+                        // sees it consumed and does not take the lift for a tap
+                        changeList.forEach { change -> change.consume() }
                     }
 
                     if (goesTowardsLeft && offsetX <= -30f) {
