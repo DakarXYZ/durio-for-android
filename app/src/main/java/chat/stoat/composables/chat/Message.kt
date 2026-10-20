@@ -77,6 +77,7 @@ import chat.stoat.api.settings.MessageReplyStyle
 import chat.stoat.callbacks.Action
 import chat.stoat.callbacks.ActionChannel
 import chat.stoat.composables.generic.RemoteImage
+import chat.stoat.fork.messages.RecentEmoji
 import chat.stoat.composables.generic.UserAvatar
 import chat.stoat.composables.generic.UserAvatarWidthPlaceholder
 import chat.stoat.composables.markdown.prose.ChatMarkdown
@@ -314,7 +315,8 @@ fun Message(
 
     Column(modifier.animateContentSize()) {
         if (message.tail == false) {
-            Spacer(modifier = Modifier.height(10.dp))
+            // durio: more room above a new author than between their messages (upstream 10dp)
+            Spacer(modifier = Modifier.height(18.dp))
         }
 
         if (authorIsBlocked) {
@@ -658,10 +660,10 @@ fun Message(
                         }
 
                         if (reactionsAndInteractions.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 reactionsAndInteractions.forEach { reaction ->
                                     Reaction(
@@ -675,6 +677,7 @@ fun Message(
                                                         reaction.key
                                                     )
                                                 } else {
+                                                    RecentEmoji.use(reaction.key)
                                                     react(
                                                         message.channel!!,
                                                         message.id!!,
@@ -699,9 +702,9 @@ fun Message(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .clip(MaterialTheme.shapes.small)
-                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
                                         .clickable(onClick = onAddReaction)
-                                        .padding(8.dp)
+                                        .padding(horizontal = 8.dp, vertical = 6.dp)
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_add_reaction_24dp),
@@ -710,7 +713,7 @@ fun Message(
                                     )
                                 }
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                         }
                     }
                 }

@@ -137,6 +137,7 @@ import chat.stoat.api.internals.ChannelUtils
 import chat.stoat.api.internals.PermissionBit
 import chat.stoat.api.internals.has
 import chat.stoat.api.routes.channel.react
+import chat.stoat.fork.messages.RecentEmoji
 import chat.stoat.api.routes.microservices.autumn.FileArgs
 import chat.stoat.api.settings.LoadedSettings
 import chat.stoat.callbacks.Action
@@ -778,6 +779,7 @@ fun ChannelScreen(
                 if (it == null) return@ReactSheet
 
                 scope.launch {
+                    RecentEmoji.use(it)
                     react(channelId, reactSheetTarget, it)
                     reactSheetState.hide()
                     reactSheetShown = false

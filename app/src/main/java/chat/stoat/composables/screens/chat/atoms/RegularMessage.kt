@@ -1,6 +1,7 @@
 package chat.stoat.composables.screens.chat.atoms
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -39,9 +40,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import chat.stoat.R
@@ -53,8 +57,16 @@ import chat.stoat.callbacks.ActionChannel
 import chat.stoat.composables.chat.Message
 import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
+import chat.stoat.api.fork.e2ee.E2eeState
+import chat.stoat.fork.e2ee.ui.noticeFor
+import chat.stoat.fork.messages.MessageQuickActions
+import chat.stoat.fork.messages.RecentEmoji
+import chat.stoat.internals.Platform
 import chat.stoat.internals.extensions.supportSwipeReply
+import chat.stoat.api.routes.channel.react
+import chat.stoat.api.routes.channel.unreact
 import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.copied
 import chat.stoat.shared.resources.swipe_to_reply_keep_swiping
 import chat.stoat.shared.resources.swipe_to_reply_release
 import com.mikepenz.markdown.model.State
@@ -83,6 +95,12 @@ fun RegularMessage(
     mdAst: State? = null
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val copiedText = stringResource(Res.string.copied)
+
+    // durio: a tap shows the quick actions (recent reactions, copy, reply, more)
+    var quickActionsShown by remember { mutableStateOf(false) }
 
     val offsetXState = remember { mutableFloatStateOf(0f) }
     var offsetX by offsetXState
@@ -176,6 +194,7 @@ fun RegularMessage(
     Box {
         Message(
             message = message,
+            onClick = { quickActionsShown = true },
             onMessageContextMenu = {
                 message.id?.let { messageId ->
                     showMessageBottomSheet(messageId)
@@ -252,6 +271,47 @@ fun RegularMessage(
                     if (messageHeight != it.height) messageHeight = it.height
                 }
         )
+        if (quickActionsShown) {
+            MessageQuickActions(
+                showReactions = message.channel != null && message.id != null,
+                // an encrypted message not (yet) decrypted has only the server's placeholder
+                showCopy = !message.content.isNullOrEmpty() &&
+                    noticeFor(message, message.id?.let { E2eeState.status[it] })?.hidesBody != true,
+                showReply = message.id != null,
+                onReact = { emoji ->
+                    quickActionsShown = false
+                    val channelId = message.channel ?: return@MessageQuickActions
+                    val messageId = message.id ?: return@MessageQuickActions
+                    val hasOwn = message.reactions?.get(emoji)?.contains(StoatAPI.selfId) == true
+                    scope.launch {
+                        runCatching {
+                            if (hasOwn) {
+                                unreact(channelId, messageId, emoji)
+                            } else {
+                                RecentEmoji.use(emoji)
+                                react(channelId, messageId, emoji)
+                            }
+                        }
+                    }
+                },
+                onCopy = {
+                    quickActionsShown = false
+                    clipboardManager.setText(AnnotatedString(message.content.orEmpty()))
+                    if (Platform.needsShowClipboardNotification()) {
+                        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onReply = {
+                    quickActionsShown = false
+                    message.id?.let { scope.launch { replyToMessage(it) } }
+                },
+                onMore = {
+                    quickActionsShown = false
+                    message.id?.let(showMessageBottomSheet)
+                },
+                onDismiss = { quickActionsShown = false },
+            )
+        }
         with(LocalDensity.current) {
             val msgHeightAsDp = messageHeight.toDp()
             BoxWithConstraints(Modifier.height(msgHeightAsDp)) {

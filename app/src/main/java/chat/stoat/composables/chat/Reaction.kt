@@ -7,6 +7,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,19 +45,29 @@ fun Reaction(
 ) {
     val hasOwn = members.contains(StoatAPI.selfId)
 
+    // durio: quieter than upstream's filled pills, the message stays in front: a faint tint,
+    // own reactions outlined in primary
     val background by animateColorAsState(
         targetValue = if (hasOwn) {
-            MaterialTheme.colorScheme.primary
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
         },
         label = "Reaction background"
     )
+    val border by animateColorAsState(
+        targetValue = if (hasOwn) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+        } else {
+            Color.Transparent
+        },
+        label = "Reaction border"
+    )
     val foreground by animateColorAsState(
         targetValue = if (hasOwn) {
-            MaterialTheme.colorScheme.onPrimary
+            MaterialTheme.colorScheme.primary
         } else {
-            MaterialTheme.colorScheme.onSurface
+            MaterialTheme.colorScheme.onSurfaceVariant
         },
         label = "Reaction foreground"
     )
@@ -65,11 +77,12 @@ fun Reaction(
         modifier = Modifier
             .clip(MaterialTheme.shapes.small)
             .background(background)
+            .border(1.dp, border, MaterialTheme.shapes.small)
             .combinedClickable(
                 onClick = { onClick(hasOwn) },
                 onLongClick = onLongClick,
             )
-            .padding(8.dp)
+            .padding(horizontal = 8.dp, vertical = 5.dp)
     ) {
         CompositionLocalProvider(LocalContentColor provides foreground) {
             if (emoji.isUlid()) {
@@ -96,7 +109,7 @@ fun Reaction(
                 }
             }
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(6.dp))
 
             members.size.let { number ->
                 number.toString()
@@ -123,7 +136,7 @@ fun Reaction(
                                 text = target.digitChar.toString(),
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.Center,
                                     fontFeatureSettings = "tnum"
                                 )

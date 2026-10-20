@@ -40,6 +40,7 @@ import chat.stoat.api.internals.Roles
 import chat.stoat.api.internals.has
 import chat.stoat.api.routes.channel.deleteMessage
 import chat.stoat.api.routes.channel.react
+import chat.stoat.fork.messages.RecentEmoji
 import chat.stoat.callbacks.UiCallbacks
 import chat.stoat.composables.chat.Message
 import chat.stoat.composables.generic.SheetButton
@@ -279,6 +280,7 @@ fun MessageContextSheet(
 
                 coroutineScope.launch {
                     message.channel?.let { channelId ->
+                        RecentEmoji.use(it)
                         react(channelId, messageId, it)
                     }
 

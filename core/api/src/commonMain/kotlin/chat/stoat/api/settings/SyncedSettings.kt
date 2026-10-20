@@ -48,7 +48,9 @@ object SyncedSettings {
             theme = "None",
             font = "Default",
             colourOverrides = null,
-            messageReplyStyle = "None"
+            // durio: swipe left to reply by default (upstream "None" switched it off for accounts
+            // without stored Android settings)
+            messageReplyStyle = "SwipeFromEnd"
         )
     )
     private val _notifications = mutableStateOf(NotificationSettings())
@@ -164,7 +166,9 @@ object SyncedSettings {
             theme = "None",
             font = "Default",
             colourOverrides = null,
-            messageReplyStyle = "None"
+            // durio: swipe left to reply by default (upstream "None" switched it off for accounts
+            // without stored Android settings)
+            messageReplyStyle = "SwipeFromEnd"
         )
         _notifications.value = NotificationSettings()
         _releaseNotes.value = ReleaseNotesSettings()
@@ -245,7 +249,9 @@ object SyncedSettings {
             theme = "None",
             font = "Default",
             colourOverrides = null,
-            messageReplyStyle = "None"
+            // durio: swipe left to reply by default (upstream "None" switched it off for accounts
+            // without stored Android settings)
+            messageReplyStyle = "SwipeFromEnd"
         )
         _android.value = default
         write("android", StoatJson.encodeToString(AndroidSpecificSettings.serializer(), default))

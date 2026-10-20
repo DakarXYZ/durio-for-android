@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: quick actions of a message (tap on a message) -->
+<resources>
+    <string name="durio_message_quick_more">More actions</string>
+    <string name="durio_message_quick_react">React with %1$s</string>
+</resources>
