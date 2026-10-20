@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: опросы и панель вложений -->
+<resources>
+    <string name="durio_poll">Опрос</string>
+    <string name="durio_poll_create_title">Новый опрос</string>
+    <string name="durio_poll_question">Вопрос</string>
+    <string name="durio_poll_answer">Вариант %1$d</string>
+    <string name="durio_poll_add_answer">Добавить вариант</string>
+    <string name="durio_poll_remove_answer">Убрать этот вариант</string>
+    <string name="durio_poll_multiple">Можно выбрать несколько</string>
+    <string name="durio_poll_send">Отправить опрос</string>
+    <string name="durio_poll_hint">Вопрос и хотя бы два варианта. Опросы не шифруются сквозным шифрованием.</string>
+    <string name="durio_poll_failed">Опрос не отправлен: %1$s</string>
+    <string name="durio_poll_vote_failed">Голос не учтён: %1$s</string>
+    <string name="durio_poll_votes">Голосов: %1$d</string>
+    <string name="durio_poll_no_votes">Пока никто не голосовал</string>
+    <string name="durio_poll_kind_multiple">Несколько ответов</string>
+    <string name="durio_poll_closed">Опрос закрыт</string>
+    <string name="durio_poll_close">Закрыть опрос</string>
+    <string name="durio_attach_gallery">Галерея</string>
+    <string name="durio_attach_recent_permission">Показать последние фото</string>
+</resources>

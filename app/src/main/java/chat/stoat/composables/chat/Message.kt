@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import chat.stoat.R
 import chat.stoat.fork.e2ee.ui.EncryptedMessageNotice
+import chat.stoat.fork.polls.PollCard
 import chat.stoat.activities.media.ImageViewActivity
 import chat.stoat.activities.media.VideoViewActivity
 import chat.stoat.api.StoatAPI
@@ -541,6 +542,11 @@ fun Message(
                                     )
                                 }
                             }
+                        }
+
+                        // durio: the poll of the message (dur.io servers)
+                        message.poll?.let { poll ->
+                            PollCard(message = message, poll = poll, onLongPress = onMessageContextMenu)
                         }
 
                         message.attachments?.takeIf { !e2eeHidden }?.let {

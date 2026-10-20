@@ -1,6 +1,7 @@
 package chat.stoat.core.model.schemas
 
 import chat.stoat.core.model.fork.EncryptedEnvelope
+import chat.stoat.core.model.fork.Poll
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -31,6 +32,8 @@ data class Message(
     val tail: Boolean? = null, // this is used to determine if the message is the last in a message group
     // durio: E2EE envelope; `content` then holds the server's placeholder (plan AN-25)
     val encrypted: EncryptedEnvelope? = null,
+    // durio: a poll on the message (dur.io servers)
+    val poll: Poll? = null,
 ) {
 
     fun mergeWithPartial(partial: Message): Message {
@@ -56,6 +59,7 @@ data class Message(
             pinned = partial.pinned ?: pinned,
             flags = partial.flags ?: flags,
             encrypted = partial.encrypted ?: encrypted,
+            poll = partial.poll ?: poll,
         )
     }
 }

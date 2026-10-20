@@ -67,6 +67,9 @@ import chat.stoat.shared.resources.message_context_sheet_actions_reply
 import chat.stoat.shared.resources.message_context_sheet_actions_report
 import chat.stoat.shared.resources.share
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import chat.stoat.api.fork.routes.closePoll
+import chat.stoat.shared.resources.durio_poll_close
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
@@ -404,6 +407,36 @@ fun MessageContextSheet(
                 onClick = {
                     coroutineScope.launch {
                         UiCallbacks.editMessage(messageId)
+                        onHideSheet()
+                    }
+                }
+            )
+        }
+
+        // durio: the author closes their poll (the server also lets ManageMessages)
+        if (message.author == StoatAPI.selfId && message.poll?.closed == false) {
+            SheetButton(
+                leadingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_poll_24dp),
+                        contentDescription = null
+                    )
+                },
+                headlineContent = {
+                    Text(text = stringResource(Res.string.durio_poll_close))
+                },
+                onClick = {
+                    coroutineScope.launch {
+                        val channelId = message.channel
+                        if (channelId != null) {
+                            try {
+                                closePoll(channelId, messageId)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Toast.makeText(context, e.message ?: "", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                         onHideSheet()
                     }
                 }

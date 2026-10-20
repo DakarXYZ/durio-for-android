@@ -149,6 +149,11 @@ import chat.stoat.fork.e2ee.ui.EncryptedChannelBadge
 import chat.stoat.fork.e2ee.ui.EncryptionBanner
 import chat.stoat.fork.e2ee.ui.showCallNotEncryptedNotice
 import chat.stoat.fork.e2ee.OutgoingMessages
+import chat.stoat.fork.polls.CreatePollSheet
+import kotlinx.coroutines.CancellationException
+import chat.stoat.api.fork.routes.sendPoll
+import chat.stoat.shared.resources.durio_poll
+import chat.stoat.shared.resources.durio_poll_failed
 import chat.stoat.fork.upload.AttachmentLimits
 import chat.stoat.fork.upload.rejectTooLargeAttachment
 import chat.stoat.api.fork.e2ee.E2eeChannels
@@ -787,6 +792,48 @@ fun ChannelScreen(
             }
         }
     }
+    // durio: a new poll (dur.io servers; not in encrypted chats)
+    var pollSheetShown by remember { mutableStateOf(false) }
+    var pollSending by remember { mutableStateOf(false) }
+    if (pollSheetShown) {
+        val pollSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
+        ModalBottomSheet(
+            sheetState = pollSheetState,
+            onDismissRequest = { if (!pollSending) pollSheetShown = false }
+        ) {
+            CreatePollSheet(busy = pollSending) { draft ->
+                pollSending = true
+                scope.launch {
+                    try {
+                        sendPoll(channelId, draft, viewModel.draftReplyTo.toList())
+                        viewModel.draftReplyTo.clear()
+                        pollSheetState.hide()
+                        pollSheetShown = false
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            getString(Res.string.durio_poll_failed, e.message ?: ""),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } finally {
+                        pollSending = false
+                    }
+                }
+            }
+        }
+    }
+    val openPollCallback: (() -> Unit)? =
+        if (OutgoingMessages.isEncrypted(channelId)) null else {
+            {
+                pollSheetShown = true
+                viewModel.activePane = ChannelScreenActivePane.None
+            }
+        }
     // </editor-fold>
     // <editor-fold desc="Begin UI composition">
     Scaffold(
@@ -1709,6 +1756,19 @@ fun ChannelScreen(
                                                                 ChannelScreenActivePane.None
                                                         }
                                                     )
+                                                    // durio: polls
+                                                    openPollCallback?.let { openPoll ->
+                                                        DropdownMenuItem(
+                                                            leadingIcon = {
+                                                                Icon(
+                                                                    painter = painterResource(R.drawable.ic_poll_24dp),
+                                                                    contentDescription = null
+                                                                )
+                                                            },
+                                                            text = { Text(stringResource(Res.string.durio_poll)) },
+                                                            onClick = openPoll
+                                                        )
+                                                    }
                                                 }
                                             }
                                         } else {
@@ -1830,6 +1890,14 @@ fun ChannelScreen(
                                                             viewModel.activePane =
                                                                 ChannelScreenActivePane.None
                                                         },
+                                                        // durio: newest photos (a second tap takes one off), polls
+                                                        onPickRecent = { uri ->
+                                                            processFileUri(uri, uri.toString())
+                                                        },
+                                                        pickedRecent = viewModel.draftAttachments
+                                                            .mapNotNull { it.pickerIdentifier }
+                                                            .toSet(),
+                                                        onCreatePoll = openPollCallback,
                                                     )
                                                 }
 
