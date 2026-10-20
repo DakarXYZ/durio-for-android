@@ -86,6 +86,7 @@ import chat.stoat.composables.voice.VoicePermissionSwitch
 import chat.stoat.composables.voice.VoiceSheet
 import chat.stoat.core.model.fork.ActiveServer
 import chat.stoat.core.model.schemas.HealthNotice
+import chat.stoat.fork.register.PendingServerInvite
 import chat.stoat.fork.account.AccountManager
 import chat.stoat.fork.links.AccountLinks
 import chat.stoat.fork.update.AppUpdates
@@ -679,6 +680,7 @@ fun AppEntrypoint(
                             ) + fadeIn(animationSpec = StoatTweenFloat)
                         }
                     ) {
+                        PendingServerInvite.OpenOnce() // durio: the invite signed up with
                         ChatRouterScreen(
                             navController,
                             windowSizeClass,
@@ -719,6 +721,7 @@ fun AppEntrypoint(
                             )
                         }
                     ) {
+                        PendingServerInvite.OpenOnce() // durio: the invite signed up with
                         MainScreen(navController)
                     }
                     composable(

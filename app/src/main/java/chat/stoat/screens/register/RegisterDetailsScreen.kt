@@ -42,6 +42,7 @@ import chat.stoat.api.routes.account.register
 import chat.stoat.api.routes.misc.getRootRoute
 import chat.stoat.composables.generic.FormTextField
 import chat.stoat.fork.register.InviteCodeField
+import chat.stoat.fork.register.PendingServerInvite
 import chat.stoat.fork.register.RegistrationInvite
 import chat.stoat.fork.register.SignInAfterRegistration
 import chat.stoat.shared.resources.Res
@@ -124,6 +125,8 @@ class RegisterDetailsScreenViewModel : ViewModel() {
 
         viewModelScope.launch {
             val result = register(body)
+            // durio: the invite to a server signed up with opens once in the chat
+            if (result.ok) PendingServerInvite.remember(invite)
 
             if (result.ok && emailVerification == false) {
                 // durio: no mail is sent, the account is verified: sign in instead of "check your mail"

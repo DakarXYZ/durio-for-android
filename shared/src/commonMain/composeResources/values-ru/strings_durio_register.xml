@@ -4,8 +4,7 @@
     <string name="durio_register_invite">Код приглашения</string>
     <string name="durio_register_invite_hint_optional">Только если сервер выдал вам код: без него на сервер с регистрацией по приглашениям не зарегистрироваться.</string>
     <string name="durio_register_invite_missing">На этом сервере регистрация только по приглашениям: введите код приглашения.</string>
-    <string name="durio_register_invite_invalid">Код приглашения недействителен или уже использован.</string>
-    <string name="durio_register_invite_hint_required">На этом сервере регистрация только по приглашениям: введите код или вставьте ссылку-приглашение от администратора.</string>
+    <string name="durio_register_invite_invalid">Приглашение недействительно, истекло или исчерпано.</string>
+    <string name="durio_register_invite_hint_required">На этом сервере регистрация только по приглашениям: вставьте ссылку-приглашение (…/invite/…) или только код из неё.</string>
     <string name="durio_register_invite_other_server">Эта ссылка для %1$s, а не для сервера, на котором вы регистрируетесь. Сначала выберите тот сервер.</string>
-    <string name="durio_register_invite_server_invite">Это приглашение на сервер (сообщество), а не для регистрации. Попросите у администратора ссылку для регистрации: в ней есть /join/.</string>
 </resources>

@@ -34,7 +34,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,13 +56,7 @@ import chat.stoat.R
 import chat.stoat.api.fork.routes.AdminRequestException
 import chat.stoat.api.fork.routes.AdminUser
 import chat.stoat.api.fork.routes.DeviceSession
-import chat.stoat.api.fork.routes.AdminInvite
-import chat.stoat.api.fork.routes.createAdminInvite
 import chat.stoat.api.fork.routes.elevateAdmin
-import chat.stoat.api.fork.routes.fetchAdminInvites
-import chat.stoat.api.fork.routes.revokeAdminInvite
-import chat.stoat.core.model.fork.ActiveServer
-import chat.stoat.fork.register.RegistrationInvite
 import chat.stoat.api.fork.routes.endAdminElevation
 import chat.stoat.api.fork.routes.endAllUserSessions
 import chat.stoat.api.fork.routes.endUserSession
@@ -170,40 +163,6 @@ class AdminViewModel : ViewModel() {
             val status = fetchAdminStatus()
             elevatedUntilMs = status.elevatedUntilMs?.takeIf { status.elevated(System.currentTimeMillis()) }
             if (elevatedUntilMs == null && !elevate()) return@request
-            invites = fetchAdminInvites()
-        }
-    }
-
-    // ---- invite links (sign-up on an invite-only server)
-
-    /** Active invites made in the app, newest first; null until loaded. */
-    var invites by mutableStateOf<List<AdminInvite>?>(null)
-    var inviteHours by mutableIntStateOf(AdminInvite.LIFETIMES_HOURS.last())
-    var inviteMultiUse by mutableStateOf(false)
-    var revoke by mutableStateOf<AdminInvite?>(null)
-
-    /** `https://<host>/invite/<code>` on the active server's host. */
-    fun inviteLink(code: String): String =
-        AdminInvite.link(RegistrationInvite.hostOf(ActiveServer.currentOrNull?.api.orEmpty()), code)
-
-    /** Creates an invite with the chosen lifetime and kind; [onCreated] gets its link. */
-    fun createInvite(onCreated: (String) -> Unit) = request {
-        val invite = createAdminInvite(inviteHours, inviteMultiUse)
-        onCreated(inviteLink(invite.code))
-        invites = fetchAdminInvites()
-    }
-
-    fun revokeInvite(invite: AdminInvite, onDone: () -> Unit) {
-        revoke = null
-        request {
-            try {
-                revokeAdminInvite(invite.code)
-            } catch (e: AdminRequestException) {
-                // gone already (expired or used up meanwhile)
-                if (e.status != 404) throw e
-            }
-            onDone()
-            invites = fetchAdminInvites()
         }
     }
 
@@ -333,7 +292,6 @@ fun AdminScreen(navController: NavController, viewModel: AdminViewModel = viewMo
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { viewModel.enter() }
     MfaPromptSheet(viewModel.mfa)
-    RevokeInviteDialog(viewModel)
 
     viewModel.confirm?.let { target ->
         val user = viewModel.user
@@ -445,7 +403,6 @@ fun AdminScreen(navController: NavController, viewModel: AdminViewModel = viewMo
                     )
                 }
             }
-            adminInvites(viewModel)
         }
     }
 }

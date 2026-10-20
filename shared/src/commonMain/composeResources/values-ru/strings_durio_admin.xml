@@ -26,20 +26,4 @@
     <string name="durio_admin_mode_needed">Режим администратора выключен: включите его кодом из приложения-аутентификатора.</string>
     <string name="durio_admin_totp_required">Для режима администратора нужно приложение-аутентификатор. Сначала включите его в «Настройки → Аккаунт → Двухфакторная аутентификация».</string>
     <string name="durio_admin_invalid_code">Код неверный или устарел. Включите режим администратора ещё раз с новым кодом.</string>
-    <string name="durio_admin_invites">Приглашения</string>
-    <string name="durio_admin_invites_text">По ссылке-приглашению можно зарегистрироваться на этом сервере. Отправляйте ссылку только тому, для кого она.</string>
-    <string name="durio_admin_invites_none">Активных приглашений нет.</string>
-    <string name="durio_admin_invite_hours">%1$d ч</string>
-    <string name="durio_admin_invite_multi">Могут использовать несколько человек</string>
-    <string name="durio_admin_invite_create">Создать и скопировать ссылку</string>
-    <string name="durio_admin_invite_copied">Ссылка-приглашение скопирована</string>
-    <string name="durio_admin_invite_copy">Копировать</string>
-    <string name="durio_admin_invite_share">Поделиться</string>
-    <string name="durio_admin_invite_revoke">Отозвать</string>
-    <string name="durio_admin_invite_revoke_title">Отозвать приглашение?</string>
-    <string name="durio_admin_invite_revoke_text">Ссылка сразу перестанет работать. Уже созданные по ней аккаунты останутся.</string>
-    <string name="durio_admin_invite_revoked">Приглашение отозвано</string>
-    <string name="durio_admin_invite_expires">Действует до %1$s</string>
-    <string name="durio_admin_invite_single">Для одного человека</string>
-    <string name="durio_admin_invite_multi_uses">Для нескольких человек · использовано: %1$d</string>
 </resources>

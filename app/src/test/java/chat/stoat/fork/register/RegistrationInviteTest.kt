@@ -33,13 +33,13 @@ class RegistrationInviteTest {
 
     @Test
     fun aPastedLinkGivesItsCode() {
-        val link = RegistrationInvite.parse(" https://duri0.duckdns.org/join/K7x9Q2abcd ")
+        val link = RegistrationInvite.parse(" https://duri0.duckdns.org/invite/K7x9Q2abcd ")
         assertEquals("K7x9Q2abcd", link.code)
         assertEquals("duri0.duckdns.org", link.host)
-        assertEquals("K7x9Q2abcd", RegistrationInvite.parse("duri0.duckdns.org/join/K7x9Q2abcd/").code)
-        assertEquals("K7x9Q2abcd", RegistrationInvite.parse("https://Duri0.DuckDNS.org:8443/app/join/K7x9Q2abcd?ref=x#y").code)
-        assertEquals("duri0.duckdns.org", RegistrationInvite.parse("https://Duri0.DuckDNS.org:8443/join/K7x9Q2abcd").host)
-        assertEquals("K7x9Q2abcd", RegistrationInvite.body("a@b.c", "pw", null, "https://duri0.duckdns.org/join/K7x9Q2abcd").invite)
+        assertEquals("K7x9Q2abcd", RegistrationInvite.parse("duri0.duckdns.org/invite/K7x9Q2abcd/").code)
+        assertEquals("K7x9Q2abcd", RegistrationInvite.parse("https://Duri0.DuckDNS.org:8443/app/invite/K7x9Q2abcd?ref=x#y").code)
+        assertEquals("duri0.duckdns.org", RegistrationInvite.parse("https://Duri0.DuckDNS.org:8443/invite/K7x9Q2abcd").host)
+        assertEquals("K7x9Q2abcd", RegistrationInvite.body("a@b.c", "pw", null, "https://duri0.duckdns.org/invite/K7x9Q2abcd").invite)
 
         // a bare code stays as it is, without a host
         assertEquals(RegistrationInvite.Parsed("K7x9Q2abcd", null), RegistrationInvite.parse("K7x9Q2abcd"))
@@ -48,16 +48,12 @@ class RegistrationInviteTest {
     }
 
     @Test
-    fun aServerInviteIsNoSignUpInvite() {
-        val guild = RegistrationInvite.parse("https://duri0.duckdns.org/invite/AbCd1234")
-        assertTrue(guild.serverInvite)
-        assertEquals("", guild.code)
-        assertEquals("duri0.duckdns.org", guild.host)
-        // nothing of it is sent, and an invite-only server still wants a code
-        assertNull(RegistrationInvite.body("a@b.c", "pw", null, "https://duri0.duckdns.org/invite/AbCd1234").invite)
-        assertFalse(RegistrationInvite.complete(inviteOnly = true, invite = "duri0.duckdns.org/invite/AbCd1234"))
-        assertFalse(RegistrationInvite.parse("https://duri0.duckdns.org/join/K7").serverInvite)
-        assertFalse(RegistrationInvite.parse("K7").serverInvite)
+    fun aServerInviteSignsUp() {
+        // dur.io servers take the standard invite to a server for signing up
+        assertEquals("AbCd1234", RegistrationInvite.body("a@b.c", "pw", null, "https://duri0.duckdns.org/invite/AbCd1234").invite)
+        assertTrue(RegistrationInvite.complete(inviteOnly = true, invite = "duri0.duckdns.org/invite/AbCd1234"))
+        // the old sign-up links are gone: such a text is sent as typed and refused by the server
+        assertNull(RegistrationInvite.parse("https://duri0.duckdns.org/join/K7").host)
     }
 
     @Test
@@ -69,11 +65,11 @@ class RegistrationInviteTest {
             proxy = "",
             webApp = "https://duri0.duckdns.org",
         )
-        assertFalse(RegistrationInvite.otherServer("https://duri0.duckdns.org/join/K7", server))
-        assertFalse(RegistrationInvite.otherServer("https://DURI0.duckdns.org/join/K7", server))
-        assertTrue(RegistrationInvite.otherServer("https://other.duckdns.org/join/K7", server))
+        assertFalse(RegistrationInvite.otherServer("https://duri0.duckdns.org/invite/K7", server))
+        assertFalse(RegistrationInvite.otherServer("https://DURI0.duckdns.org/invite/K7", server))
+        assertTrue(RegistrationInvite.otherServer("https://other.duckdns.org/invite/K7", server))
         assertFalse(RegistrationInvite.otherServer("K7", server))
-        assertFalse(RegistrationInvite.otherServer("https://other.duckdns.org/join/K7", null))
+        assertFalse(RegistrationInvite.otherServer("https://other.duckdns.org/invite/K7", null))
         assertEquals("duri0.duckdns.org", RegistrationInvite.hostOf(server.api))
     }
 
