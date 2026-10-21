@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,9 +42,13 @@ import chat.stoat.core.model.fork.Poll
 import chat.stoat.core.model.schemas.Message
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_poll
+import chat.stoat.shared.resources.durio_poll_cancel
+import chat.stoat.shared.resources.durio_poll_change_vote
 import chat.stoat.shared.resources.durio_poll_closed
 import chat.stoat.shared.resources.durio_poll_kind_multiple
 import chat.stoat.shared.resources.durio_poll_no_votes
+import chat.stoat.shared.resources.durio_poll_take_back
+import chat.stoat.shared.resources.durio_poll_vote
 import chat.stoat.shared.resources.durio_poll_vote_failed
 import chat.stoat.shared.resources.durio_poll_votes
 import kotlinx.coroutines.CancellationException
@@ -51,8 +57,9 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The poll of a message: the question, a row per answer with a bar of its share of the voters,
- * the own picks ticked. A tap votes (the server's update is what stays), a long press opens the
+ * The poll of a message: the question, a row per answer with a bar of its share of all votes,
+ * the own picks ticked. Taps pick answers and "Vote" sends them (the server's update is what
+ * stays); "Change vote" picks again unless the poll's votes are final. A long press opens the
  * message's context sheet like the rest of the message.
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -62,22 +69,36 @@ fun PollCard(message: Message, poll: Poll, onLongPress: () -> Unit) {
     val scope = rememberCoroutineScope()
     val selfId = StoatAPI.selfId
 
-    // the picks just made, until the server's poll replaces it
+    // the picks just sent, until the server's poll replaces it
     var pending by remember(poll) { mutableStateOf<Poll?>(null) }
     val shown = pending ?: poll
-    val picks = PollLogic.picks(shown, selfId)
+    val mine = PollLogic.picks(shown, selfId)
+    val voted = mine.isNotEmpty()
     val voters = PollLogic.voters(shown)
     val canVote = !shown.closed && selfId != null && message.channel != null && message.id != null
 
-    fun vote(answerId: String) {
+    // picks not sent yet; changing: choosing again after a vote
+    var draft by remember(message.id) { mutableStateOf(emptyList<String>()) }
+    var changing by remember(message.id) { mutableStateOf(false) }
+    var busy by remember(message.id) { mutableStateOf(false) }
+    val choosing = canVote && (!voted || changing)
+    val canChange = canVote && voted && !changing && !shown.finalVotes
+    // a first vote needs a pick; a changed one may take the vote back
+    val canSend = !busy && !PollLogic.samePicks(draft, mine) && (draft.isNotEmpty() || voted)
+
+    fun vote() {
         val self = selfId ?: return
         val channelId = message.channel ?: return
         val messageId = message.id ?: return
-        val next = PollLogic.nextPicks(shown, self, answerId)
-        pending = PollLogic.withPicks(shown, self, next)
+        if (!canSend) return
+        val picks = draft
+        busy = true
+        pending = PollLogic.withPicks(shown, self, picks)
+        draft = emptyList()
+        changing = false
         scope.launch {
             try {
-                votePoll(channelId, messageId, next)
+                votePoll(channelId, messageId, picks)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -87,6 +108,8 @@ fun PollCard(message: Message, poll: Poll, onLongPress: () -> Unit) {
                     getString(Res.string.durio_poll_vote_failed, e.message ?: ""),
                     Toast.LENGTH_SHORT,
                 ).show()
+            } finally {
+                busy = false
             }
         }
     }
@@ -117,7 +140,7 @@ fun PollCard(message: Message, poll: Poll, onLongPress: () -> Unit) {
         }
 
         shown.answers.forEach { answer ->
-            val picked = answer.id in picks
+            val picked = if (choosing) answer.id in draft else answer.id in mine
             val percent = PollLogic.percent(shown, answer.id)
             val shape = RoundedCornerShape(8.dp)
             Box(
@@ -133,11 +156,11 @@ fun PollCard(message: Message, poll: Poll, onLongPress: () -> Unit) {
                     )
                     .combinedClickable(
                         enabled = true,
-                        onClick = { if (canVote) vote(answer.id) },
+                        onClick = { if (choosing && !busy) draft = PollLogic.toggle(shown, draft, answer.id) },
                         onLongClick = onLongPress,
                     ),
             ) {
-                // the share of the voters, as a bar behind the text
+                // the share of all votes, as a bar behind the text
                 Box(Modifier.matchParentSize()) {
                     Box(
                         Modifier
@@ -174,6 +197,33 @@ fun PollCard(message: Message, poll: Poll, onLongPress: () -> Unit) {
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                }
+            }
+        }
+
+        if (choosing || canChange) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (choosing) {
+                    Button(onClick = { vote() }, enabled = canSend) {
+                        Text(
+                            stringResource(
+                                if (voted && draft.isEmpty()) Res.string.durio_poll_take_back
+                                else Res.string.durio_poll_vote
+                            )
+                        )
+                    }
+                    if (changing) {
+                        TextButton(onClick = { draft = emptyList(); changing = false }) {
+                            Text(stringResource(Res.string.durio_poll_cancel))
+                        }
+                    }
+                } else {
+                    TextButton(onClick = { draft = mine; changing = true }) {
+                        Text(stringResource(Res.string.durio_poll_change_vote))
                     }
                 }
             }

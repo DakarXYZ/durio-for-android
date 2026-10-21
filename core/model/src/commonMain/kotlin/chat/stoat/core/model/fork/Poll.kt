@@ -1,5 +1,6 @@
 package chat.stoat.core.model.fork
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,6 +13,9 @@ data class Poll(
     val answers: List<PollAnswer> = emptyList(),
     val multiple: Boolean = false,
     val closed: Boolean = false,
+    /** A vote, once given, can be neither changed nor taken back. */
+    @SerialName("final_votes")
+    val finalVotes: Boolean = false,
 )
 
 @Serializable

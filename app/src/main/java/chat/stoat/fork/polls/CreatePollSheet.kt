@@ -31,6 +31,7 @@ import chat.stoat.R
 import chat.stoat.api.fork.routes.PollDraft
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_poll_add_answer
+import chat.stoat.shared.resources.durio_poll_allow_change
 import chat.stoat.shared.resources.durio_poll_answer
 import chat.stoat.shared.resources.durio_poll_create_title
 import chat.stoat.shared.resources.durio_poll_hint
@@ -41,7 +42,7 @@ import chat.stoat.shared.resources.durio_poll_send
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * A new poll: the question, 2–10 answers, one or several picks. [onSend] gets a draft that the
+ * A new poll: the question, 2–10 answers, one or several picks, votes that can be changed or not. [onSend] gets a draft that the
  * server takes (trimmed, blank answers left out); [busy] while it is on its way.
  */
 @Composable
@@ -49,7 +50,8 @@ fun CreatePollSheet(busy: Boolean, onSend: (PollDraft) -> Unit) {
     var question by remember { mutableStateOf("") }
     val answers = remember { mutableStateListOf("", "") }
     var multiple by remember { mutableStateOf(false) }
-    val draft = PollDraft(question, answers.toList(), multiple).cleaned()
+    var allowChange by remember { mutableStateOf(true) }
+    val draft = PollDraft(question, answers.toList(), multiple, finalVotes = !allowChange).cleaned()
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -103,6 +105,15 @@ fun CreatePollSheet(busy: Boolean, onSend: (PollDraft) -> Unit) {
                 modifier = Modifier.weight(1f),
             )
             Switch(checked = multiple, onCheckedChange = { multiple = it })
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(Res.string.durio_poll_allow_change),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(checked = allowChange, onCheckedChange = { allowChange = it })
         }
 
         Text(

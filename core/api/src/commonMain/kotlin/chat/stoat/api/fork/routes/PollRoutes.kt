@@ -15,6 +15,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** A poll to send (dur.io servers): 1–300 characters of question, 2–10 answers of 1–100. */
@@ -23,6 +24,9 @@ data class PollDraft(
     val question: String,
     val answers: List<String>,
     val multiple: Boolean = false,
+    /** A vote, once given, can be neither changed nor taken back (off: votes can be changed). */
+    @SerialName("final_votes")
+    val finalVotes: Boolean = false,
 ) {
     companion object {
         const val MAX_QUESTION = 300
@@ -37,7 +41,7 @@ data class PollDraft(
         val a = answers.map { it.trim() }.filter { it.isNotEmpty() }
         if (q.isEmpty() || q.length > MAX_QUESTION) return null
         if (a.size !in MIN_ANSWERS..MAX_ANSWERS || a.any { it.length > MAX_ANSWER }) return null
-        return PollDraft(q, a, multiple)
+        return PollDraft(q, a, multiple, finalVotes)
     }
 }
 

@@ -9,17 +9,18 @@ object PollLogic {
         if (selfId == null) emptyList() else poll.answers.filter { selfId in it.votes }.map { it.id }
 
     /**
-     * The picks after tapping [answerId]: single choice picks it (or takes the vote back when it
+     * The picks (not sent yet) after tapping [answerId]: single choice picks it (or none when it
      * was the pick), multiple choice toggles it.
      */
-    fun nextPicks(poll: Poll, selfId: String?, answerId: String): List<String> {
-        val current = picks(poll, selfId)
-        return if (poll.multiple) {
-            if (answerId in current) current - answerId else current + answerId
+    fun toggle(poll: Poll, picks: List<String>, answerId: String): List<String> =
+        if (poll.multiple) {
+            if (answerId in picks) picks - answerId else picks + answerId
         } else {
-            if (current == listOf(answerId)) emptyList() else listOf(answerId)
+            if (answerId in picks) emptyList() else listOf(answerId)
         }
-    }
+
+    /** Whether two lists of picks are the same answers. */
+    fun samePicks(a: List<String>, b: List<String>): Boolean = a.size == b.size && a.toSet() == b.toSet()
 
     /** The poll as it will be once [picks] are [selfId]'s votes (shown until the server answers). */
     fun withPicks(poll: Poll, selfId: String, picks: List<String>): Poll = poll.copy(
@@ -32,11 +33,14 @@ object PollLogic {
     /** People who voted at all (one person picking two answers counts once). */
     fun voters(poll: Poll): Int = poll.answers.flatMap { it.votes }.toSet().size
 
-    /** Share of voters who picked an answer, 0..100, rounded. */
+    /** Votes on all answers: the base of the shares, so they add up to 100 with several picks. */
+    fun votes(poll: Poll): Int = poll.answers.sumOf { it.votes.size }
+
+    /** Share of all votes an answer got, 0..100, rounded. */
     fun percent(poll: Poll, answerId: String): Int {
-        val voters = voters(poll)
-        if (voters == 0) return 0
-        val votes = poll.answers.firstOrNull { it.id == answerId }?.votes?.size ?: 0
-        return Math.round(votes * 100f / voters)
+        val votes = votes(poll)
+        if (votes == 0) return 0
+        val got = poll.answers.firstOrNull { it.id == answerId }?.votes?.size ?: 0
+        return Math.round(got * 100f / votes)
     }
 }

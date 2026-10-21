@@ -17,6 +17,11 @@
     <string name="durio_poll_kind_multiple">Several answers</string>
     <string name="durio_poll_closed">Poll closed</string>
     <string name="durio_poll_close">Close poll</string>
+    <string name="durio_poll_allow_change">Allow changing the vote</string>
+    <string name="durio_poll_vote">Vote</string>
+    <string name="durio_poll_change_vote">Change vote</string>
+    <string name="durio_poll_cancel">Cancel</string>
+    <string name="durio_poll_take_back">Take back vote</string>
     <string name="durio_attach_gallery">Gallery</string>
     <string name="durio_attach_recent_permission">Show recent photos</string>
 </resources>

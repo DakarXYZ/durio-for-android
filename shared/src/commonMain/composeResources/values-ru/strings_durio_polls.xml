@@ -17,6 +17,11 @@
     <string name="durio_poll_kind_multiple">Несколько ответов</string>
     <string name="durio_poll_closed">Опрос закрыт</string>
     <string name="durio_poll_close">Закрыть опрос</string>
+    <string name="durio_poll_allow_change">Можно изменить свой голос</string>
+    <string name="durio_poll_vote">Голосовать</string>
+    <string name="durio_poll_change_vote">Изменить голос</string>
+    <string name="durio_poll_cancel">Отменить</string>
+    <string name="durio_poll_take_back">Отозвать голос</string>
     <string name="durio_attach_gallery">Галерея</string>
     <string name="durio_attach_recent_permission">Показать последние фото</string>
 </resources>
