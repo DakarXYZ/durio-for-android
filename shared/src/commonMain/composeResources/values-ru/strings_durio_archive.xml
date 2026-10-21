@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: сообщения, импортированные из архива (например, из Discord) -->
+<resources>
+    <string name="durio_archive_badge">Архив</string>
+    <string name="durio_archive_badge_discord">Архив Discord</string>
+</resources>

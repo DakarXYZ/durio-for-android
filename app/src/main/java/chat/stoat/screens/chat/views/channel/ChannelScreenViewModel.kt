@@ -445,7 +445,9 @@ class ChannelScreenViewModel(
         if (draftReplyTo.size >= 5) return
         if (draftReplyTo.any { it.id == messageId }) return
 
-        val shouldMention = kvStorage.getBoolean("mentionOnReply") ?: false
+        // durio: an archived message's phantom author is never mentioned
+        val shouldMention = StoatAPI.messageCache[messageId]?.imported == null &&
+            (kvStorage.getBoolean("mentionOnReply") ?: false)
         draftReplyTo.add(SendMessageReply(messageId, shouldMention))
     }
 
@@ -700,7 +702,9 @@ class ChannelScreenViewModel(
 
         val messages = normalizeByUlid(response.messages.orEmpty()) { it.id }
         messages.forEach { message ->
-            message.author?.let { addUserIfUnknown(it) }
+            // durio: an archived (imported) message's author is a webhook with no user; the
+            // placeholder is made where it is shown, not fetched once per phantom author
+            message.author?.takeIf { message.imported == null }?.let { addUserIfUnknown(it) }
             message.id?.let { StoatAPI.messageCache[it] = message }
         }
         return messages
@@ -1177,7 +1181,8 @@ class ChannelScreenViewModel(
                             m is ChannelScreenItem.RegularMessage && m.message.id == it.messageId
                         } as? ChannelScreenItem.RegularMessage ?: return@onEach
 
-                        val shouldMention = kvStorage.getBoolean("mentionOnReply") ?: false
+                        val shouldMention = message.message.imported == null &&
+                            (kvStorage.getBoolean("mentionOnReply") ?: false)
                         draftReplyTo.add(
                             SendMessageReply(
                                 message.message.id ?: return@onEach,
@@ -1202,7 +1207,8 @@ class ChannelScreenViewModel(
                             m is ChannelScreenItem.RegularMessage && m.message.id == it.messageId
                         } as? ChannelScreenItem.RegularMessage ?: return@onEach
 
-                        val shouldMention = kvStorage.getBoolean("mentionOnReply") ?: false
+                        val shouldMention = message.message.imported == null &&
+                            (kvStorage.getBoolean("mentionOnReply") ?: false)
                         draftReplyTo.add(
                             SendMessageReply(
                                 message.message.id ?: return@onEach,

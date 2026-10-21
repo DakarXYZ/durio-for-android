@@ -60,6 +60,8 @@ import androidx.core.net.toUri
 import chat.stoat.R
 import chat.stoat.fork.e2ee.ui.EncryptedMessageNotice
 import chat.stoat.fork.polls.PollCard
+import chat.stoat.fork.archive.ArchiveBadge
+import chat.stoat.fork.archive.ArchivedMessages
 import chat.stoat.activities.media.ImageViewActivity
 import chat.stoat.activities.media.VideoViewActivity
 import chat.stoat.api.StoatAPI
@@ -157,6 +159,9 @@ fun authorName(message: MessageSchema): String {
         return message.masquerade!!.name!!
     }
 
+    // durio: a webhook's message (e.g. one imported from an archive) has no user behind it
+    message.webhook?.name?.takeIf { it.isNotBlank() }?.let { return it }
+
     val serverId =
         StoatAPI.channelCache[message.channel]?.server
             ?: return StoatAPI.userCache[message.author]?.let { User.resolveDefaultName(it) }
@@ -190,6 +195,9 @@ fun authorAvatarUrl(message: MessageSchema): String? {
     if (message.masquerade?.avatar != null) {
         return asJanuaryProxyUrl(message.masquerade!!.avatar!!)
     }
+
+    // durio: the avatar a webhook's message carries (e.g. one imported from an archive)
+    ArchivedMessages.webhookAvatarUrl(message)?.let { return it }
 
     val serverId =
         StoatAPI.channelCache[message.channel]?.server ?: return null
@@ -255,7 +263,12 @@ fun Message(
     modifier: Modifier = Modifier,
     mdAst: State? = null
 ) {
-    val author = StoatAPI.userCache[message.author] ?: return CircularProgressIndicator()
+    // durio: a webhook has no user; its placeholder is not waited for (pins, search)
+    val author = StoatAPI.userCache[message.author]
+        ?: ArchivedMessages.webhookAuthorPlaceholder(message)
+        ?: return CircularProgressIndicator()
+    // durio: an imported (archived) message's author is a phantom: no profile, sheet or mention
+    val imported = message.imported
     val context = LocalContext.current
     val voiceMessageMetadata = remember(author.badges, message.content, message.attachments) {
         if (!author.badges.hasUserBadge(UserBadges.Developer)) {
@@ -407,12 +420,13 @@ fun Message(
                     if (message.tail == false) {
                         Column {
                             Spacer(modifier = Modifier.height(4.dp))
+                            val webhookAvatar = ArchivedMessages.webhookAvatar(message)
                             UserAvatar(
-                                username = User.resolveDefaultName(author),
+                                username = webhookName ?: message.webhook?.name ?: User.resolveDefaultName(author),
                                 userId = author.id ?: message.id ?: ULID.makeSpecial(0),
-                                avatar = author.avatar,
-                                rawUrl = if (ignoreServerAvatar) null else authorAvatarUrl(message),
-                                onClick = onAvatarClick
+                                avatar = webhookAvatar ?: author.avatar,
+                                rawUrl = if (ignoreServerAvatar && webhookAvatar == null) null else authorAvatarUrl(message),
+                                onClick = if (imported != null) null else onAvatarClick
                             )
                         }
                     } else {
@@ -448,7 +462,7 @@ fun Message(
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.then(
-                                        if (onNameClick != null)
+                                        if (onNameClick != null && imported == null)
                                             Modifier.combinedClickable(
                                                 onClick = onNameClick,
                                                 onLongClick = {
@@ -477,13 +491,22 @@ fun Message(
                                     bridge = message.masquerade != null && author.bot != null,
                                     platformModeration = author.id == SpecialUsers.PLATFORM_MODERATION_USER,
                                     teamMember = author.id in TeamMemberFlairs.TEAM_MEMBER_FLAIRS.keys,
-                                    webhook = fromWebhook,
+                                    webhook = fromWebhook && imported == null,
                                     colour = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                                     modifier = Modifier.size(16.dp),
                                     precedingIfAny = {
                                         Spacer(modifier = Modifier.width(5.dp))
                                     }
                                 )
+
+                                // durio: an archived message carries a small «Archive» badge instead
+                                if (imported != null) {
+                                    Spacer(modifier = Modifier.width(5.dp))
+                                    ArchiveBadge(
+                                        imported = imported,
+                                        colour = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.width(5.dp))
 

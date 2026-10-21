@@ -1,6 +1,7 @@
 package chat.stoat.core.model.schemas
 
 import chat.stoat.core.model.fork.EncryptedEnvelope
+import chat.stoat.core.model.fork.MessageImport
 import chat.stoat.core.model.fork.Poll
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -34,6 +35,8 @@ data class Message(
     val encrypted: EncryptedEnvelope? = null,
     // durio: a poll on the message (dur.io servers)
     val poll: Poll? = null,
+    // durio: set on messages imported from an archive (e.g. Discord); authored by a webhook
+    val imported: MessageImport? = null,
 ) {
 
     fun mergeWithPartial(partial: Message): Message {
@@ -60,6 +63,7 @@ data class Message(
             flags = partial.flags ?: flags,
             encrypted = partial.encrypted ?: encrypted,
             poll = partial.poll ?: poll,
+            imported = partial.imported ?: imported,
         )
     }
 }

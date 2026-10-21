@@ -48,6 +48,7 @@ import chat.stoat.composables.chat.authorColour
 import chat.stoat.composables.chat.authorName
 import chat.stoat.composables.generic.UserAvatar
 import chat.stoat.core.model.schemas.Message
+import chat.stoat.fork.archive.ArchivedMessages
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.remove_reply_alt
 import chat.stoat.shared.resources.reply_mention_off
@@ -82,7 +83,9 @@ fun ManageableReply(
     embedded: Boolean = false,
 ) {
     val replyMessage = StoatAPI.messageCache[reply.id] ?: return onRemove()
-    val replyAuthor = StoatAPI.userCache[replyMessage.author] ?: return onRemove()
+    val replyAuthor = StoatAPI.userCache[replyMessage.author]
+        ?: ArchivedMessages.webhookAuthorPlaceholder(replyMessage)
+        ?: return onRemove()
 
     Row(
         modifier = Modifier
@@ -116,7 +119,7 @@ fun ManageableReply(
         UserAvatar(
             username = authorName(message = replyMessage),
             userId = replyAuthor.id ?: ULID.makeSpecial(0),
-            avatar = replyAuthor.avatar,
+            avatar = ArchivedMessages.webhookAvatar(replyMessage) ?: replyAuthor.avatar,
             rawUrl = authorAvatarUrl(message = replyMessage),
             size = 16.dp
         )
@@ -146,25 +149,28 @@ fun ManageableReply(
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        Text(
-            text = if (reply.mention) {
-                stringResource(Res.string.reply_mention_on)
-            } else {
-                stringResource(Res.string.reply_mention_off)
-            },
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable {
-                    onToggleMention()
-                }
-                .padding(4.dp),
-            color = if (reply.mention) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-            },
-            fontWeight = FontWeight.Bold
-        )
+        // durio: an archived message's phantom author cannot be mentioned
+        if (replyMessage.imported == null) {
+            Text(
+                text = if (reply.mention) {
+                    stringResource(Res.string.reply_mention_on)
+                } else {
+                    stringResource(Res.string.reply_mention_off)
+                },
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable {
+                        onToggleMention()
+                    }
+                    .padding(4.dp),
+                color = if (reply.mention) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                },
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 

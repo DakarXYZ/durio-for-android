@@ -204,6 +204,8 @@ fun RegularMessage(
                 }
             },
             onAvatarClick = {
+                // durio: an archived message's phantom author has no sheet or profile
+                if (message.imported != null) return@Message
                 if (message.webhook != null) {
                     scope.launch {
                         ActionChannel.send(Action.OpenWebhookSheet)
@@ -217,6 +219,8 @@ fun RegularMessage(
                 }
             },
             onNameClick = {
+                // durio: nor can it be mentioned
+                if (message.imported != null) return@Message
                 val author = message.author?.let { StoatAPI.userCache[it] } ?: return@Message
                 putTextAtCursorPosition("@${author.username}#${author.discriminator}")
             },

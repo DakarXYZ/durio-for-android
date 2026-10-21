@@ -30,6 +30,8 @@ import chat.stoat.api.internals.SpecialUsers
 import chat.stoat.api.routes.channel.fetchSingleMessage
 import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.composables.generic.UserAvatar
+import chat.stoat.fork.archive.ArchiveBadge
+import chat.stoat.fork.archive.ArchivedMessages
 import chat.stoat.fork.e2ee.ui.encryptedMessagePreview
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.core.model.schemas.User
@@ -51,7 +53,9 @@ fun InReplyTo(
     onMessageClick: (String) -> Unit = { _ -> }
 ) {
     val message = StoatAPI.messageCache[messageId]
+    // durio: a webhook (e.g. an archived message's phantom author) has no user to look up
     val author = StoatAPI.userCache[message?.author ?: ""]
+        ?: message?.let { ArchivedMessages.webhookAuthorPlaceholder(it) }
 
     val username = message?.let { authorName(it) }
         ?: author?.let { User.resolveDefaultName(it) }
@@ -91,14 +95,14 @@ fun InReplyTo(
                 UserAvatar(
                     username = username,
                     userId = author?.id ?: "",
-                    avatar = author?.avatar,
+                    avatar = ArchivedMessages.webhookAvatar(message) ?: author?.avatar,
                     rawUrl = authorAvatarUrl(message),
                     size = 16.dp
                 )
 
                 Text(
                     text = if (author != null) {
-                        if (withMention) {
+                        if (withMention && message.imported == null) {
                             "@$username"
                         } else {
                             username
@@ -133,13 +137,23 @@ fun InReplyTo(
                     bridge = message.masquerade != null && author?.bot != null,
                     platformModeration = author?.id == SpecialUsers.PLATFORM_MODERATION_USER,
                     teamMember = author?.id in TeamMemberFlairs.TEAM_MEMBER_FLAIRS.keys,
-                    webhook = message.webhook != null,
+                    webhook = message.webhook != null && message.imported == null,
                     colour = contentColor.copy(alpha = 0.5f),
                     modifier = Modifier.size(12.dp),
                     followingIfAny = {
                         Spacer(modifier = Modifier.width(4.dp))
                     }
                 )
+
+                // durio: the reply to an archived message says so
+                message.imported?.let { imported ->
+                    ArchiveBadge(
+                        imported = imported,
+                        colour = contentColor.copy(alpha = 0.6f),
+                        fontSize = 9.sp,
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
 
                 // durio: never the server's placeholder of an encrypted message (plan AN-25)
                 val e2eePreview = encryptedMessagePreview(message)
