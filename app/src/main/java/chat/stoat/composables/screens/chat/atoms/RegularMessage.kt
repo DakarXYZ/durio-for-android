@@ -59,6 +59,7 @@ import chat.stoat.core.model.schemas.Channel
 import chat.stoat.core.model.schemas.Message
 import chat.stoat.api.fork.e2ee.E2eeState
 import chat.stoat.fork.e2ee.ui.noticeFor
+import chat.stoat.fork.media.MessagePictures
 import chat.stoat.fork.messages.MessageQuickActions
 import chat.stoat.fork.messages.RecentEmoji
 import chat.stoat.internals.Platform
@@ -92,8 +93,16 @@ fun RegularMessage(
     replyToMessage: suspend (String) -> Unit,
     jumpToMessage: (String) -> Unit = {},
     scope: CoroutineScope = rememberCoroutineScope(),
-    mdAst: State? = null
+    mdAst: State? = null,
+    pictures: MessagePictures? = null
 ) {
+    // durio: the pictures of this message are in an earlier message's grid; it stays in the
+    // list (keys, scrolling) but shows nothing
+    if (pictures == MessagePictures.Merged) {
+        Box(modifier = Modifier.fillMaxWidth())
+        return
+    }
+
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -241,6 +250,8 @@ fun RegularMessage(
             fromWebhook = message.webhook != null,
             webhookName = message.webhook?.name,
             mdAst = mdAst,
+            pictures = pictures as? MessagePictures.Panels,
+            onPictureLongPress = showMessageBottomSheet,
             modifier = Modifier
                 .offset(
                     x = with(LocalDensity.current) { animOffsetX.toDp() }

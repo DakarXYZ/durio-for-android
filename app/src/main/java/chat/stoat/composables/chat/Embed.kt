@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,9 @@ fun RegularEmbed(
     modifier: Modifier = Modifier,
     onLinkClick: (String) -> Unit = {}
 ) {
+    // durio: the link the embed previews; its title opens it (the link itself may be hidden)
+    val link = embed.originalURL ?: embed.url
+
     Row(
         modifier = modifier
             .clip(MaterialTheme.shapes.medium)
@@ -66,10 +70,10 @@ fun RegularEmbed(
                 Row(
                     modifier = Modifier
                         .then(
-                            if (embed.originalURL != null) {
+                            if (link != null) {
                                 Modifier
                                     .clickable {
-                                        onLinkClick(embed.originalURL!!)
+                                        onLinkClick(link)
                                     }
                             } else {
                                 Modifier
@@ -92,7 +96,8 @@ fun RegularEmbed(
                     embed.title?.let {
                         Text(
                             text = it,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = if (link != null) MaterialTheme.colorScheme.primary else Color.Unspecified
                         )
                     }
                 }
@@ -118,9 +123,9 @@ fun RegularEmbed(
                         modifier = Modifier
                             .clip(MaterialTheme.shapes.medium)
                             .then(
-                                if (embed.originalURL != null) {
+                                if (link != null) {
                                     Modifier.clickable {
-                                        onLinkClick(embed.originalURL!!)
+                                        onLinkClick(link)
                                     }
                                 } else {
                                     Modifier

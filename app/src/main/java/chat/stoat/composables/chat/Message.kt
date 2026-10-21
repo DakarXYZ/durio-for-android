@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -62,6 +63,11 @@ import chat.stoat.fork.e2ee.ui.EncryptedMessageNotice
 import chat.stoat.fork.polls.PollCard
 import chat.stoat.fork.archive.ArchiveBadge
 import chat.stoat.fork.archive.ArchivedMessages
+import chat.stoat.fork.media.GridPicture
+import chat.stoat.fork.media.LinkPreviews
+import chat.stoat.fork.media.MessagePictures
+import chat.stoat.fork.media.PictureGrid
+import chat.stoat.fork.media.PictureGridPanels
 import chat.stoat.activities.media.ImageViewActivity
 import chat.stoat.activities.media.VideoViewActivity
 import chat.stoat.api.StoatAPI
@@ -261,7 +267,9 @@ fun Message(
     fromWebhook: Boolean = false,
     webhookName: String? = null,
     modifier: Modifier = Modifier,
-    mdAst: State? = null
+    mdAst: State? = null,
+    pictures: MessagePictures.Panels? = null,
+    onPictureLongPress: (String) -> Unit = {}
 ) {
     // durio: a webhook has no user; its placeholder is not waited for (pins, search)
     val author = StoatAPI.userCache[message.author]
@@ -315,6 +323,30 @@ fun Message(
     )
 
     val authorIsBlocked = remember(author) { author.relationship == "Blocked" }
+
+    // durio: the pictures drawn in this message's grid instead of one by one
+    val griddedPictures = remember(pictures, message.attachments, message.embeds, message.content) {
+        if (pictures != null) PictureGrid.pictures(message) else emptyList()
+    }
+    val openImageAttachment: (AutumnResource) -> Unit = { attachment ->
+        attachmentView.launch(
+            Intent(
+                context,
+                ImageViewActivity::class.java
+            ).apply {
+                putExtra("autumnResource", StoatJson.encodeToString(AutumnResource.serializer(), attachment))
+            }
+        )
+    }
+    val openGridPicture: (GridPicture) -> Unit = { picture ->
+        val attachment = picture.attachment
+        val embedUrl = picture.embed?.url
+        if (attachment != null) {
+            openImageAttachment(attachment)
+        } else if (embedUrl != null) {
+            openMessageLinkOrBrowser(embedUrl)
+        }
+    }
 
     var mentionsSelfRole by remember(message) { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -539,10 +571,13 @@ fun Message(
                         // durio: an encrypted message never shows the server's placeholder (plan AN-25, AN-46)
                         val e2eeHidden = EncryptedMessageNotice(message)
 
-                        key(message.content) {
+                        key(message.content, message.embeds) {
                             message.content?.takeIf { voiceMessageMetadata == null && !e2eeHidden }?.let {
-                                val content = it.stripPUAChars()
+                                val stripped = it.stripPUAChars()
+                                // durio: a link standing alone is not shown when its preview is
+                                val content = LinkPreviews.visibleContent(stripped, message.embeds)
                                 if (content.isBlank()) return@let // if only an attachment is sent
+                                val linkHidden = content != stripped
 
                                 val gigamoji = Gigamoji.useGigamojiForMessage(content)
                                 val fontSizeMultiplier = when (gigamoji) {
@@ -551,7 +586,7 @@ fun Message(
                                     GigamojiState.None -> 1f
                                 }
                                 Spacer(modifier = Modifier.height(2.dp))
-                                if (mdAst != null) {
+                                if (mdAst != null && !linkHidden) {
                                     ChatMarkdown(
                                         mdAst,
                                         serverId = StoatAPI.channelCache[message.channel]?.server,
@@ -572,8 +607,18 @@ fun Message(
                             PollCard(message = message, poll = poll, onLongPress = onMessageContextMenu)
                         }
 
+                        // durio: several pictures of the author in a row, drawn as one grid
+                        pictures?.takeIf { !e2eeHidden }?.let {
+                            PictureGridPanels(
+                                panels = it.panels,
+                                onOpen = openGridPicture,
+                                onLongPress = { picture -> onPictureLongPress(picture.messageId) }
+                            )
+                        }
+
                         message.attachments?.takeIf { !e2eeHidden }?.let {
                             it.forEach { attachment ->
+                                if (griddedPictures.any { picture -> picture.attachment == attachment }) return@forEach
                                 Spacer(modifier = Modifier.height(2.dp))
                                 MessageAttachment(
                                     attachment = attachment,
@@ -582,16 +627,7 @@ fun Message(
                                         voiceMessageMetadata?.durationMillis,
                                 ) {
                                     when (attachment.metadata?.type) {
-                                        "Image" -> {
-                                            attachmentView.launch(
-                                                Intent(
-                                                    context,
-                                                    ImageViewActivity::class.java
-                                                ).apply {
-                                                    putExtra("autumnResource", StoatJson.encodeToString(AutumnResource.serializer(), attachment))
-                                                }
-                                            )
-                                        }
+                                        "Image" -> openImageAttachment(attachment)
 
                                         "Video" -> {
                                             attachmentView.launch(
@@ -619,6 +655,7 @@ fun Message(
 
                         message.embeds?.takeIf { !e2eeHidden }?.let {
                             it.forEach { embed ->
+                                if (griddedPictures.any { picture -> picture.embed == embed }) return@forEach
                                 when (embed.type) {
                                     "Website", "Text" -> {
                                         val embedIsEmpty =
@@ -661,11 +698,37 @@ fun Message(
                                                             embed.width?.toInt()?.dp
                                                                 ?: maxWidth
                                                         )
-                                                        .aspectRatio(
-                                                            embed.width!!.toFloat() / embed.height!!.toFloat()
-                                                        ),
+                                                        .aspectRatio(embedAspectRatio(embed, 1f)),
                                                     description = null
                                                 )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                    }
+
+                                    // durio: a video preview (e.g. a GIF link) as its first frame;
+                                    // a tap opens it, as the link it stands for
+                                    "Video" -> {
+                                        val url = embed.url ?: return@forEach
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        BoxWithConstraints(
+                                            modifier = Modifier
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable { openMessageLinkOrBrowser(url) }
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .width(embed.width?.toInt()?.dp?.coerceAtMost(maxWidth) ?: maxWidth)
+                                                    .aspectRatio(embedAspectRatio(embed, 16f / 9f))
+                                            ) {
+                                                RemoteImage(
+                                                    url = asJanuaryProxyUrl(url),
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    description = null
+                                                )
+                                                VideoPlayButton()
                                             }
                                         }
                                         Spacer(modifier = Modifier.height(2.dp))
@@ -749,6 +812,13 @@ fun Message(
             }
         }
     }
+}
+
+// durio: the width/height of an embed's media; [fallback] when the server did not measure it
+private fun embedAspectRatio(embed: chat.stoat.core.model.schemas.Embed, fallback: Float): Float {
+    val width = embed.width?.toFloat() ?: return fallback
+    val height = embed.height?.toFloat() ?: return fallback
+    return if (width > 0f && height > 0f) width / height else fallback
 }
 
 private fun AutumnResource.isValidVoiceMessageAttachment(): Boolean {

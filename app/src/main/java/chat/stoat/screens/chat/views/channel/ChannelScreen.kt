@@ -150,6 +150,7 @@ import chat.stoat.fork.e2ee.ui.EncryptionBanner
 import chat.stoat.fork.e2ee.ui.showCallNotEncryptedNotice
 import chat.stoat.fork.e2ee.OutgoingMessages
 import chat.stoat.fork.polls.CreatePollSheet
+import chat.stoat.fork.media.PictureGrid
 import kotlinx.coroutines.CancellationException
 import chat.stoat.api.fork.routes.sendPoll
 import chat.stoat.shared.resources.durio_poll
@@ -526,6 +527,15 @@ fun ChannelScreen(
     // </editor-fold>
     // <editor-fold desc="UI elements">
     val lazyListState = rememberLazyListState()
+    // durio: several pictures in a row from one author are drawn as one grid (items are newest first)
+    val messageItems = viewModel.items
+    val pictureGrid by remember(messageItems) {
+        derivedStateOf {
+            PictureGrid.plan(
+                messageItems.asReversed().map { (it as? ChannelScreenItem.RegularMessage)?.message }
+            )
+        }
+    }
     val messageComposerBlurEnabled = LoadedSettings.messageComposerBlurEnabled
     val messageComposerHazeState = rememberHazeState(
         blurEnabled = messageComposerBlurEnabled
@@ -1156,7 +1166,8 @@ fun ChannelScreen(
                                                     replyToMessage = viewModel::addReplyTo,
                                                     jumpToMessage = viewModel::requestJump,
                                                     scope = scope,
-                                                    mdAst = item.mdAst
+                                                    mdAst = item.mdAst,
+                                                    pictures = item.message.id?.let { pictureGrid[it] }
                                                 )
                                             }
 
