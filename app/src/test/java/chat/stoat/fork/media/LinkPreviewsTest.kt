@@ -21,6 +21,9 @@ class LinkPreviewsTest {
         assertTrue(LinkPreviews.replacesLink(image))
         assertTrue(LinkPreviews.replacesLink(Embed(type = "Video", url = "https://v.test/a.mp4")))
         assertFalse(LinkPreviews.replacesLink(site.copy(title = " ")))
+        // a post with no title, only its author (site name) and text
+        assertTrue(LinkPreviews.replacesLink(site.copy(title = null, siteName = "someone", description = "a post")))
+        assertFalse(LinkPreviews.replacesLink(site.copy(title = null, siteName = "someone", description = " ")))
         assertFalse(LinkPreviews.replacesLink(Embed(type = "Text", title = "x")))
         assertFalse(LinkPreviews.replacesLink(Embed(type = "None")))
     }
@@ -64,6 +67,10 @@ class LinkPreviewsTest {
         val content = "first\nhttps://example.com/page"
         assertEquals(content, LinkPreviews.visibleContent(content, null))
         assertEquals(content, LinkPreviews.visibleContent(content, listOf(site.copy(title = null))))
+        assertEquals(
+            "first",
+            LinkPreviews.visibleContent(content, listOf(site.copy(title = null, description = "a post"))),
+        )
         assertEquals(content, LinkPreviews.visibleContent(content, listOf(image)))
         assertEquals("", LinkPreviews.visibleContent(null, listOf(site)))
     }

@@ -9,10 +9,10 @@ import chat.stoat.core.model.schemas.Embed
 object LinkPreviews {
     private val standaloneUrl = Regex("^https?://\S+$", RegexOption.IGNORE_CASE)
 
-    /** An embed drawn as media or a card: an image, a video, or a website with a title. */
+    /** An embed drawn as media or a card: an image, a video, or a website with a title or description. */
     fun replacesLink(embed: Embed): Boolean = when (embed.type) {
         "Image", "Video" -> true
-        "Website" -> !embed.title.isNullOrBlank()
+        "Website" -> !embed.title.isNullOrBlank() || !embed.description.isNullOrBlank()
         else -> false
     }
 

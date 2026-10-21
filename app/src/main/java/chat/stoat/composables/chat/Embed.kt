@@ -40,8 +40,11 @@ fun RegularEmbed(
     modifier: Modifier = Modifier,
     onLinkClick: (String) -> Unit = {}
 ) {
-    // durio: the link the embed previews; its title opens it (the link itself may be hidden)
+    // durio: the link the embed previews; its title opens it (the link itself may be hidden).
+    // A post without a title (e.g. an archived tweet) shows its site name as the link instead.
     val link = embed.originalURL ?: embed.url
+    val title = embed.title?.takeIf { it.isNotBlank() }
+    val heading = title ?: embed.siteName?.takeIf { it.isNotBlank() }
 
     Row(
         modifier = modifier
@@ -93,10 +96,10 @@ fun RegularEmbed(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    embed.title?.let {
+                    heading?.let {
                         Text(
                             text = it,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = if (title != null) FontWeight.Bold else FontWeight.Medium,
                             color = if (link != null) MaterialTheme.colorScheme.primary else Color.Unspecified
                         )
                     }
