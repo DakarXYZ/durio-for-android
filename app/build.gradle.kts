@@ -57,7 +57,7 @@ fun buildproperty(propertyName: String, fallbackEnv: String? = null): String? {
 // versionCode = base * 10 + abiCode (universal = 0), so an update never goes "down" when a device
 // moves between the universal and a per-ABI APK. 32-bit x86 is left out: the E2EE core and RaTeX
 // ship no x86 library.
-val durioVersionCodeBase = Integer.parseInt("001_008_004".replace("_", ""), 10)
+val durioVersionCodeBase = Integer.parseInt("001_008_005".replace("_", ""), 10)
 val durioAbiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
 
 // durio: instrumented tests against the minified (R8) release build, -Pdurio.minifiedTests
@@ -78,7 +78,7 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         // durio: universal APK; the per-ABI ones are set in androidComponents below (AN-41)
         versionCode = durioVersionCodeBase * 10
-        versionName = "1.8.4"
+        versionName = "1.8.5"
 
         // durio: server prefilled on the login screen; empty = the user types the address (plan O13)
         buildConfigField(
