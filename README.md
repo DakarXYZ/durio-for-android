@@ -11,6 +11,12 @@ Android-клиент мессенджера **dur.io** (Kotlin, Jetpack Compose)
 Основано на [stoatchat/for-android](https://github.com/stoatchat/for-android). dur.io — независимый форк и не
 связан с проектом Stoat; название и логотип Stoat — товарные знаки их владельцев.
 
+<p align="center">
+  <img src=".github/readme/chat.png" width="300" alt="Канал сервера: сообщения, реакции, картинки">
+  &nbsp;&nbsp;
+  <img src=".github/readme/poll.png" width="300" alt="Новый опрос из панели «+»">
+</p>
+
 ## Чем отличается от оригинала
 
 - **Своё приложение**: `io.github.dakarxyz.durio`, своя подпись и свой Firebase-проект, без Sentry; ставится рядом
