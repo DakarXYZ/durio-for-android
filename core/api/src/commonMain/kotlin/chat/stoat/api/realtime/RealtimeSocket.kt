@@ -408,7 +408,12 @@ object RealtimeSocket {
 
                 // durio: an edited encrypted message is decrypted; the UI gets the plaintext frame (AN-25)
                 val (merged, uiFrame) =
-                    E2eeMessages.updated(messageUpdateFrame, oldMessage, oldMessage.mergeWithPartial(rawMessage))
+                    E2eeMessages.updated(
+                        messageUpdateFrame,
+                        oldMessage,
+                        // durio: a thread or spoiler can be taken away too
+                        oldMessage.mergeWithPartial(rawMessage).withCleared(messageUpdateFrame.clear),
+                    )
                 StoatAPI.messageCache[messageUpdateFrame.id] = merged
 
                 messageUpdateFrame.channel.let {
@@ -585,7 +590,8 @@ object RealtimeSocket {
 
                 StoatAPI.channelCache[channelCreateFrame.id!!] = channelCreateFrame
                 E2eeFrames.onServerChannel(channelCreateFrame) // durio: created encrypted (AN-27, O6)
-                channelCreateFrame.server?.let { serverId ->
+                // durio: a thread is not in its server's channel list
+                channelCreateFrame.server?.takeIf { channelCreateFrame.thread == null }?.let { serverId ->
                     StoatAPI.serverCache[serverId]?.let { server ->
                         if (channelCreateFrame.id !in server.channels.orEmpty()) {
                             StoatAPI.serverCache[serverId] = server.copy(

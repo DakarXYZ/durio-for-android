@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: треды, спойлеры модераторов, частые эмодзи -->
+<resources>
+    <string name="durio_threads">Треды</string>
+    <string name="durio_thread_new">Новый тред</string>
+    <string name="durio_thread_create">Создать тред</string>
+    <string name="durio_thread_open">Открыть тред</string>
+    <string name="durio_thread_name">Название треда</string>
+    <string name="durio_thread_create_action">Создать</string>
+    <string name="durio_thread_cancel">Отмена</string>
+    <string name="durio_thread_failed">Тред не создан: %1$s</string>
+    <string name="durio_thread_archive">В архив</string>
+    <string name="durio_thread_unarchive">Вернуть из архива</string>
+    <string name="durio_thread_archived">в архиве</string>
+    <string name="durio_thread_archived_section">В архиве</string>
+    <string name="durio_thread_active_section">Активные</string>
+    <string name="durio_thread_none">Тредов пока нет. Начните тред из сообщения или кнопкой «Новый тред».</string>
+    <string name="durio_thread_started">%1$s начал(а) тред: %2$s</string>
+    <string name="durio_thread_back_to_channel">Назад в канал</string>
+    <plurals name="durio_thread_messages">
+        <item quantity="one">%1$d сообщение</item>
+        <item quantity="few">%1$d сообщения</item>
+        <item quantity="many">%1$d сообщений</item>
+        <item quantity="other">%1$d сообщения</item>
+    </plurals>
+    <string name="durio_spoiler_hide">Скрыть под спойлер</string>
+    <string name="durio_spoiler_remove">Убрать спойлер</string>
+    <string name="durio_spoiler_alert">Спойлер!</string>
+    <string name="durio_spoiler_nsfw">NSFW</string>
+    <string name="durio_spoiler_tap">Нажмите, чтобы показать</string>
+    <string name="durio_spoiler_failed">Не удалось изменить спойлер: %1$s</string>
+    <string name="durio_emoji_frequent">Часто используемые</string>
+    <string name="durio_emoji_pick">Выбрать эмодзи</string>
+</resources>

@@ -106,6 +106,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -210,6 +211,11 @@ import chat.stoat.shared.resources.voice_start_call
 import chat.stoat.sheets.ChannelInfoSheet
 import chat.stoat.sheets.MessageContextSheet
 import chat.stoat.sheets.ReactSheet
+import chat.stoat.fork.threads.ThreadArchiveAction
+import chat.stoat.fork.threads.Threads
+import chat.stoat.fork.threads.ThreadsSheet
+import chat.stoat.shared.resources.durio_thread_back_to_channel
+import chat.stoat.shared.resources.durio_threads
 import com.mikepenz.markdown.model.State
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
@@ -802,6 +808,30 @@ fun ChannelScreen(
             }
         }
     }
+    // durio: the threads of this channel; a thread goes back to its channel
+    var threadsSheetShown by remember { mutableStateOf(false) }
+    if (threadsSheetShown) {
+        val threadsSheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
+        ModalBottomSheet(
+            sheetState = threadsSheetState,
+            onDismissRequest = { threadsSheetShown = false }
+        ) {
+            ThreadsSheet(channelId) {
+                scope.launch {
+                    threadsSheetState.hide()
+                    threadsSheetShown = false
+                }
+            }
+        }
+    }
+    val threadParentId = viewModel.channel?.thread?.parent
+    BackHandler(enabled = threadParentId != null && !threadsSheetShown) {
+        threadParentId?.let { scope.launch { Threads.open(it) } }
+    }
+
     // durio: a new poll (dur.io servers; not in encrypted chats)
     var pollSheetShown by remember { mutableStateOf(false) }
     var pollSending by remember { mutableStateOf(false) }
@@ -868,6 +898,25 @@ fun ChannelScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            // durio: a thread shows its channel first
+                            viewModel.channel?.thread?.parent?.let { StoatAPI.channelCache[it] }?.let { parent ->
+                                Text(
+                                    parent.name ?: stringResource(Res.string.unknown),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier
+                                        .alpha(0.6f)
+                                        .widthIn(max = 120.dp)
+                                )
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_keyboard_arrow_right_24dp),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .alpha(0.5f)
+                                )
+                            }
                             viewModel.channel?.let {
                                 when (it.channelType) {
                                     ChannelType.DirectMessage -> {
@@ -963,7 +1012,15 @@ fun ChannelScreen(
                     },
                     windowInsets = if (useChatUI) WindowInsets.statusBars else WindowInsets.zero,
                     navigationIcon = {
-                        if (useDrawer) {
+                        // durio: from a thread, back to its channel
+                        if (threadParentId != null) {
+                            IconButton(onClick = { scope.launch { Threads.open(threadParentId) } }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_back_24dp),
+                                    contentDescription = stringResource(Res.string.durio_thread_back_to_channel)
+                                )
+                            }
+                        } else if (useDrawer) {
                             IconButton(onClick = onToggleDrawer) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_menu_24dp),
@@ -971,7 +1028,7 @@ fun ChannelScreen(
                                 )
                             }
                         }
-                        if (useBackButton) {
+                        if (useBackButton && threadParentId == null) {
                             IconButton(onClick = backButtonAction ?: {}) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_arrow_back_24dp),
@@ -981,6 +1038,19 @@ fun ChannelScreen(
                         }
                     },
                     actions = {
+                        // durio: the threads of a server text channel; archive a thread
+                        viewModel.channel?.let { current ->
+                            if (current.thread != null) {
+                                ThreadArchiveAction(current)
+                            } else if (current.channelType == ChannelType.TextChannel) {
+                                IconButton(onClick = { threadsSheetShown = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_forum_24dp),
+                                        contentDescription = stringResource(Res.string.durio_threads)
+                                    )
+                                }
+                            }
+                        }
                         val isDmLike =
                             viewModel.channel?.channelType == ChannelType.DirectMessage ||
                                     viewModel.channel?.channelType == ChannelType.Group
@@ -1865,6 +1935,7 @@ fun ChannelScreen(
                                                             .navigationBarsPadding()
                                                     ) {
                                                         EmojiPicker(
+                                                            serverId = viewModel.channel?.server,
                                                             onEmojiSelected = viewModel::putAtCursorPosition,
                                                             bottomInset = pxAsDp(
                                                                 max(
@@ -1945,6 +2016,7 @@ fun ChannelScreen(
                                                 .navigationBarsPadding()
                                         ) {
                                             EmojiPicker(
+                                                serverId = viewModel.channel?.server,
                                                 onEmojiSelected = viewModel::putAtCursorPosition,
                                                 bottomInset = pxAsDp(
                                                     max(

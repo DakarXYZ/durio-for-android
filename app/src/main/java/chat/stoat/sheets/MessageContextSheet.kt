@@ -72,6 +72,19 @@ import chat.stoat.api.fork.routes.closePoll
 import chat.stoat.shared.resources.durio_poll_close
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import chat.stoat.api.fork.routes.removeMessageSpoiler
+import chat.stoat.api.fork.routes.setMessageSpoiler
+import chat.stoat.core.model.fork.MessageSpoiler
+import chat.stoat.core.model.schemas.ChannelType
+import chat.stoat.fork.threads.CreateThreadDialog
+import chat.stoat.fork.threads.Threads
+import chat.stoat.shared.resources.durio_spoiler_alert
+import chat.stoat.shared.resources.durio_spoiler_failed
+import chat.stoat.shared.resources.durio_spoiler_hide
+import chat.stoat.shared.resources.durio_spoiler_nsfw
+import chat.stoat.shared.resources.durio_spoiler_remove
+import chat.stoat.shared.resources.durio_thread_create
+import chat.stoat.shared.resources.durio_thread_open
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,6 +117,42 @@ fun MessageContextSheet(
     var showShareSheet by remember { mutableStateOf(false) }
     var showReactSheet by remember { mutableStateOf(false) }
     var showDeleteMessageConfirmation by remember { mutableStateOf(false) }
+    // durio: threads and moderator spoilers
+    var showCreateThread by remember { mutableStateOf(false) }
+    var showSpoilerKinds by remember { mutableStateOf(false) }
+    val messageChannel = message.channel?.let { StoatAPI.channelCache[it] }
+    val canStartThread = message.thread == null && message.system == null && Threads.canStartIn(messageChannel)
+    val canSpoiler = messageChannel?.channelType == ChannelType.TextChannel &&
+        message.system == null &&
+        Threads.permission(messageChannel) has PermissionBit.ManageMessages
+    val changeSpoiler: (String?) -> Unit = { kind ->
+        coroutineScope.launch {
+            val channelId = message.channel ?: return@launch
+            try {
+                if (kind == null) {
+                    removeMessageSpoiler(channelId, messageId)
+                } else {
+                    setMessageSpoiler(channelId, messageId, kind)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    getString(Res.string.durio_spoiler_failed, e.message ?: ""),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            onHideSheet()
+        }
+    }
+
+    if (showCreateThread && messageChannel?.id != null) {
+        CreateThreadDialog(messageChannel.id!!, message) {
+            showCreateThread = false
+            coroutineScope.launch { onHideSheet() }
+        }
+    }
 
     if (showShareSheet) {
         val shareSheetState = rememberBottomSheetState(
@@ -390,6 +439,67 @@ fun MessageContextSheet(
                 showReactSheet = true
             }
         )
+
+        // durio: threads
+        message.thread?.let { threadId ->
+            SheetButton(
+                leadingContent = {
+                    Icon(painter = painterResource(R.drawable.ic_forum_24dp), contentDescription = null)
+                },
+                headlineContent = { Text(text = stringResource(Res.string.durio_thread_open)) },
+                onClick = {
+                    coroutineScope.launch {
+                        onHideSheet()
+                        Threads.open(threadId)
+                    }
+                }
+            )
+        }
+        if (canStartThread) {
+            SheetButton(
+                leadingContent = {
+                    Icon(painter = painterResource(R.drawable.ic_forum_24dp), contentDescription = null)
+                },
+                headlineContent = { Text(text = stringResource(Res.string.durio_thread_create)) },
+                onClick = { showCreateThread = true }
+            )
+        }
+
+        // durio: moderators hide any message behind a spoiler
+        if (canSpoiler) {
+            if (message.spoiler != null) {
+                SheetButton(
+                    leadingContent = {
+                        Icon(painter = painterResource(R.drawable.ic_visibility_24dp), contentDescription = null)
+                    },
+                    headlineContent = { Text(text = stringResource(Res.string.durio_spoiler_remove)) },
+                    onClick = { changeSpoiler(null) }
+                )
+            } else if (!showSpoilerKinds) {
+                SheetButton(
+                    leadingContent = {
+                        Icon(painter = painterResource(R.drawable.ic_visibility_off_24dp), contentDescription = null)
+                    },
+                    headlineContent = { Text(text = stringResource(Res.string.durio_spoiler_hide)) },
+                    onClick = { showSpoilerKinds = true }
+                )
+            } else {
+                SheetButton(
+                    leadingContent = {
+                        Icon(painter = painterResource(R.drawable.ic_visibility_off_24dp), contentDescription = null)
+                    },
+                    headlineContent = { Text(text = stringResource(Res.string.durio_spoiler_alert)) },
+                    onClick = { changeSpoiler(MessageSpoiler.KIND_SPOILER) }
+                )
+                SheetButton(
+                    leadingContent = {
+                        Icon(painter = painterResource(R.drawable.ic_visibility_off_24dp), contentDescription = null)
+                    },
+                    headlineContent = { Text(text = stringResource(Res.string.durio_spoiler_nsfw)) },
+                    onClick = { changeSpoiler(MessageSpoiler.KIND_NSFW) }
+                )
+            }
+        }
 
         if (message.author == StoatAPI.selfId) {
             SheetButton(

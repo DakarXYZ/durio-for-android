@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: threads, moderator spoilers, frequent emoji -->
+<resources>
+    <string name="durio_threads">Threads</string>
+    <string name="durio_thread_new">New thread</string>
+    <string name="durio_thread_create">Create thread</string>
+    <string name="durio_thread_open">Open thread</string>
+    <string name="durio_thread_name">Thread name</string>
+    <string name="durio_thread_create_action">Create</string>
+    <string name="durio_thread_cancel">Cancel</string>
+    <string name="durio_thread_failed">The thread was not created: %1$s</string>
+    <string name="durio_thread_archive">Archive the thread</string>
+    <string name="durio_thread_unarchive">Bring the thread back</string>
+    <string name="durio_thread_archived">archived</string>
+    <string name="durio_thread_archived_section">Archived</string>
+    <string name="durio_thread_active_section">Active</string>
+    <string name="durio_thread_none">No threads yet. Start one from a message, or with "New thread".</string>
+    <string name="durio_thread_started">%1$s started a thread: %2$s</string>
+    <string name="durio_thread_back_to_channel">Back to the channel</string>
+    <plurals name="durio_thread_messages">
+        <item quantity="one">%1$d message</item>
+        <item quantity="other">%1$d messages</item>
+    </plurals>
+    <string name="durio_spoiler_hide">Hide behind a spoiler</string>
+    <string name="durio_spoiler_remove">Remove the spoiler</string>
+    <string name="durio_spoiler_alert">Spoiler alert!</string>
+    <string name="durio_spoiler_nsfw">NSFW</string>
+    <string name="durio_spoiler_tap">Tap to show</string>
+    <string name="durio_spoiler_failed">Could not change the spoiler: %1$s</string>
+    <string name="durio_emoji_frequent">Frequently used</string>
+    <string name="durio_emoji_pick">Pick an emoji</string>
+</resources>

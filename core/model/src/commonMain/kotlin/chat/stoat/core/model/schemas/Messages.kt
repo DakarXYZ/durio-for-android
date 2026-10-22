@@ -2,6 +2,7 @@ package chat.stoat.core.model.schemas
 
 import chat.stoat.core.model.fork.EncryptedEnvelope
 import chat.stoat.core.model.fork.MessageImport
+import chat.stoat.core.model.fork.MessageSpoiler
 import chat.stoat.core.model.fork.Poll
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -37,6 +38,10 @@ data class Message(
     val poll: Poll? = null,
     // durio: set on messages imported from an archive (e.g. Discord); authored by a webhook
     val imported: MessageImport? = null,
+    // durio: id of the thread started from this message
+    val thread: String? = null,
+    // durio: set when a moderator hid this message behind a spoiler
+    val spoiler: MessageSpoiler? = null,
 ) {
 
     fun mergeWithPartial(partial: Message): Message {
@@ -64,7 +69,25 @@ data class Message(
             encrypted = partial.encrypted ?: encrypted,
             poll = partial.poll ?: poll,
             imported = partial.imported ?: imported,
+            thread = partial.thread ?: thread,
+            spoiler = partial.spoiler ?: spoiler,
         )
+    }
+
+    /**
+     * durio: drop the fields a MessageUpdate takes away ("Pinned", "Thread", "Spoiler")
+     */
+    fun withCleared(fields: List<String>?): Message {
+        if (fields.isNullOrEmpty()) return this
+        var message = this
+        fields.forEach {
+            when (it) {
+                "Pinned" -> message = message.copy(pinned = null)
+                "Thread" -> message = message.copy(thread = null)
+                "Spoiler" -> message = message.copy(spoiler = null)
+            }
+        }
+        return message
     }
 }
 

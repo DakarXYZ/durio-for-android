@@ -57,7 +57,9 @@ data class MessageUpdateFrame(
     val type: String = "MessageUpdate",
     val id: String,
     val channel: String,
-    val data: JsonObject
+    val data: JsonObject,
+    // durio: fields taken away ("Pinned", "Thread", "Spoiler")
+    val clear: List<String>? = null,
 )
 
 @Serializable

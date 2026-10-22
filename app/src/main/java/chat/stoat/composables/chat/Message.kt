@@ -61,6 +61,8 @@ import androidx.core.net.toUri
 import chat.stoat.R
 import chat.stoat.fork.e2ee.ui.EncryptedMessageNotice
 import chat.stoat.fork.polls.PollCard
+import chat.stoat.fork.messages.SpoilerCover
+import chat.stoat.fork.threads.ThreadChip
 import chat.stoat.fork.archive.ArchiveBadge
 import chat.stoat.fork.archive.ArchivedMessages
 import chat.stoat.fork.media.GridPicture
@@ -571,8 +573,15 @@ fun Message(
                         // durio: an encrypted message never shows the server's placeholder (plan AN-25, AN-46)
                         val e2eeHidden = EncryptedMessageNotice(message)
 
+                        // durio: a message a moderator hid behind a spoiler shows a cover until tapped
+                        var spoilerShown by remember(message.id) { mutableStateOf(false) }
+                        val spoilerHidden = message.spoiler != null && !spoilerShown && !e2eeHidden
+                        message.spoiler?.takeIf { spoilerHidden }?.let {
+                            SpoilerCover(it) { spoilerShown = true }
+                        }
+
                         key(message.content, message.embeds) {
-                            message.content?.takeIf { voiceMessageMetadata == null && !e2eeHidden }?.let {
+                            message.content?.takeIf { voiceMessageMetadata == null && !e2eeHidden && !spoilerHidden }?.let {
                                 val stripped = it.stripPUAChars()
                                 // durio: a link standing alone is not shown when its preview is
                                 val content = LinkPreviews.visibleContent(stripped, message.embeds)
@@ -603,12 +612,12 @@ fun Message(
                         }
 
                         // durio: the poll of the message (dur.io servers)
-                        message.poll?.let { poll ->
+                        message.poll?.takeIf { !spoilerHidden }?.let { poll ->
                             PollCard(message = message, poll = poll, onLongPress = onMessageContextMenu)
                         }
 
                         // durio: several pictures of the author in a row, drawn as one grid
-                        pictures?.takeIf { !e2eeHidden }?.let {
+                        pictures?.takeIf { !e2eeHidden && !spoilerHidden }?.let {
                             PictureGridPanels(
                                 panels = it.panels,
                                 onOpen = openGridPicture,
@@ -616,7 +625,7 @@ fun Message(
                             )
                         }
 
-                        message.attachments?.takeIf { !e2eeHidden }?.let {
+                        message.attachments?.takeIf { !e2eeHidden && !spoilerHidden }?.let {
                             it.forEach { attachment ->
                                 if (griddedPictures.any { picture -> picture.attachment == attachment }) return@forEach
                                 Spacer(modifier = Modifier.height(2.dp))
@@ -653,7 +662,7 @@ fun Message(
                             }
                         }
 
-                        message.embeds?.takeIf { !e2eeHidden }?.let {
+                        message.embeds?.takeIf { !e2eeHidden && !spoilerHidden }?.let {
                             it.forEach { embed ->
                                 if (griddedPictures.any { picture -> picture.embed == embed }) return@forEach
                                 when (embed.type) {
@@ -807,6 +816,9 @@ fun Message(
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                         }
+
+                        // durio: the thread started from this message
+                        ThreadChip(message)
                     }
                 }
             }

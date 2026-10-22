@@ -3,6 +3,7 @@ package chat.stoat.composables.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -71,6 +72,8 @@ import chat.stoat.shared.resources.system_message_user_removed_alt
 import chat.stoat.shared.resources.unknown
 import kotlinx.datetime.Instant
 import org.jetbrains.compose.resources.pluralStringResource
+import chat.stoat.fork.threads.ThreadChip
+import chat.stoat.shared.resources.durio_thread_started
 import org.jetbrains.compose.resources.stringResource
 
 enum class SystemMessageType(val type: String) {
@@ -87,6 +90,8 @@ enum class SystemMessageType(val type: String) {
     MESSAGE_PINNED("message_pinned"),
     MESSAGE_UNPINNED("message_unpinned"),
     CALL_STARTED("call_started"),
+    // durio: a thread started without a message to hang off
+    THREAD_CREATED("thread_created"),
     TEXT("text")
 }
 
@@ -118,6 +123,7 @@ fun SystemMessage(
             fontWeight = FontWeight.Light
         )
     ) {
+        Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -276,10 +282,26 @@ fun SystemMessage(
                     )
                 }
 
+                SystemMessageType.THREAD_CREATED -> {
+                    ChatMarkdown(
+                        stringResource(
+                            Res.string.durio_thread_started,
+                            message.system!!.by.mention(),
+                            "**${message.system!!.name ?: stringResource(Res.string.unknown)}**"
+                        ),
+                        serverId = serverId
+                    )
+                }
+
                 SystemMessageType.TEXT -> {
                     message.system!!.content?.let { ChatMarkdown(it) }
                 }
             }
+        }
+        // durio: the thread this system message started
+        Row(modifier = Modifier.padding(start = 52.dp)) {
+            ThreadChip(message)
+        }
         }
     }
 }
@@ -514,6 +536,15 @@ fun SystemMessageIcon(type: SystemMessageType, modifier: Modifier = Modifier, si
             )
         }
 
+        SystemMessageType.THREAD_CREATED -> {
+            Icon(
+                painter = painterResource(R.drawable.ic_forum_24dp),
+                contentDescription = null,
+                tint = LocalContentColor.current,
+                modifier = modifier.size(size)
+            )
+        }
+
         SystemMessageType.TEXT -> {
             Icon(
                 painter = painterResource(R.drawable.ic_info_24dp),
@@ -542,6 +573,7 @@ private fun shapeForType(type: SystemMessageType): Shape {
         SystemMessageType.MESSAGE_PINNED -> MaterialShapes.Clover4Leaf
         SystemMessageType.MESSAGE_UNPINNED -> MaterialShapes.Clover8Leaf
         SystemMessageType.CALL_STARTED -> MaterialShapes.Fan
+        SystemMessageType.THREAD_CREATED -> MaterialShapes.Bun
         SystemMessageType.TEXT -> MaterialShapes.Square
     }.toShape()
 }

@@ -93,14 +93,17 @@ object Roles {
 
                 var calculated = permissionFor(server, chMember)
 
-                if (channel.defaultPermissions != null) {
+                // durio: a thread takes the overrides of its channel
+                val overrides = channel.thread?.parent?.let { StoatAPI.channelCache[it] } ?: channel
+
+                if (overrides.defaultPermissions != null) {
                     calculated =
-                        calculated or channel.defaultPermissions!!.a and channel.defaultPermissions!!.d.inv()
+                        calculated or overrides.defaultPermissions!!.a and overrides.defaultPermissions!!.d.inv()
                 }
 
                 if (chMember.roles?.isNotEmpty() == true) {
                     chMember.roles!!.forEach { roleId ->
-                        val override = channel.rolePermissions?.get(roleId) ?: return@forEach
+                        val override = overrides.rolePermissions?.get(roleId) ?: return@forEach
                         calculated = calculated or override.a and override.d.inv()
                     }
                 }
