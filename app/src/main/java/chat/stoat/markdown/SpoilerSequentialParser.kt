@@ -1,10 +1,17 @@
 package chat.stoat.markdown
 
+import org.intellij.markdown.IElementType
 import org.intellij.markdown.parser.sequentialparsers.RangesListBuilder
 import org.intellij.markdown.parser.sequentialparsers.SequentialParser
 import org.intellij.markdown.parser.sequentialparsers.TokensCache
 
-class SpoilerSequentialParser : SequentialParser {
+/**
+ * Pairs [delimiter] tokens into [element] nodes: `||spoiler||`, and (durio) `(!)NSFW(!)`.
+ */
+class SpoilerSequentialParser(
+    private val delimiter: IElementType = SPOILER_DELIMITER_TOKEN_TYPE,
+    private val element: IElementType = SPOILER_ELEMENT_TYPE,
+) : SequentialParser {
     override fun parse(
         tokens: TokensCache,
         rangesToGlue: List<IntRange>,
@@ -14,13 +21,13 @@ class SpoilerSequentialParser : SequentialParser {
         var iterator: TokensCache.Iterator = tokens.RangesListIterator(rangesToGlue)
 
         while (iterator.type != null) {
-            if (iterator.type == SPOILER_DELIMITER_TOKEN_TYPE) {
+            if (iterator.type == delimiter) {
                 val opening = iterator
                 var closing = iterator.advance()
 
                 while (closing.type != null) {
                     if (
-                        closing.type == SPOILER_DELIMITER_TOKEN_TYPE &&
+                        closing.type == delimiter &&
                         closing.start >= opening.end
                     ) {
                         var inner = opening.advance()
@@ -31,7 +38,7 @@ class SpoilerSequentialParser : SequentialParser {
                         result.withNode(
                             SequentialParser.Node(
                                 opening.index..closing.index + 1,
-                                SPOILER_ELEMENT_TYPE,
+                                element,
                             )
                         )
                         iterator = closing.advance()

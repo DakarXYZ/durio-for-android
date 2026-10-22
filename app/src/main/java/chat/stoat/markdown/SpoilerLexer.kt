@@ -54,36 +54,48 @@ class SpoilerLexer(
     }
 
     private fun split(type: IElementType, start: Int, end: Int) {
-        if (type != MarkdownTokenTypes.TEXT) {
-            pending += Token(type, start, end)
-            consumedUntil = maxOf(consumedUntil, end)
-            return
-        }
-
+        val text = type == MarkdownTokenTypes.TEXT
         var cursor = start
         var segmentStart = start
         while (cursor < end) {
-            if (
-                cursor + 1 < contentEnd &&
-                content[cursor] == '|' &&
-                content[cursor + 1] == '|' &&
-                !isEscaped(cursor)
-            ) {
+            // durio: `(!)` is three tokens to the GFM lexer, so it is looked for at the start of
+            // any token too; text tokens are searched through
+            val delimiter = if (text || cursor == start) delimiterAt(cursor) else null
+            if (delimiter != null) {
                 if (segmentStart < cursor) {
-                    pending += Token(MarkdownTokenTypes.TEXT, segmentStart, cursor)
+                    pending += Token(type, segmentStart, cursor)
                 }
-                pending += Token(SPOILER_DELIMITER_TOKEN_TYPE, cursor, cursor + 2)
-                cursor += 2
+                pending += Token(delimiter.first, cursor, cursor + delimiter.second)
+                cursor += delimiter.second
                 segmentStart = cursor
-            } else {
+            } else if (text) {
                 cursor++
+            } else {
+                cursor = end
             }
         }
 
         if (segmentStart < end) {
-            pending += Token(MarkdownTokenTypes.TEXT, segmentStart, end)
+            pending += Token(type, segmentStart, end)
         }
         consumedUntil = maxOf(consumedUntil, cursor, end)
+    }
+
+    /** The delimiter starting at [offset] and its length: `||`, or (durio) `(!)` */
+    private fun delimiterAt(offset: Int): Pair<IElementType, Int>? {
+        if (isEscaped(offset)) return null
+        if (offset + 1 < contentEnd && content[offset] == '|' && content[offset + 1] == '|') {
+            return SPOILER_DELIMITER_TOKEN_TYPE to 2
+        }
+        if (
+            offset + 2 < contentEnd &&
+            content[offset] == '(' &&
+            content[offset + 1] == '!' &&
+            content[offset + 2] == ')'
+        ) {
+            return NSFW_DELIMITER_TOKEN_TYPE to 3
+        }
+        return null
     }
 
     private fun isEscaped(offset: Int): Boolean {

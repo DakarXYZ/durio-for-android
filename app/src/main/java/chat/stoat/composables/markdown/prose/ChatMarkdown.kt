@@ -66,6 +66,9 @@ import chat.stoat.markdown.CHANNEL_MENTION_ELEMENT_TYPE
 import chat.stoat.markdown.CUSTOM_EMOTE_ELEMENT_TYPE
 import chat.stoat.markdown.MASS_MENTION_ELEMENT_TYPE
 import chat.stoat.markdown.ROLE_MENTION_ELEMENT_TYPE
+import chat.stoat.fork.messages.MentionNames
+import chat.stoat.markdown.NSFW_DELIMITER_TOKEN_TYPE
+import chat.stoat.markdown.NSFW_ELEMENT_TYPE
 import chat.stoat.markdown.SPOILER_DELIMITER_TOKEN_TYPE
 import chat.stoat.markdown.SPOILER_ELEMENT_TYPE
 import chat.stoat.markdown.StoatMarkdownFlavour
@@ -312,8 +315,14 @@ fun ChatMarkdown(
         lateinit var spoilerAwareAnnotator: MarkdownAnnotator
         spoilerAwareAnnotator = markdownAnnotator { content, child ->
             when (child.type) {
-                SPOILER_ELEMENT_TYPE -> {
+                SPOILER_ELEMENT_TYPE, NSFW_ELEMENT_TYPE -> {
                     val spoilerId = child.startOffset
+                    // durio: (!)NSFW(!) spoilers are drawn labelled
+                    val tagPrefix = if (child.type == NSFW_ELEMENT_TYPE) {
+                        NSFW_SPOILER_LINK_TAG_PREFIX
+                    } else {
+                        SPOILER_LINK_TAG_PREFIX
+                    }
                     val revealed = revealedSpoilers[spoilerId] == true
                     if (revealed) {
                         buildMarkdownAnnotatedString(
@@ -347,7 +356,7 @@ fun ChatMarkdown(
                         }
                         withLink(
                             LinkAnnotation.Clickable(
-                                tag = "$SPOILER_LINK_TAG_PREFIX$spoilerId",
+                                tag = "$tagPrefix$spoilerId",
                                 linkInteractionListener = LinkInteractionListener {
                                     revealedSpoilers[spoilerId] = true
                                 },
@@ -359,7 +368,7 @@ fun ChatMarkdown(
                     true
                 }
 
-                SPOILER_DELIMITER_TOKEN_TYPE -> {
+                SPOILER_DELIMITER_TOKEN_TYPE, NSFW_DELIMITER_TOKEN_TYPE -> {
                     append(child.getTextInNode(content))
                     true
                 }
@@ -399,7 +408,8 @@ fun ChatMarkdown(
                     val member = serverId?.let { StoatAPI.members.getMember(it, ulid) }
                     val displayName = member?.nickname
                         ?: StoatAPI.userCache[ulid]?.let { User.resolveDefaultName(it) }
-                        ?: ulid
+                        // durio: an unknown user is fetched, the name replaces the id once known
+                        ?: ulid.also { MentionNames.request(it, serverId) }
                     withLink(LinkAnnotation.Url("stoat-user://$ulid", mentionLinkStyle)) {
                         append("@$displayName")
                     }

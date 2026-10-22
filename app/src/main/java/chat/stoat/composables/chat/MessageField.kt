@@ -167,12 +167,13 @@ private fun CharSequence.isEmptyOrOnlyNewlines(): Boolean {
 }
 
 private fun TextFieldState.lastWord(): String? {
+    // durio: a word after a line break counts too (`@` at the start of a new line)
     return this.text.substring(0, this.selection.min)
-        .split(" ").lastOrNull()
+        .split(' ', '\n', '\t').lastOrNull()
 }
 
 private fun CharSequence.lastWordStartsAt(): Int {
-    return this.lastIndexOf(" ")
+    return this.lastIndexOfAny(charArrayOf(' ', '\n', '\t'))
 }
 
 @Composable
@@ -513,7 +514,8 @@ fun MessageField(
                     }
 
                     lastWord.startsWith('@') -> {
-                        if (channelId != null && serverId != null) {
+                        // durio: DMs and groups have no server but do have people to mention
+                        if (channelId != null) {
                             autocompleteSuggestions.addAll(
                                 Autocomplete.userOrRole(
                                     channelId,
@@ -521,6 +523,17 @@ fun MessageField(
                                     lastWord.substring(1)
                                 )
                             )
+                            // durio: the first `@` in a server fetches its member list
+                            if (serverId != null && Autocomplete.loadMembers(serverId)) {
+                                autocompleteSuggestions.clear()
+                                autocompleteSuggestions.addAll(
+                                    Autocomplete.userOrRole(
+                                        channelId,
+                                        serverId,
+                                        lastWord.substring(1)
+                                    )
+                                )
+                            }
                         }
                     }
 

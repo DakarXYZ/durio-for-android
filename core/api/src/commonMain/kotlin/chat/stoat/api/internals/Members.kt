@@ -43,6 +43,10 @@ class Members {
         }?.toMap() ?: emptyMap()
     }
 
+    /** durio: the cached members of a server (for mention suggestions) */
+    fun membersOf(serverId: String): List<Member> =
+        memberCache[serverId]?.values?.toList() ?: emptyList()
+
     fun filterNamesFor(serverId: String, query: String): List<Member> {
         return memberCache[serverId]?.values?.filter { member ->
             member.nickname?.contains(query, ignoreCase = true) ?: false

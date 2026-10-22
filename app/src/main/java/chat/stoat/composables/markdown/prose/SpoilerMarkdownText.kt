@@ -1,6 +1,12 @@
 package chat.stoat.composables.markdown.prose
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +28,9 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
 
 internal const val SPOILER_LINK_TAG_PREFIX = "spoiler:"
+
+/** durio: a closed (!)NSFW(!) spoiler (also starts with [SPOILER_LINK_TAG_PREFIX]) */
+internal const val NSFW_SPOILER_LINK_TAG_PREFIX = "spoiler:nsfw:"
 
 @Composable
 internal fun SpoilerMarkdownText(
@@ -49,6 +58,14 @@ internal fun SpoilerMarkdownText(
         link?.tag?.startsWith(SPOILER_LINK_TAG_PREFIX) == true
     }
     var layoutResult by remember(styledText) { mutableStateOf<TextLayoutResult?>(null) }
+    // durio: NSFW spoilers are red and say so
+    val nsfwColor = MaterialTheme.colorScheme.error
+    val nsfwLabelStyle = TextStyle(
+        color = MaterialTheme.colorScheme.onError,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+    )
+    val textMeasurer = rememberTextMeasurer()
     val semanticsModifier = if (isHeading) Modifier.semantics { heading() } else Modifier
 
     MarkdownText(
@@ -64,10 +81,23 @@ internal fun SpoilerMarkdownText(
                 val layout = layoutResult ?: return@drawWithContent
                 hiddenSpoilers.forEach { spoiler ->
                     if (spoiler.start < spoiler.end) {
-                        drawPath(
-                            path = layout.getPathForRange(spoiler.start, spoiler.end),
-                            color = spoilerColor,
-                        )
+                        val nsfw = (spoiler.item as LinkAnnotation.Clickable).tag
+                            .startsWith(NSFW_SPOILER_LINK_TAG_PREFIX)
+                        val path = layout.getPathForRange(spoiler.start, spoiler.end)
+                        drawPath(path = path, color = if (nsfw) nsfwColor else spoilerColor)
+                        if (nsfw) {
+                            val bounds = path.getBounds()
+                            val label = textMeasurer.measure("NSFW", nsfwLabelStyle)
+                            if (label.size.width <= bounds.width) {
+                                drawText(
+                                    textLayoutResult = label,
+                                    topLeft = Offset(
+                                        bounds.left + (bounds.width - label.size.width) / 2f,
+                                        bounds.top + (bounds.height - label.size.height) / 2f,
+                                    ),
+                                )
+                            }
+                        }
                     }
                 }
             },

@@ -24,6 +24,7 @@ class StoatMarkdownFlavour(private val content: String) : GFMFlavourDescriptor()
                 TimestampSequentialParser(content),
                 CustomEmoteSequentialParser(content),
             ) + upstream.take(emphasisIndex) + SpoilerSequentialParser() +
+                    SpoilerSequentialParser(NSFW_DELIMITER_TOKEN_TYPE, NSFW_ELEMENT_TYPE) +
                     upstream.drop(emphasisIndex)
         }
     }
