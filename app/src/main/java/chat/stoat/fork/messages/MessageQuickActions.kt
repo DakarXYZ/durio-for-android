@@ -40,6 +40,7 @@ import chat.stoat.api.internals.isUlid
 import chat.stoat.composables.generic.RemoteImage
 import chat.stoat.core.model.data.STOAT_FILES
 import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.durio_emoji_pick
 import chat.stoat.shared.resources.durio_message_quick_more
 import chat.stoat.shared.resources.durio_message_quick_react
 import chat.stoat.shared.resources.message_context_sheet_actions_copy
@@ -61,10 +62,13 @@ fun MessageQuickActions(
     onReply: () -> Unit,
     onMore: () -> Unit,
     onDismiss: () -> Unit,
+    // durio: the emoji picker, to react with any emoji
+    onPickEmoji: (() -> Unit)? = null,
 ) {
     LaunchedEffect(Unit) { RecentEmoji.load() }
     val recent by RecentEmoji.emoji.collectAsState()
-    val quick = remember(recent) { RecentEmoji.quick(recent) }
+    // durio: one quick emoji fewer, the picker button fits
+    val quick = remember(recent) { RecentEmoji.quick(recent, 4) }
 
     val margin = with(LocalDensity.current) { 8.dp.roundToPx() }
     val positionProvider = remember(margin) { AboveOrBelow(margin) }
@@ -86,6 +90,13 @@ fun MessageQuickActions(
             ) {
                 if (showReactions) {
                     quick.forEach { emoji -> QuickEmoji(emoji) { onReact(emoji) } }
+                    onPickEmoji?.let {
+                        QuickIcon(
+                            R.drawable.ic_add_reaction_24dp,
+                            stringResource(Res.string.durio_emoji_pick),
+                            it,
+                        )
+                    }
                     VerticalDivider(
                         modifier = Modifier
                             .padding(horizontal = 4.dp)

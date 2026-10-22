@@ -328,6 +328,10 @@ fun RegularMessage(
                     message.id?.let(showMessageBottomSheet)
                 },
                 onDismiss = { quickActionsShown = false },
+                onPickEmoji = {
+                    quickActionsShown = false
+                    showReactBottomSheet()
+                },
             )
         }
         with(LocalDensity.current) {

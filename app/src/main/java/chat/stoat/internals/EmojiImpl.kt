@@ -58,6 +58,9 @@ enum class UnicodeEmojiSection(val googleName: String, val nameResource: StringR
 sealed class Category {
     data class UnicodeEmojiCategory(val definition: UnicodeEmojiSection) : Category()
     data class ServerEmoteCategory(val server: Server) : Category()
+
+    /** durio: the emoji the user picks most */
+    data object Frequent : Category()
 }
 
 sealed class EmojiPickerItem {
@@ -73,6 +76,9 @@ sealed class EmojiPickerItem {
 
 class EmojiImpl {
     private var metadata: List<EmojiGroup>
+
+    /** durio: the server whose emoji come first (the current channel's) */
+    var firstServer: String? = null
 
     private fun initMetadata(context: Context): List<EmojiGroup> {
         val json = context.assets.open("metadata/emoji.json").use {
@@ -93,6 +99,24 @@ class EmojiImpl {
             .distinct()
             .mapNotNull { StoatAPI.serverCache[it] }
             .toList()
+            // durio: the current server's emoji first
+            .sortedBy { if (it.id == firstServer) 0 else 1 }
+    }
+
+    /**
+     * durio: the "Frequently used" section: [frequent] emoji (unicode, or custom emoji ids that
+     * are known), empty when there are none
+     */
+    fun frequentSection(frequent: List<String>): List<EmojiPickerItem> {
+        val items = frequent.mapNotNull { emoji ->
+            if (emoji.length == 26 && emoji.all { it.isLetterOrDigit() }) {
+                StoatAPI.emojiCache[emoji]?.let { EmojiPickerItem.ServerEmote(it) }
+            } else {
+                EmojiPickerItem.UnicodeEmoji(emoji, hasSkinTones = false, alternates = emptyList())
+            }
+        }
+        if (items.isEmpty()) return emptyList()
+        return listOf(EmojiPickerItem.Section(Category.Frequent)) + items
     }
 
     fun serverEmoteList(server: Server): List<EmojiPickerItem> {

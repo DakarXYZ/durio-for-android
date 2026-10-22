@@ -13,7 +13,8 @@ fun ReactSheet(messageId: String, onSelect: (String?) -> Unit) {
         return
     }
 
-    EmojiPicker {
+    // durio: the emoji of the message's server come first
+    EmojiPicker(serverId = message.channel?.let { StoatAPI.channelCache[it]?.server }) {
         onSelect(it.removeSurrounding(":"))
     }
 

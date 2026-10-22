@@ -82,6 +82,10 @@ import chat.stoat.shared.resources.emoji_picker_skin_tone_fitzpatrick_5
 import chat.stoat.shared.resources.emoji_picker_skin_tone_fitzpatrick_6
 import chat.stoat.shared.resources.emoji_picker_skin_tone_none
 import chat.stoat.shared.resources.unknown
+import chat.stoat.shared.resources.durio_emoji_frequent
+import chat.stoat.fork.messages.EmojiFrequency
+import chat.stoat.fork.messages.RecentEmoji
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -89,13 +93,26 @@ import org.jetbrains.compose.resources.stringResource
 fun EmojiPicker(
     onSearchFocus: (Boolean) -> Unit = {},
     bottomInset: Dp = 0.dp,
+    // durio: the server whose emoji come first
+    serverId: String? = null,
     onEmojiSelected: (String) -> Unit,
 ) {
     val view = LocalView.current
     val focusManager = LocalFocusManager.current
 
-    val emojiImpl = remember { EmojiImpl() }
-    val pickerList = remember(emojiImpl) { emojiImpl.flatPickerList() }
+    val emojiImpl = remember(serverId) { EmojiImpl().also { it.firstServer = serverId } }
+    // durio: "Frequently used" on top, fixed while the picker is open
+    LaunchedEffect(Unit) { RecentEmoji.load() }
+    val emojiCounts by RecentEmoji.counts.collectAsState()
+    var frequent by remember { mutableStateOf<List<String>?>(null) }
+    LaunchedEffect(emojiCounts) {
+        if (frequent == null && emojiCounts.isNotEmpty()) {
+            frequent = EmojiFrequency.frequent(emojiCounts, RecentEmoji.emoji.value)
+        }
+    }
+    val pickerList = remember(emojiImpl, frequent) {
+        emojiImpl.frequentSection(frequent.orEmpty()) + emojiImpl.flatPickerList()
+    }
     val servers = remember(emojiImpl) { emojiImpl.serversWithEmotes() }
     val categorySpans = remember(pickerList) { emojiImpl.categorySpans(pickerList) }
 
@@ -155,7 +172,7 @@ fun EmojiPicker(
     val skinSample = remember(pickerList) {
         pickerList
             .filterIsInstance<EmojiPickerItem.UnicodeEmoji>()
-            .first { it.character == "\uD83E\uDEF0" }
+            .first { it.character == "\uD83E\uDEF0" && it.hasSkinTones }
     }
 
     var searchQuery by remember { mutableStateOf("") }
@@ -186,14 +203,16 @@ fun EmojiPicker(
     val onEmojiClick: (EmojiPickerItem) -> Unit = {
         view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
         when (it) {
-            is EmojiPickerItem.UnicodeEmoji -> onEmojiSelected(
-                emojiImpl.applyFitzpatrickSkinTone(
-                    it,
-                    currentSkinTone
-                )
-            )
+            is EmojiPickerItem.UnicodeEmoji -> {
+                val emoji = emojiImpl.applyFitzpatrickSkinTone(it, currentSkinTone)
+                RecentEmoji.count(emoji) // durio: for the favourites
+                onEmojiSelected(emoji)
+            }
 
-            is EmojiPickerItem.ServerEmote -> onEmojiSelected(":${it.emote.id}:")
+            is EmojiPickerItem.ServerEmote -> {
+                it.emote.id?.let(RecentEmoji::count)
+                onEmojiSelected(":${it.emote.id}:")
+            }
             else -> {}
         }
     }
@@ -650,6 +669,8 @@ fun ColumnScope.PickerItem(
                     is Category.ServerEmoteCategory ->
                         item.category.server.name
                             ?: stringResource(Res.string.unknown)
+
+                    Category.Frequent -> stringResource(Res.string.durio_emoji_frequent)
                 },
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier
