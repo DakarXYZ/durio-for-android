@@ -1,5 +1,11 @@
 package chat.stoat.screens.settings.channel
 
+import chat.stoat.api.fork.routes.removeUserPermissions
+import chat.stoat.api.fork.routes.setUserPermissions
+import chat.stoat.api.internals.ChannelUtils
+import chat.stoat.api.internals.Roles
+import chat.stoat.fork.userchannels.MemberOverridesSection
+import chat.stoat.fork.userchannels.memberName
 import android.app.Application
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -96,6 +102,19 @@ import org.koin.androidx.compose.koinViewModel
 
 private const val DefaultChannelRoleId = "default"
 
+// durio: the editor also takes one member's permissions, as "user:<id>"
+private const val MemberOverridePrefix = "user:"
+
+private fun memberOverrideId(roleId: String): String? =
+    roleId.takeIf { it.startsWith(MemberOverridePrefix) }?.removePrefix(MemberOverridePrefix)
+
+private fun overrideOf(channel: Channel, roleId: String): PermissionDescription? =
+    when {
+        roleId == DefaultChannelRoleId -> channel.defaultPermissions
+        memberOverrideId(roleId) != null -> channel.userPermissions?.get(memberOverrideId(roleId))
+        else -> channel.rolePermissions?.get(roleId)
+    }
+
 private data class ChannelPermissionRoleEntry(
     val id: String,
     val role: Role,
@@ -128,11 +147,7 @@ class ChannelSettingsPermissionsViewModel(
         val channel = StoatAPI.channelCache[channelId] ?: return
 
         loadedKey = key
-        initialPermissions = if (roleId == DefaultChannelRoleId) {
-            channel.defaultPermissions
-        } else {
-            channel.rolePermissions?.get(roleId)
-        } ?: PermissionDescription(0, 0)
+        initialPermissions = overrideOf(channel, roleId) ?: PermissionDescription(0, 0)
         permissions = initialPermissions
         error = null
         loaded = true
@@ -153,17 +168,19 @@ class ChannelSettingsPermissionsViewModel(
             saving = true
             error = null
             runCatching {
-                if (roleId == DefaultChannelRoleId) {
-                    setDefaultChannelPermissions(channelId, permissions)
-                } else {
-                    setChannelRolePermissions(channelId, roleId, permissions)
+                val memberId = memberOverrideId(roleId)
+                when {
+                    roleId == DefaultChannelRoleId -> setDefaultChannelPermissions(channelId, permissions)
+                    // durio: nothing set drops the member's own permissions
+                    memberId != null && permissions.a == 0L && permissions.d == 0L ->
+                        removeUserPermissions(channelId, memberId)
+                    memberId != null ->
+                        setUserPermissions(channelId, memberId, permissions.a, permissions.d)
+                    else -> setChannelRolePermissions(channelId, roleId, permissions)
                 }
             }.onSuccess { channel ->
-                initialPermissions = if (roleId == DefaultChannelRoleId) {
-                    channel.defaultPermissions
-                } else {
-                    channel.rolePermissions?.get(roleId)
-                } ?: permissions
+                initialPermissions = overrideOf(channel, roleId)
+                    ?: if (memberOverrideId(roleId) != null) PermissionDescription(0, 0) else permissions
                 permissions = initialPermissions
                 saveSucceeded++
             }.onFailure {
@@ -180,8 +197,11 @@ class ChannelSettingsPermissionsViewModel(
     ): List<ServerPermissionOption> {
         val channel = StoatAPI.channelCache[channelId] ?: return emptyList()
         val currentPermissions = effectivePermissionsFor(channel)
+        val memberId = memberOverrideId(roleId)
         val proposedChannel = if (roleId == DefaultChannelRoleId) {
             channel.copy(defaultPermissions = permissions)
+        } else if (memberId != null) {
+            channel.copy(userPermissions = channel.userPermissions.orEmpty() + (memberId to permissions))
         } else {
             channel.copy(
                 rolePermissions = channel.rolePermissions.orEmpty() + (roleId to permissions)
@@ -206,6 +226,7 @@ class ChannelSettingsPermissionsViewModel(
         }
 
         val member = StoatAPI.members.getMember(server.id.orEmpty(), selfId) ?: return 0L
+        val onServer = Roles.permissionFor(server, member)
         var calculated = server.defaultPermissions ?: BitDefaults.Server
 
         fun apply(override: PermissionDescription?) {
@@ -225,6 +246,14 @@ class ChannelSettingsPermissionsViewModel(
         assignedRoles.forEach { (roleId, _) ->
             apply(channel.rolePermissions?.get(roleId))
         }
+        // durio: our own override, then a member's own channel
+        apply(channel.userPermissions?.get(selfId))
+        calculated = Roles.userChannelPermissions(
+            calculated,
+            maker = ChannelUtils.userChannelOwner(channel),
+            selfId = selfId,
+            onServer = onServer,
+        )
 
         if (member.canPublish == false) {
             calculated = calculated and PermissionBit.Speak.value.inv()
@@ -353,6 +382,11 @@ fun ChannelSettingsPermissions(navController: NavController, channelId: String) 
             )
         }
 
+        // durio: permissions of single members
+        MemberOverridesSection(channelId) { userId ->
+            navController.navigate("settings/channel/$channelId/permissions/$MemberOverridePrefix$userId")
+        }
+
         Spacer(Modifier.height(32.dp))
     }
 }
@@ -369,7 +403,8 @@ fun ChannelSettingsPermissionEditor(
     val server = channel?.server?.let(StoatAPI.serverCache::get)
     val role = server?.roles?.get(roleId)
     val effectivePermissions by rememberChannelPermissions(channelId, channel ?: Unit)
-    val elevated = roleId == DefaultChannelRoleId ||
+    val memberId = memberOverrideId(roleId)
+    val elevated = roleId == DefaultChannelRoleId || memberId != null ||
             (server != null && role != null && canManageServerRole(server, role))
     val hasManagePermissions =
         effectivePermissions.hasPermission(PermissionBit.ManagePermissions)
@@ -451,6 +486,8 @@ fun ChannelSettingsPermissionEditor(
             Text(
                 if (roleId == DefaultChannelRoleId) {
                     stringResource(Res.string.server_settings_roles_everyone)
+                } else if (memberId != null) {
+                    memberName(server?.id.orEmpty(), memberId)
                 } else {
                     role?.name ?: stringResource(Res.string.server_settings_role)
                 }

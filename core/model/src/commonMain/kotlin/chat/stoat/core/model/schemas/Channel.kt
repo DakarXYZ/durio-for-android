@@ -97,6 +97,9 @@ data class Channel(
     // durio: threads of this channel are deleted after this many days without a message
     @SerialName("thread_auto_delete")
     val threadAutoDelete: Int? = null,
+    // durio: permissions of single members in this server channel
+    @SerialName("user_permissions")
+    val userPermissions: Map<String, PermissionDescription>? = null,
 ) {
     fun mergeWithPartial(partial: Channel): Channel {
         return Channel(
@@ -121,6 +124,7 @@ data class Channel(
             encryption = partial.encryption ?: encryption,
             thread = partial.thread ?: thread,
             threadAutoDelete = partial.threadAutoDelete ?: threadAutoDelete,
+            userPermissions = partial.userPermissions ?: userPermissions,
         )
     }
 }

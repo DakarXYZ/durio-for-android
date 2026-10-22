@@ -21,7 +21,10 @@ data class Server(
     val banner: AutumnResource? = null,
     val flags: Long? = null,
     val analytics: Boolean? = null,
-    val discoverable: Boolean? = null
+    val discoverable: Boolean? = null,
+    // durio: how many text channels of their own each member may make
+    @SerialName("user_channel_limit")
+    val userChannelLimit: Int? = null,
 ) {
     fun mergeWithPartial(other: Server): Server {
         return Server(
@@ -38,7 +41,8 @@ data class Server(
             banner = other.banner ?: banner,
             flags = other.flags ?: flags,
             analytics = other.analytics ?: analytics,
-            discoverable = other.discoverable ?: discoverable
+            discoverable = other.discoverable ?: discoverable,
+            userChannelLimit = other.userChannelLimit ?: userChannelLimit,
         )
     }
 }

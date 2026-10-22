@@ -233,7 +233,8 @@ fun ChannelInfoSheet(channelId: String, onHideSheet: suspend () -> Unit) {
     )
 
     if (
-        (permissions has PermissionBit.ManageChannel || permissions has PermissionBit.ManageRole)
+        (permissions has PermissionBit.ManageChannel || permissions has PermissionBit.ManageRole ||
+                permissions has PermissionBit.ManagePermissions)
         && (channel.channelType != ChannelType.SavedMessages && channel.channelType != ChannelType.DirectMessage)
     ) {
         SheetButton(

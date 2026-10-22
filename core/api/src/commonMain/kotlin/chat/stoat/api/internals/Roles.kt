@@ -70,6 +70,24 @@ object Roles {
         return calculated
     }
 
+    /**
+     * durio: a member's own channel is run by its maker, and the server's moderators
+     * (ManageChannel on the server) keep there what they have on the server
+     * @param calculated Permissions in the channel so far
+     * @param maker Member who made the channel for themselves, if anyone did
+     * @param selfId Our user id
+     * @param onServer Our permissions on the server
+     */
+    fun userChannelPermissions(calculated: Long, maker: String?, selfId: String?, onServer: Long): Long {
+        if (maker == null) return calculated
+        var result = calculated
+        if (maker == selfId) result = result or BitDefaults.UserChannelOwner
+        if (onServer.hasPermission(PermissionBit.ManageChannel)) {
+            result = result or onServer or PermissionBit.ViewChannel.value
+        }
+        return result
+    }
+
     // TODO may not be exactly accurate
     // See https://github.com/revoltchat/revolt.js/blob/2ba023c879b2a53f9a3cc7042e6721c28dd970ba/src/permissions/calculator.ts#L80-L158
     fun permissionFor(channel: Channel, user: User? = null, member: Member? = null): Long {
@@ -91,7 +109,8 @@ object Roles {
                     user?.id ?: return 0L
                 ) ?: return 0L
 
-                var calculated = permissionFor(server, chMember)
+                val onServer = permissionFor(server, chMember)
+                var calculated = onServer
 
                 // durio: a thread takes the overrides of its channel
                 val overrides = channel.thread?.parent?.let { StoatAPI.channelCache[it] } ?: channel
@@ -107,6 +126,18 @@ object Roles {
                         calculated = calculated or override.a and override.d.inv()
                     }
                 }
+
+                // durio: an override for this member alone, then a member's own channel
+                val selfId = chMember.id?.user ?: user?.id
+                overrides.userPermissions?.get(selfId)?.let { override ->
+                    calculated = calculated or override.a and override.d.inv()
+                }
+                calculated = userChannelPermissions(
+                    calculated,
+                    maker = overrides.owner.takeIf { overrides.channelType == ChannelType.TextChannel },
+                    selfId = selfId,
+                    onServer = onServer,
+                )
 
                 if (chMember.timeoutTimestamp()?.let { it > Clock.System.now() } == true) {
                     calculated = calculated and BitDefaults.AllowedInTimeout

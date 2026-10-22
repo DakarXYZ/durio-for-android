@@ -110,6 +110,19 @@ object BitDefaults {
                 PermissionBit.ChangeNickname +
                 PermissionBit.ChangeAvatar
 
+    // durio: what the member who made a channel of their own may do in it
+    val UserChannelOwner =
+        ViewOnly +
+                PermissionBit.SendMessage +
+                PermissionBit.ManageMessages +
+                PermissionBit.ManageChannel +
+                PermissionBit.ManagePermissions +
+                PermissionBit.InviteOthers +
+                PermissionBit.SendEmbeds +
+                PermissionBit.UploadFiles +
+                PermissionBit.React +
+                PermissionBit.BypassSlowmode
+
     val Webhook =
         PermissionBit.SendMessage +
                 PermissionBit.SendEmbeds +

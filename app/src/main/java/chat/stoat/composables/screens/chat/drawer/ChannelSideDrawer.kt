@@ -1,6 +1,8 @@
 package chat.stoat.composables.screens.chat.drawer
 
 import chat.stoat.fork.threads.DrawerThreadTree
+import chat.stoat.fork.userchannels.MakeOwnChannelRow
+import chat.stoat.fork.userchannels.UserChannelsHeader
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -991,7 +993,21 @@ fun ColumnScope.ServerChannelListRenderer(
                     CategoryItem(category = channelOrCat.category)
                 }
 
+                // durio: "Channels <member>" over a member's own channels
+                is CategorisedChannelList.UserChannels -> {
+                    UserChannelsHeader(serverId = serverId, ownerId = channelOrCat.ownerId)
+                }
+
                 else -> {}
+            }
+        }
+        // durio: a member makes a channel of their own
+        item(key = "make-own-channel") {
+            MakeOwnChannelRow(serverId = serverId) { channelId ->
+                onDestinationChanged(ChatRouterDestination.Channel(channelId))
+                scope.launch {
+                    drawerState?.close()
+                }
             }
         }
         item(key = "last") {

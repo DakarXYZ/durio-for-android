@@ -134,7 +134,9 @@ fun ChannelSettingsHome(navController: NavController, channelId: String) {
         Box(Modifier.padding(pv)) {
             channel?.let {
                 val canManageChannel = permissions.hasPermission(PermissionBit.ManageChannel)
-                val showPermissions = permissions.hasPermission(PermissionBit.ManageRole)
+                // durio: ManagePermissions in the channel, so a member runs their own channel too
+                val showPermissions = permissions.hasPermission(PermissionBit.ManageRole) ||
+                        permissions.hasPermission(PermissionBit.ManagePermissions)
                 val showDelete = canManageChannel &&
                         channel.channelType != ChannelType.DirectMessage &&
                         channel.channelType != ChannelType.Group

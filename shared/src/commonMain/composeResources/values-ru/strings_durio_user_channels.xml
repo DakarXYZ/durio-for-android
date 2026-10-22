@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: свои каналы участников, права отдельных участников -->
+<resources>
+    <string name="durio_user_channels_of">Каналы</string>
+    <string name="durio_user_channel_make">Создать свой канал</string>
+    <string name="durio_user_channel_name">Название канала</string>
+    <string name="durio_user_channel_create">Создать</string>
+    <string name="durio_user_channel_limit_heading">Каналы участников</string>
+    <string name="durio_user_channel_limit">Сколько своих текстовых каналов может создать участник</string>
+    <string name="durio_user_channel_limit_none">Ничего</string>
+    <string name="durio_member_overrides">Права участников</string>
+    <string name="durio_member_overrides_empty">Ни у кого из участников нет здесь своих прав. Найдите участника, чтобы оставить ему только чтение или запретить реакции.</string>
+    <string name="durio_member_overrides_find">Найти участника</string>
+</resources>

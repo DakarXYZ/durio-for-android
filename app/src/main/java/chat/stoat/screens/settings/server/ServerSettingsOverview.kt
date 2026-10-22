@@ -1,5 +1,6 @@
 package chat.stoat.screens.settings.server
 
+import chat.stoat.fork.userchannels.UserChannelLimitSetting
 import android.app.Application
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -452,6 +453,8 @@ fun ServerSettingsOverview(
         }
 
         ServerInfoFields(viewModel)
+        // durio: how many channels of their own members may make
+        UserChannelLimitSetting(serverId)
         SystemMessageFields(viewModel, channels)
 
         AnimatedVisibility(viewModel.updateError != null) {

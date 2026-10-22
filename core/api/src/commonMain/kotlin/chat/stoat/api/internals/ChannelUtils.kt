@@ -11,6 +11,9 @@ sealed class CategorisedChannelList {
 
     data class Category(val category: chat.stoat.core.model.schemas.Category) :
         CategorisedChannelList()
+
+    // durio: "Channels <member>" over the channels a member made for themselves
+    data class UserChannels(val ownerId: String) : CategorisedChannelList()
 }
 
 object ChannelUtils {
@@ -63,6 +66,45 @@ object ChannelUtils {
             output.addAll(channels)
         }
 
+        // durio: members' own channels go out of the categories, grouped by member
+        val own = output.filterIsInstance<CategorisedChannelList.Channel>()
+            .filter { userChannelOwner(it.channel) != null }
+        if (own.isEmpty()) return output
+
+        output.removeAll(own)
+        own.groupBy { userChannelOwner(it.channel)!! }.forEach { (ownerId, channels) ->
+            output.add(CategorisedChannelList.UserChannels(ownerId))
+            output.addAll(channels)
+        }
+
         return output
+    }
+
+    /**
+     * durio: the member who made this server channel for themselves, if anyone did
+     */
+    fun userChannelOwner(channel: Channel): String? =
+        channel.owner.takeIf { channel.channelType == chat.stoat.core.model.schemas.ChannelType.TextChannel && channel.thread == null }
+
+    /**
+     * durio: the channels each member made for themselves on a server
+     */
+    fun userChannels(server: Server): Map<String, List<Channel>> =
+        server.channels.orEmpty()
+            .mapNotNull { StoatAPI.channelCache[it] }
+            .filter { userChannelOwner(it) != null }
+            .groupBy { userChannelOwner(it)!! }
+
+    /**
+     * durio: whether we may make a channel of our own on this server
+     * @param serverPermissions Our permissions on the server
+     */
+    fun canMakeOwnChannel(server: Server, serverPermissions: Long?): Boolean {
+        val selfId = StoatAPI.selfId ?: return false
+        if (serverPermissions == null || serverPermissions.hasPermission(PermissionBit.ManageChannel)) {
+            return false
+        }
+        val limit = server.userChannelLimit ?: 0
+        return userChannels(server)[selfId].orEmpty().size < limit
     }
 }

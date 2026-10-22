@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dur.io: channels members make for themselves, permissions of single members -->
+<resources>
+    <string name="durio_user_channels_of">Channels</string>
+    <string name="durio_user_channel_make">Make a channel of your own</string>
+    <string name="durio_user_channel_name">Channel name</string>
+    <string name="durio_user_channel_create">Create</string>
+    <string name="durio_user_channel_limit_heading">Channels of members</string>
+    <string name="durio_user_channel_limit">Text channels each member may make for themselves</string>
+    <string name="durio_user_channel_limit_none">None</string>
+    <string name="durio_member_overrides">Member Overrides</string>
+    <string name="durio_member_overrides_empty">No member has permissions of their own here. Find a member to make the channel read-only for them or take away reactions.</string>
+    <string name="durio_member_overrides_find">Find a member</string>
+</resources>
