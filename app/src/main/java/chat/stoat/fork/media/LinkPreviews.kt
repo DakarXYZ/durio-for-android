@@ -7,7 +7,7 @@ import chat.stoat.core.model.schemas.Embed
  * shown when an embed of it is drawn as a card or media; the embed stands for it.
  */
 object LinkPreviews {
-    private val standaloneUrl = Regex("^https?://\S+$", RegexOption.IGNORE_CASE)
+    private val standaloneUrl = Regex("^https?://\\S+$", RegexOption.IGNORE_CASE)
 
     /** An embed drawn as media or a card: an image, a video, or a website with a title or description. */
     fun replacesLink(embed: Embed): Boolean = when (embed.type) {
