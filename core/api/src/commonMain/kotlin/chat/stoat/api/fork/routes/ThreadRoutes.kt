@@ -36,7 +36,21 @@ private suspend fun ensureOk(response: HttpResponse): String {
 private data class CreateThreadBody(val name: String, val message: String? = null)
 
 @Serializable
-private data class EditThreadBody(val name: String? = null, val archived: Boolean? = null)
+private data class EditThreadBody(
+    val name: String? = null,
+    val archived: Boolean? = null,
+    val locked: Boolean? = null,
+)
+
+@Serializable
+private data class ThreadAutoDeleteBody(
+    @kotlinx.serialization.SerialName("thread_auto_delete")
+    val threadAutoDelete: Int? = null,
+    val remove: List<String>? = null,
+)
+
+/** Choices for how long a channel keeps threads nobody writes in, in days */
+val THREAD_AUTO_DELETE_DAYS = listOf(1, 3, 7, 14, 30, 90, 180, 365)
 
 @Serializable
 private data class SpoilerBody(val kind: String)
@@ -84,15 +98,35 @@ suspend fun fetchThreads(parentId: String, client: ApiClient = ApiClient.Active)
     return StoatJson.decodeFromString(ListSerializer(Channel.serializer()), text).map(::remember)
 }
 
-/** `PATCH /channels/{thread}/thread`: rename or (un)archive (its starter, or ManageChannel). */
+/**
+ * `PATCH /channels/{thread}/thread`: rename, (un)archive, close or open again (its starter, or
+ * ManageChannel). Closing archives it too.
+ */
 suspend fun editThread(
     threadId: String,
     name: String? = null,
     archived: Boolean? = null,
+    locked: Boolean? = null,
     client: ApiClient = ApiClient.Active,
 ): Channel {
-    val body = StoatJson.encodeToString(EditThreadBody.serializer(), EditThreadBody(name, archived))
+    val body = StoatJson.encodeToString(EditThreadBody.serializer(), EditThreadBody(name, archived, locked))
     val text = ensureOk(client.http.patch("/channels/$threadId/thread".api(client)) {
+        setBody(TextContent(body, ContentType.Application.Json))
+    })
+    return remember(StoatJson.decodeFromString(Channel.serializer(), text))
+}
+
+/**
+ * `PATCH /channels/{id}`: delete the channel's threads after [days] without a message, or keep them
+ * forever when null (ManageChannel).
+ */
+suspend fun setThreadAutoDelete(channelId: String, days: Int?, client: ApiClient = ApiClient.Active): Channel {
+    val body = StoatJson.encodeToString(
+        ThreadAutoDeleteBody.serializer(),
+        if (days != null) ThreadAutoDeleteBody(threadAutoDelete = days)
+        else ThreadAutoDeleteBody(remove = listOf("ThreadAutoDelete")),
+    )
+    val text = ensureOk(client.http.patch("/channels/$channelId".api(client)) {
         setBody(TextContent(body, ContentType.Application.Json))
     })
     return remember(StoatJson.decodeFromString(Channel.serializer(), text))

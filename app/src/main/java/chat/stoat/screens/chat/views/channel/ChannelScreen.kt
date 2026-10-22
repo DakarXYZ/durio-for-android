@@ -211,7 +211,7 @@ import chat.stoat.shared.resources.voice_start_call
 import chat.stoat.sheets.ChannelInfoSheet
 import chat.stoat.sheets.MessageContextSheet
 import chat.stoat.sheets.ReactSheet
-import chat.stoat.fork.threads.ThreadArchiveAction
+import chat.stoat.fork.threads.ThreadLockAction
 import chat.stoat.fork.threads.Threads
 import chat.stoat.fork.threads.ThreadsSheet
 import chat.stoat.shared.resources.durio_thread_back_to_channel
@@ -1038,10 +1038,10 @@ fun ChannelScreen(
                         }
                     },
                     actions = {
-                        // durio: the threads of a server text channel; archive a thread
+                        // durio: the threads of a server text channel; close a thread
                         viewModel.channel?.let { current ->
                             if (current.thread != null) {
-                                ThreadArchiveAction(current)
+                                ThreadLockAction(current)
                             } else if (current.channelType == ChannelType.TextChannel) {
                                 IconButton(onClick = { threadsSheetShown = true }) {
                                     Icon(

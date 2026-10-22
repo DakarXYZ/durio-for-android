@@ -29,4 +29,14 @@
     <string name="durio_spoiler_failed">Could not change the spoiler: %1$s</string>
     <string name="durio_emoji_frequent">Frequently used</string>
     <string name="durio_emoji_pick">Pick an emoji</string>
+    <string name="durio_thread_close">Close the thread</string>
+    <string name="durio_thread_reopen">Open the thread again</string>
+    <string name="durio_thread_closed">closed</string>
+    <string name="durio_thread_closed_notice">This thread is closed.</string>
+    <string name="durio_thread_auto_delete">Delete threads nobody writes in for</string>
+    <string name="durio_thread_auto_delete_never">Never delete threads</string>
+    <plurals name="durio_thread_auto_delete_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
 </resources>

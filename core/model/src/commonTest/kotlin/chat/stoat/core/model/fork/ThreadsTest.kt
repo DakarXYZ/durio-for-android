@@ -39,6 +39,24 @@ class ThreadsTest {
     }
 
     @Test
+    fun parsesClosedThreadAndAutoDelete() {
+        val thread = json.decodeFromString(
+            Channel.serializer(),
+            """{"_id":"T","channel_type":"TextChannel","thread":{"parent":"P","message":"M","owner":"U","archived":true,"locked":true}}""",
+        )
+        assertTrue(thread.thread!!.locked)
+        assertNull(thread.threadAutoDelete)
+
+        val parent = json.decodeFromString(
+            Channel.serializer(),
+            """{"_id":"P","channel_type":"TextChannel","name":"general","thread_auto_delete":7}""",
+        )
+        assertEquals(7, parent.threadAutoDelete)
+        assertEquals(7, parent.mergeWithPartial(Channel(name = "renamed")).threadAutoDelete)
+        assertEquals(30, parent.mergeWithPartial(Channel(threadAutoDelete = 30)).threadAutoDelete)
+    }
+
+    @Test
     fun messageThreadAndSpoilerClear() {
         val message = json.decodeFromString(
             Message.serializer(),

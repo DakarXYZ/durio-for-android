@@ -1,5 +1,6 @@
 package chat.stoat.screens.settings.channel
 
+import chat.stoat.fork.threads.ThreadAutoDeleteSetting
 import android.app.Application
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
@@ -449,6 +450,9 @@ fun ChannelSettingsOverview(
                         modifier = Modifier
                             .padding(vertical = 8.dp, horizontal = 16.dp),
                     )
+
+                    // durio: delete the channel's threads nobody writes in for a while
+                    ThreadAutoDeleteSetting(currentChannel)
                 }
             } ?: run {
                 Box(

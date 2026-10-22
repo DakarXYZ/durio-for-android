@@ -31,4 +31,16 @@
     <string name="durio_spoiler_failed">Не удалось изменить спойлер: %1$s</string>
     <string name="durio_emoji_frequent">Часто используемые</string>
     <string name="durio_emoji_pick">Выбрать эмодзи</string>
+    <string name="durio_thread_close">Закрыть тред</string>
+    <string name="durio_thread_reopen">Открыть тред снова</string>
+    <string name="durio_thread_closed">закрыт</string>
+    <string name="durio_thread_closed_notice">Тред закрыт.</string>
+    <string name="durio_thread_auto_delete">Удалять треды, в которых не пишут</string>
+    <string name="durio_thread_auto_delete_never">Не удалять треды</string>
+    <plurals name="durio_thread_auto_delete_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
+    </plurals>
 </resources>

@@ -17,6 +17,8 @@ data class ThreadInfo(
     val owner: String,
     /** Archived by hand; a new message brings it back */
     val archived: Boolean = false,
+    /** Closed: archived, and only its starter or ManageChannel may write in it or open it again */
+    val locked: Boolean = false,
     @SerialName("message_count")
     val messageCount: Long = 0,
 ) {

@@ -1,5 +1,6 @@
 package chat.stoat.composables.screens.chat.drawer
 
+import chat.stoat.fork.threads.DrawerThreadTree
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
@@ -942,7 +943,7 @@ fun ColumnScope.ServerChannelListRenderer(
 
         items(categorisedChannels?.size ?: 0) {
             when (val channelOrCat = categorisedChannels?.get(it)) {
-                is CategorisedChannelList.Channel -> {
+                is CategorisedChannelList.Channel -> Column {
                     ChannelItem(
                         channel = channelOrCat.channel,
                         isCurrent = when (currentDestination) {
@@ -971,6 +972,18 @@ fun ColumnScope.ServerChannelListRenderer(
                         ),
                         showVoiceParticipants = true,
                         onOpenChannelContextSheet = onOpenChannelContextSheet
+                    )
+                    // durio: its open threads, as a tree under it
+                    DrawerThreadTree(
+                        parentId = channelOrCat.channel.id!!,
+                        currentChannelId = (currentDestination as? ChatRouterDestination.Channel)?.channelId,
+                        serverId = serverId,
+                        onOpen = { threadId ->
+                            onDestinationChanged(ChatRouterDestination.Channel(threadId))
+                            scope.launch {
+                                drawerState?.close()
+                            }
+                        },
                     )
                 }
 

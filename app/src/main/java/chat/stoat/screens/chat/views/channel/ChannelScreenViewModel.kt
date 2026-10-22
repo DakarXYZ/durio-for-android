@@ -21,6 +21,7 @@ import chat.stoat.api.internals.has
 import chat.stoat.api.realtime.RealtimeSocket
 import chat.stoat.api.realtime.RealtimeSocketFrames
 import chat.stoat.api.realtime.frames.receivable.ChannelDeleteFrame
+import chat.stoat.api.realtime.frames.receivable.ChannelUpdateFrame
 import chat.stoat.api.realtime.frames.receivable.ChannelStartTypingFrame
 import chat.stoat.api.realtime.frames.receivable.ChannelStopTypingFrame
 import chat.stoat.api.realtime.frames.receivable.MessageAppendFrame
@@ -58,6 +59,7 @@ import chat.stoat.persistence.KVStorage
 import chat.stoat.screens.chat.ChatRouterDestination
 import chat.stoat.settings.providers.AgeGateUnlockedStorageProvider
 import chat.stoat.shared.resources.Res
+import chat.stoat.shared.resources.durio_thread_closed_notice
 import chat.stoat.shared.resources.message_field_denied_generic
 import chat.stoat.shared.resources.message_field_denied_no_permission
 import chat.stoat.shared.resources.message_field_denied_platform_moderation
@@ -284,15 +286,22 @@ class ChannelScreenViewModel(
 
         val partnerId = ChannelUtils.resolveDMPartner(channel!!)
 
+        // durio: a closed thread takes messages from its starter and moderators only
+        val threadClosed = channel!!.thread?.let { thread ->
+            thread.locked && thread.owner != selfUser.id && !(permission has PermissionBit.ManageChannel)
+        } ?: false
+
         denyMessageField = when {
             partnerId == SpecialUsers.PLATFORM_MODERATION_USER -> true
             !canSend -> true
+            threadClosed -> true
             else -> false
         }
 
         denyMessageFieldReasonResource = when {
             partnerId == SpecialUsers.PLATFORM_MODERATION_USER -> Res.string.message_field_denied_platform_moderation
             !canSend -> Res.string.message_field_denied_no_permission
+            threadClosed -> Res.string.durio_thread_closed_notice
             else -> Res.string.message_field_denied_generic
         }
     }
@@ -1138,6 +1147,11 @@ class ChannelScreenViewModel(
                         if (it.id != channel?.id) return@onEach
 
                         clearTypingUser(it.user)
+                    }
+
+                    is ChannelUpdateFrame -> {
+                        if (it.id != channel?.id) return@onEach
+                        denyMessageFieldIfNeeded()
                     }
 
                     is ChannelDeleteFrame -> {

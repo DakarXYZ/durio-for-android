@@ -2,16 +2,20 @@ package chat.stoat.fork.threads
 
 import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -19,6 +23,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +37,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import chat.stoat.R
 import chat.stoat.api.StoatAPI
 import chat.stoat.api.fork.routes.MAX_THREAD_NAME
+import chat.stoat.api.fork.routes.THREAD_AUTO_DELETE_DAYS
+import chat.stoat.api.fork.routes.setThreadAutoDelete
 import chat.stoat.api.fork.routes.cachedThreads
 import chat.stoat.api.fork.routes.createThread
 import chat.stoat.api.fork.routes.editThread
@@ -57,7 +67,12 @@ import chat.stoat.core.model.schemas.ChannelType
 import chat.stoat.core.model.schemas.Message
 import chat.stoat.shared.resources.Res
 import chat.stoat.shared.resources.durio_thread_active_section
-import chat.stoat.shared.resources.durio_thread_archive
+import chat.stoat.shared.resources.durio_thread_auto_delete
+import chat.stoat.shared.resources.durio_thread_auto_delete_days
+import chat.stoat.shared.resources.durio_thread_auto_delete_never
+import chat.stoat.shared.resources.durio_thread_close
+import chat.stoat.shared.resources.durio_thread_closed
+import chat.stoat.shared.resources.durio_thread_reopen
 import chat.stoat.shared.resources.durio_thread_archived
 import chat.stoat.shared.resources.durio_thread_archived_section
 import chat.stoat.shared.resources.durio_thread_cancel
@@ -67,7 +82,6 @@ import chat.stoat.shared.resources.durio_thread_messages
 import chat.stoat.shared.resources.durio_thread_name
 import chat.stoat.shared.resources.durio_thread_new
 import chat.stoat.shared.resources.durio_thread_none
-import chat.stoat.shared.resources.durio_thread_unarchive
 import chat.stoat.shared.resources.durio_threads
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -88,7 +102,7 @@ object Threads {
             channel.thread == null &&
             permission(channel) has PermissionBit.SendMessage
 
-    /** Its starter, or ManageChannel, may archive a thread */
+    /** Its starter, or ManageChannel, may archive, close or open a thread again */
     fun canManage(thread: Channel): Boolean =
         thread.thread?.owner == StoatAPI.selfId || permission(thread) has PermissionBit.ManageChannel
 
@@ -111,7 +125,9 @@ private fun threadMeta(thread: Channel): String {
         parts += DateUtils.getRelativeTimeSpanString(it, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
             .toString()
     }
-    if (isArchivedThread(thread, System.currentTimeMillis())) {
+    if (thread.thread?.locked == true) {
+        parts += stringResource(Res.string.durio_thread_closed)
+    } else if (isArchivedThread(thread, System.currentTimeMillis())) {
         parts += stringResource(Res.string.durio_thread_archived)
     }
     return parts.joinToString(" · ")
@@ -317,9 +333,9 @@ private fun ThreadRow(thread: Channel, onClick: () -> Unit) {
     }
 }
 
-/** Top bar action of a thread: archive it, or bring it back */
+/** Top bar action of a thread: close it (only its starter and moderators write in it), or open it again */
 @Composable
-fun ThreadArchiveAction(thread: Channel) {
+fun ThreadLockAction(thread: Channel) {
     val info = thread.thread ?: return
     if (!Threads.canManage(thread)) return
     val context = LocalContext.current
@@ -328,7 +344,7 @@ fun ThreadArchiveAction(thread: Channel) {
     androidx.compose.material3.IconButton(onClick = {
         scope.launch {
             try {
-                editThread(thread.id ?: return@launch, archived = !info.archived)
+                editThread(thread.id ?: return@launch, locked = !info.locked)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -337,10 +353,155 @@ fun ThreadArchiveAction(thread: Channel) {
         }
     }) {
         Icon(
-            painter = painterResource(if (info.archived) R.drawable.ic_unarchive_24dp else R.drawable.ic_archive_24dp),
+            painter = painterResource(if (info.locked) R.drawable.ic_lock_open_24dp else R.drawable.ic_lock_24dp),
             contentDescription = stringResource(
-                if (info.archived) Res.string.durio_thread_unarchive else Res.string.durio_thread_archive,
+                if (info.locked) Res.string.durio_thread_reopen else Res.string.durio_thread_close,
             ),
+        )
+    }
+}
+
+/**
+ * Under a server channel in the channel list: its open threads, tied to it by a curved line (as on
+ * Discord). The thread open right now shows even when archived.
+ */
+@Composable
+fun DrawerThreadTree(
+    parentId: String,
+    currentChannelId: String?,
+    serverId: String,
+    onOpen: (String) -> Unit,
+) {
+    val now = System.currentTimeMillis()
+    val threads = cachedThreads(parentId).filter { !isArchivedThread(it, now) || it.id == currentChannelId }
+    if (threads.isEmpty()) return
+    val lineColor = MaterialTheme.colorScheme.outlineVariant
+
+    Column(modifier = Modifier.padding(start = 44.dp, end = 8.dp)) {
+        threads.forEach { thread ->
+            val id = thread.id ?: return@forEach
+            val isCurrent = id == currentChannelId
+            val unread = thread.lastMessageID?.let { StoatAPI.unreads.hasUnread(id, it, serverId) } ?: false
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .drawBehind {
+                        val x = -8.dp.toPx()
+                        val mid = size.height / 2
+                        val radius = 6.dp.toPx()
+                        val path = Path().apply {
+                            moveTo(x, -mid)
+                            lineTo(x, mid - radius)
+                            quadraticTo(x, mid, x + radius, mid)
+                            lineTo(-2.dp.toPx(), mid)
+                        }
+                        drawPath(path, lineColor, style = Stroke(width = 1.5.dp.toPx()))
+                    }
+                    .clip(CircleShape)
+                    .clickable { onOpen(id) }
+                    .then(
+                        if (isCurrent) Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+                        else Modifier,
+                    )
+                    .padding(horizontal = 12.dp),
+            ) {
+                Text(
+                    thread.name ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (unread && !isCurrent) FontWeight.SemiBold else null,
+                    color = when {
+                        isCurrent -> MaterialTheme.colorScheme.onSecondaryContainer
+                        unread -> MaterialTheme.colorScheme.onSurface
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                if (unread && !isCurrent) {
+                    Box(
+                        Modifier
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .size(8.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun autoDeleteLabel(days: Int?): String =
+    if (days == null) stringResource(Res.string.durio_thread_auto_delete_never)
+    else pluralStringResource(Res.plurals.durio_thread_auto_delete_days, days, days)
+
+/**
+ * Channel settings: delete the channel's threads nobody writes in for a while, or never
+ * (ManageChannel, server text channels that are not threads)
+ */
+@Composable
+fun ThreadAutoDeleteSetting(channel: Channel) {
+    if (channel.channelType != ChannelType.TextChannel || channel.thread != null) return
+    if (!(Threads.permission(channel) has PermissionBit.ManageChannel)) return
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var choosing by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    val current = channel.threadAutoDelete
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !busy) { choosing = true }
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+    ) {
+        Text(stringResource(Res.string.durio_thread_auto_delete), style = MaterialTheme.typography.labelLarge)
+        Text(autoDeleteLabel(current), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.alpha(0.8f))
+    }
+
+    if (choosing) {
+        AlertDialog(
+            onDismissRequest = { choosing = false },
+            title = { Text(stringResource(Res.string.durio_thread_auto_delete)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    (listOf<Int?>(null) + THREAD_AUTO_DELETE_DAYS).forEach { days ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    choosing = false
+                                    if (days == current) return@clickable
+                                    busy = true
+                                    scope.launch {
+                                        try {
+                                            setThreadAutoDelete(channel.id ?: return@launch, days)
+                                        } catch (e: CancellationException) {
+                                            throw e
+                                        } catch (e: Exception) {
+                                            Toast.makeText(context, e.message ?: "", Toast.LENGTH_SHORT).show()
+                                        } finally {
+                                            busy = false
+                                        }
+                                    }
+                                }
+                                .padding(vertical = 4.dp),
+                        ) {
+                            RadioButton(selected = days == current, onClick = null)
+                            Text(autoDeleteLabel(days), modifier = Modifier.padding(start = 12.dp))
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { choosing = false }) {
+                    Text(stringResource(Res.string.durio_thread_cancel))
+                }
+            },
         )
     }
 }

@@ -557,6 +557,10 @@ object RealtimeSocket {
                 if ("Slowmode" in channelUpdateFrame.clear.orEmpty()) {
                     combined = combined.copy(slowmode = null)
                 }
+                // durio: the channel keeps its threads forever again
+                if ("ThreadAutoDelete" in channelUpdateFrame.clear.orEmpty()) {
+                    combined = combined.copy(threadAutoDelete = null)
+                }
 
                 StoatAPI.channelCache[channelUpdateFrame.id] = combined
                 E2eeFrames.onServerChannel(combined) // durio: encryption enabled / pinned (AN-27, AN-39)
@@ -578,6 +582,8 @@ object RealtimeSocket {
                     if (combined.nsfw == true) 1L else 0L,
                     combined.server
                 )
+                // durio: an open channel re-reads what it allows (a thread closed or opened again)
+                StoatAPI.wsFrameChannel.emit(channelUpdateFrame)
             }
 
             "ChannelCreate" -> {

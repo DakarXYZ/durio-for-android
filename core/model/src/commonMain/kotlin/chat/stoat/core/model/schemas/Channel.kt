@@ -94,6 +94,9 @@ data class Channel(
     val encryption: ChannelEncryption? = null,
     // durio: set when this server channel is a thread of another channel
     val thread: ThreadInfo? = null,
+    // durio: threads of this channel are deleted after this many days without a message
+    @SerialName("thread_auto_delete")
+    val threadAutoDelete: Int? = null,
 ) {
     fun mergeWithPartial(partial: Channel): Channel {
         return Channel(
@@ -117,6 +120,7 @@ data class Channel(
             type = partial.type ?: type,
             encryption = partial.encryption ?: encryption,
             thread = partial.thread ?: thread,
+            threadAutoDelete = partial.threadAutoDelete ?: threadAutoDelete,
         )
     }
 }
