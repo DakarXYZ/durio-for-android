@@ -89,6 +89,7 @@ class AccountStorage internal constructor(
             // by E2eeManager.destroy already, this catches what a failed destroy left
             File(context.noBackupFilesDir, "crypto/$key").deleteRecursively()
             File(context.noBackupFilesDir, "keys/$key.bin").delete()
+            File(context.noBackupFilesDir, "keys/$key.session").delete()
         }
     }
 }

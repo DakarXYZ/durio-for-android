@@ -229,8 +229,12 @@ sealed class E2eeException(message: String, cause: Throwable? = null) : Exceptio
     /** Another instance holds the account's store (one per account and process). */
     class StoreLocked(cause: Throwable? = null) : E2eeException("Store is locked", cause)
 
-    /** The store cannot be opened: wrong key, damaged, or of another account/device (AN-42). */
-    class StoreUnusable(cause: Throwable? = null) : E2eeException("Store is unusable", cause)
+    /**
+     * The store cannot be opened: wrong key, damaged, or of another account/device (AN-42).
+     * [otherDevice]: it opens, but holds another device (session) of the account.
+     */
+    class StoreUnusable(cause: Throwable? = null, val otherDevice: Boolean = false) :
+        E2eeException("Store is unusable", cause)
 
     /** A failed request needs the user (AN-31/32, AN-42). */
     class ActionRequired(val action: E2eeAction, cause: Throwable? = null) :

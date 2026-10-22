@@ -395,7 +395,8 @@ internal inline fun <T> core(block: () -> T): T = try {
 
 internal fun CryptoException.toE2ee(): E2eeException = when (this) {
     is CryptoException.StoreLocked -> E2eeException.StoreLocked(this)
-    is CryptoException.StoreMismatch, is CryptoException.Store -> E2eeException.StoreUnusable(this)
+    is CryptoException.StoreMismatch -> E2eeException.StoreUnusable(this, otherDevice = true)
+    is CryptoException.Store -> E2eeException.StoreUnusable(this)
     is CryptoException.MfaRequired -> E2eeException.ActionRequired(E2eeAction.MfaRequired, this)
     is CryptoException.BackupVersionChanged ->
         E2eeException.ActionRequired(E2eeAction.BackupVersionChanged, this)

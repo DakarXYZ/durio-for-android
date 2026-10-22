@@ -73,6 +73,35 @@ class E2eeStoreKeysTest {
     }
 
     @Test
+    fun storeOfAnEarlierSessionIsTold() {
+        val keys = E2eeStoreKeys(dir, wrapper)
+        assertFalse(keys.madeForOtherSession("a", "S1"))
+
+        keys.dataKey("a")
+        keys.storeDir("a").mkdirs()
+        keys.storeDir("a").resolve("crypto.sqlite3").writeText("x")
+        // a store from before the note: this session's
+        assertFalse(keys.madeForOtherSession("a", "S1"))
+
+        keys.rememberSession("a", "S1")
+        assertFalse(keys.madeForOtherSession("a", "S1"))
+        // logged in again: a new session, the store stayed
+        assertTrue(keys.madeForOtherSession("a", "S2"))
+        assertFalse(keys.madeForOtherSession("b", "S2"))
+    }
+
+    @Test
+    fun deleteRemovesTheSessionNote() {
+        val keys = E2eeStoreKeys(dir, wrapper)
+        keys.dataKey("a")
+        keys.rememberSession("a", "S1")
+        keys.delete("a")
+
+        assertFalse(keys.sessionFile("a").exists())
+        assertFalse(keys.madeForOtherSession("a", "S2"))
+    }
+
+    @Test
     fun deleteRemovesTheKey() {
         val keys = E2eeStoreKeys(dir, wrapper)
         val first = keys.dataKey("a")

@@ -46,6 +46,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import logcat.LogPriority
 import logcat.logcat
+import java.io.IOException
 
 /** E2EE of the active account, for the UI (AN-30, AN-42) and the send path (AN-26). */
 sealed interface E2eeStatus {
@@ -197,10 +198,7 @@ object E2eeManager : E2eeSocketListener {
         registry = CryptoRegistry(
             scope = scope,
             open = ::openCore,
-            destroyStore = { key ->
-                CryptoStores.destroy(keys.storeDir(key))
-                keys.delete(key)
-            },
+            destroyStore = ::discardStore,
         )
         E2eeFrames.listener = this
         // attachments need no account: the stateless half of the core (AN-28)
@@ -210,10 +208,40 @@ object E2eeManager : E2eeSocketListener {
         E2eeVerifications.init(context)
     }
 
+    /**
+     * Opens the account's store as its current session (device = session, C22). A store left by
+     * an earlier session of the account can never be this device: it is discarded and a new one
+     * made, as a logout would have done — not "encryption was reset" after every new login.
+     */
     private suspend fun openCore(accountKey: String): E2eeCore {
         val account = AccountManager.state.value.find(accountKey)
             ?: throw IllegalStateException("No account for this key")
-        return CryptoStores.open(account.userId, account.sessionId, keys.storeDir(accountKey), keys.dataKey(accountKey))
+        if (keys.madeForOtherSession(accountKey, account.sessionId)) {
+            logcat(LogPriority.WARN) { "E2EE store of an earlier session discarded" }
+            discardStore(accountKey)
+        }
+        val core = try {
+            CryptoStores.open(account.userId, account.sessionId, keys.storeDir(accountKey), keys.dataKey(accountKey))
+        } catch (e: E2eeException.StoreUnusable) {
+            // a store from before the session note, of another device: the same case
+            if (!e.otherDevice) throw e
+            logcat(LogPriority.WARN) { "E2EE store of another device discarded" }
+            discardStore(accountKey)
+            CryptoStores.open(account.userId, account.sessionId, keys.storeDir(accountKey), keys.dataKey(accountKey))
+        }
+        try {
+            keys.rememberSession(accountKey, account.sessionId)
+        } catch (e: IOException) {
+            // without the note a later store of another session shows up as a mismatch at open
+            logcat(LogPriority.WARN) { "E2EE session note not written" }
+        }
+        return core
+    }
+
+    /** Deletes the account's store, its key and its session note (logout, a stale store). */
+    private suspend fun discardStore(accountKey: String) {
+        CryptoStores.destroy(keys.storeDir(accountKey))
+        keys.delete(accountKey)
     }
 
     /** After `StoatAPI.loginAs` of the active account ([AccountManager.onLoggedIn]). */
