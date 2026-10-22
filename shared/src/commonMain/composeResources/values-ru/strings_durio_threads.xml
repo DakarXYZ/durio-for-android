@@ -25,7 +25,7 @@
     </plurals>
     <string name="durio_spoiler_hide">Скрыть под спойлер</string>
     <string name="durio_spoiler_remove">Убрать спойлер</string>
-    <string name="durio_spoiler_alert">Спойлер!</string>
+    <string name="durio_spoiler_alert">Spoiler Alert!</string>
     <string name="durio_spoiler_nsfw">NSFW</string>
     <string name="durio_spoiler_tap">Нажмите, чтобы показать</string>
     <string name="durio_spoiler_failed">Не удалось изменить спойлер: %1$s</string>

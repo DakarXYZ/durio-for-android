@@ -24,7 +24,7 @@ import org.jetbrains.compose.resources.stringResource
 
 /**
  * A message a moderator hid behind a spoiler (dur.io servers): in place of its text, pictures,
- * files and poll, a cover saying "Spoiler alert!" or "NSFW"; a tap shows the message.
+ * files and poll, a cover saying "Spoiler Alert!" or "NSFW"; a tap shows the message.
  */
 @Composable
 fun SpoilerCover(spoiler: MessageSpoiler, onShow: () -> Unit) {
