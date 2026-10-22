@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -541,6 +542,7 @@ private fun StoatVideoPlayer(
                 VideoTimeline(
                     currentPositionMs = scrubPositionMs ?: progressState.currentPositionMs,
                     durationMs = progressState.durationMs,
+                    bufferedPositionMs = progressState.bufferedPositionMs,
                     onScrub = {
                         scrubPositionMs = it
                         keepControlsVisible()
@@ -638,6 +640,7 @@ private fun VideoControlButton(
 private fun VideoTimeline(
     currentPositionMs: Long,
     durationMs: Long,
+    bufferedPositionMs: Long,
     onScrub: (Long) -> Unit,
     onScrubFinished: () -> Unit,
     isFullscreen: Boolean,
@@ -663,23 +666,42 @@ private fun VideoTimeline(
             )
         )
 
-        ControlledSlider(
-            value = sliderValue,
-            onValueChange = { onScrub((it * usableDurationMs).toLong()) },
-            onValueChangeFinished = onScrubFinished,
-            enabled = usableDurationMs > 0L,
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = MaterialTheme.colorScheme.primary,
-                inactiveTrackColor = Color.White.copy(alpha = 0.3f),
-                disabledThumbColor = Color.White.copy(alpha = 0.6f),
-                disabledActiveTrackColor = Color.White.copy(alpha = 0.3f),
-                disabledInactiveTrackColor = Color.White.copy(alpha = 0.18f)
-            ),
+        // durio: how much is loaded, under the track (a seek can go anywhere, the server
+        // serves ranges)
+        val bufferedFraction = if (usableDurationMs > 0L) {
+            bufferedPositionMs.coerceIn(0L, usableDurationMs).toFloat() / usableDurationMs
+        } else {
+            0f
+        }
+        Box(
+            contentAlignment = Alignment.CenterStart,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 10.dp)
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .fillMaxWidth(bufferedFraction)
+                    .height(4.dp)
+                    .background(Color.White.copy(alpha = 0.35f), RoundedCornerShape(2.dp))
+            )
+            ControlledSlider(
+                value = sliderValue,
+                onValueChange = { onScrub((it * usableDurationMs).toLong()) },
+                onValueChangeFinished = onScrubFinished,
+                enabled = usableDurationMs > 0L,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                    disabledThumbColor = Color.White.copy(alpha = 0.6f),
+                    disabledActiveTrackColor = Color.White.copy(alpha = 0.3f),
+                    disabledInactiveTrackColor = Color.White.copy(alpha = 0.18f)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Text(
             text = formatPlaybackTime(usableDurationMs),
