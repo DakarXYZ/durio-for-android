@@ -285,7 +285,7 @@ object E2eeManager : E2eeSocketListener {
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 // the account's files are deleted anyway (AccountStorage.deleteFiles)
-                logcat(LogPriority.WARN) { "E2EE store not destroyed: ${e::class.simpleName}" }
+                logcat(LogPriority.WARN) { "E2EE store not destroyed: ${e::class.simpleName} ${e.message} cause=${e.cause} ${e.cause?.message}" }
             }
             keys.delete(accountKey)
         }
@@ -356,7 +356,7 @@ object E2eeManager : E2eeSocketListener {
                 is E2eeException.StoreTooNew -> E2eeStatus.UpdateApp
                 else -> E2eeStatus.Failed(e::class.simpleName ?: "Unknown")
             }
-            logcat(LogPriority.ERROR) { "E2EE device not opened: ${e::class.simpleName}" }
+            logcat(LogPriority.ERROR) { "E2EE device not opened: ${e::class.simpleName} ${e.message} cause=${e.cause} ${e.cause?.message}" }
             return
         }
 
