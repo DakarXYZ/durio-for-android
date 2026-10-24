@@ -42,7 +42,7 @@ dependencyResolutionManagement {
                     metadataSources { artifact() }
                 },
             )
-            filter { includeModule("io.github.dakarxyz.durio", "stoat-crypto") }
+            filter { includeModule("io.github.dakarxyz.durio", "durio-crypt") }
         }
     }
 }

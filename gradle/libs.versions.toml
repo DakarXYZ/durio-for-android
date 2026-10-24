@@ -33,7 +33,7 @@ coroutines = "1.10.2"
 turbine = "1.2.1"
 robolectric = "4.17"
 # durio: E2EE core AAR (plan AN-20); bump together with gradle/verification-metadata.xml
-stoat-crypto = "0.2.3"
+durio-crypt = "0.2.4"
 jna = "5.17.0"
 
 [libraries]

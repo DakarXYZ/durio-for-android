@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copies a local build of the E2EE core into .durio-crypto/ (gitignored), plan AN-20:
-#   .durio-crypto/maven/  maven repo with io.github.dakarxyz.durio:stoat-crypto (settings.gradle.kts
+#   .durio-crypto/maven/  maven repo with io.github.dakarxyz.durio:durio-crypt (settings.gradle.kts
 #                         prefers it over the GitHub Release)
 #   .durio-crypto/host/   libstoat_crypto_ffi.so for linux-x86-64: JVM tests against the real core
 # Inside the for-android checkout, so builds in Docker (only /work mounted) see it too.
@@ -15,7 +15,7 @@ cd "$(dirname "$0")/.."
 src=${1:-../durio-crypt}
 android="$src/bindings/android/build"
 
-test -d "$android/maven" || { echo "No $android/maven: build the AAR first (stoat-crypto scripts/daar.sh)"; exit 1; }
+test -d "$android/maven" || { echo "No $android/maven: build the AAR first (durio-crypt scripts/daar.sh)"; exit 1; }
 
 rm -rf .durio-crypto
 mkdir -p .durio-crypto/maven .durio-crypto/host
@@ -26,15 +26,15 @@ else
     echo "Note: no host library in $android/host, JVM tests against the real core will be skipped"
 fi
 
-version=$(sed -nE 's/^stoat-crypto = "([^"]+)"/\1/p' gradle/libs.versions.toml)
-aar=".durio-crypto/maven/io/github/dakarxyz/durio/stoat-crypto/$version/stoat-crypto-$version.aar"
+version=$(sed -nE 's/^durio-crypt = "([^"]+)"/\1/p' gradle/libs.versions.toml)
+aar=".durio-crypto/maven/io/github/dakarxyz/durio/durio-crypt/$version/durio-crypt-$version.aar"
 test -f "$aar" || { echo "No AAR for version $version (gradle/libs.versions.toml) in $android/maven"; exit 1; }
 
 sha=$(sha256sum "$aar" | cut -d' ' -f1)
 if grep -q "$sha" gradle/verification-metadata.xml; then
-    echo "stoat-crypto $version ($sha) copied; matches the pin."
+    echo "durio-crypt $version ($sha) copied; matches the pin."
 else
-    echo "stoat-crypto $version copied, but its SHA-256 $sha is not pinned in gradle/verification-metadata.xml."
+    echo "durio-crypt $version copied, but its SHA-256 $sha is not pinned in gradle/verification-metadata.xml."
     echo "Gradle will refuse it: add it there (also-trust for a dev build, the release value for a release)."
     exit 1
 fi

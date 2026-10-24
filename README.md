@@ -130,7 +130,7 @@ Android-клиент мессенджера **dur.io** (Kotlin, Jetpack Compose)
 
 Kotlin 2.3, Jetpack Compose, Ktor, SQLDelight, Koin; пакет кода `chat.stoat` (`namespace`), наш код — в
 `chat.stoat.fork.*`. Крипто-ядро E2EE — AAR из [durio-crypt](https://github.com/DakarXYZ/durio-crypt)
-(`io.github.dakarxyz.durio:stoat-crypto`, SHA-256 закреплён в `gradle/verification-metadata.xml`).
+(`io.github.dakarxyz.durio:durio-crypt`, SHA-256 закреплён в `gradle/verification-metadata.xml`).
 
 Нужны JDK 21 и Android SDK 37 (Android Studio или командная строка). Перед сборкой:
 

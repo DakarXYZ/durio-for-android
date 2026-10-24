@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// durio: the E2EE core (plan AN-20). Wraps the stoat-crypto AAR (UniFFI bindings over
+// durio: the E2EE core (plan AN-20). Wraps the durio-crypt AAR (UniFFI bindings over
 // libstoat_crypto_ffi.so) behind `chat.stoat.api.fork.e2ee.E2eeCore`; nothing outside this
 // module sees UniFFI or JNA types.
 plugins {
@@ -46,9 +46,9 @@ dependencies {
     implementation(project(":core:api"))
 
     // The release AAR comes without metadata (GitHub Releases, ivy): `@aar` keeps the local
-    // maven build the same, and JNA + coroutines are declared here (stoat-crypto README).
+    // maven build the same, and JNA + coroutines are declared here (durio-crypt README).
     // R8 rules ship inside the AAR (consumer-rules.pro).
-    implementation("io.github.dakarxyz.durio:stoat-crypto:${libs.versions.stoat.crypto.get()}@aar")
+    implementation("io.github.dakarxyz.durio:durio-crypt:${libs.versions.durio.crypt.get()}@aar")
     implementation("net.java.dev.jna:jna:${libs.versions.jna.get()}@aar")
     implementation(libs.kotlinx.coroutines.core)
 
