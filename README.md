@@ -140,7 +140,7 @@ Kotlin 2.3, Jetpack Compose, Ktor, SQLDelight, Koin; пакет кода `chat.s
 - Сборочные настройки — `stoatbuild.properties` по образцу `stoatbuild.properties.example`
   (`durio.default_server` — предзаполненный адрес сервера, по умолчанию пусто).
 - AAR ядра качается из релиза `durio-crypt`. До релиза или для своей сборки ядра —
-  `scripts/durio-crypto-local.sh ../stoat-crypto` (после `scripts/build-aar.sh all` в репозитории ядра).
+  `scripts/durio-crypto-local.sh ../durio-crypt` (после `scripts/build-aar.sh all` в репозитории ядра).
 
 ```bash
 ./gradlew assembleDebug                      # debug APK

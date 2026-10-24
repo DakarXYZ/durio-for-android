@@ -5,14 +5,14 @@
 #   .durio-crypto/host/   libstoat_crypto_ffi.so for linux-x86-64: JVM tests against the real core
 # Inside the for-android checkout, so builds in Docker (only /work mounted) see it too.
 #
-# Usage: scripts/durio-crypto-local.sh [path to stoat-crypto]   (default: ../stoat-crypto)
-# Build the core first: stoat-crypto/scripts/daar.sh (Windows) or scripts/build-aar.sh all.
+# Usage: scripts/durio-crypto-local.sh [path to durio-crypt]   (default: ../durio-crypt)
+# Build the core first: durio-crypt/scripts/daar.sh (Windows) or scripts/build-aar.sh all.
 # The AAR must match the SHA-256 pinned in gradle/verification-metadata.xml; a new core version
 # means a new pin (and a version bump in gradle/libs.versions.toml).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-src=${1:-../stoat-crypto}
+src=${1:-../durio-crypt}
 android="$src/bindings/android/build"
 
 test -d "$android/maven" || { echo "No $android/maven: build the AAR first (stoat-crypto scripts/daar.sh)"; exit 1; }
